@@ -40,7 +40,7 @@ public class ZipWriter : AbstractWriter
 
         if (WriterOptions.LeaveStreamOpen)
         {
-            destination = NonDisposingStream.Create(destination);
+            destination = SharpCompressStream.Create(destination, leaveOpen: true);
         }
         InitializeStream(destination);
     }

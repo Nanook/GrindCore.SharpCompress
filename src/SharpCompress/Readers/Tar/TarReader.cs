@@ -55,7 +55,7 @@ public class TarReader : AbstractReader<TarEntry, TarVolume>
     {
         stream.CheckNotNull(nameof(stream));
         options = options ?? new ReaderOptions();
-        var rewindableStream = new RewindableStream(stream);
+        var rewindableStream = SharpCompressStream.Create(stream);
         rewindableStream.StartRecording();
         if (GZipArchive.IsGZipFile(rewindableStream))
         {

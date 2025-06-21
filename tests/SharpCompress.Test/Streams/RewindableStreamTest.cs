@@ -20,7 +20,7 @@ public class RewindableStreamTest
         bw.Write(7);
         bw.Flush();
         ms.Position = 0;
-        var stream = new RewindableStream(ms);
+        var stream = SharpCompressStream.Create(ms);
         stream.StartRecording();
         var br = new BinaryReader(stream);
         Assert.Equal(1, br.ReadInt32());
@@ -58,7 +58,7 @@ public class RewindableStreamTest
         bw.Write(7);
         bw.Flush();
         ms.Position = 0;
-        var stream = new RewindableStream(ms);
+        var stream = SharpCompressStream.Create(ms);
         stream.StartRecording();
         var br = new BinaryReader(stream);
         Assert.Equal(1, br.ReadInt32());

@@ -36,8 +36,9 @@ public abstract class ReaderTests : TestBase
     )
     {
         using var file = File.OpenRead(testArchive);
-        using var protectedStream = NonDisposingStream.Create(
+        using var protectedStream = SharpCompressStream.Create(
             new ForwardOnlyStream(file),
+            leaveOpen: true,
             throwOnDispose: true
         );
         using var testStream = new TestStream(protectedStream);

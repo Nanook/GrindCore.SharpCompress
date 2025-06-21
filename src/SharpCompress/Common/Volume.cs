@@ -15,7 +15,7 @@ public abstract class Volume : IVolume
         ReaderOptions = readerOptions ?? new ReaderOptions();
         if (ReaderOptions.LeaveStreamOpen)
         {
-            stream = NonDisposingStream.Create(stream);
+            stream = SharpCompressStream.Create(stream, leaveOpen: true);
         }
         _actualStream = stream;
     }

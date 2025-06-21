@@ -19,15 +19,15 @@ internal class StreamingZipHeaderFactory : ZipHeaderFactory
 
     internal IEnumerable<ZipHeader> ReadStreamHeader(Stream stream)
     {
-        RewindableStream rewindableStream;
+        SharpCompressStream rewindableStream;
 
-        if (stream is RewindableStream rs)
+        if (stream is SharpCompressStream rs)
         {
             rewindableStream = rs;
         }
         else
         {
-            rewindableStream = new RewindableStream(stream);
+            rewindableStream = SharpCompressStream.Create(stream);
         }
         while (true)
         {

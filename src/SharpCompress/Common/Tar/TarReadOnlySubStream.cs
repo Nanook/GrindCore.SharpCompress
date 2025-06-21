@@ -4,13 +4,13 @@ using SharpCompress.IO;
 
 namespace SharpCompress.Common.Tar;
 
-internal class TarReadOnlySubStream : NonDisposingStream
+internal class TarReadOnlySubStream : SharpCompressStream
 {
     private bool _isDisposed;
     private long _amountRead;
 
     public TarReadOnlySubStream(Stream stream, long bytesToRead)
-        : base(stream, throwOnDispose: false) => BytesLeftToRead = bytesToRead;
+        : base(stream, leaveOpen: true, throwOnDispose: false) => BytesLeftToRead = bytesToRead;
 
     protected override void Dispose(bool disposing)
     {
@@ -24,7 +24,7 @@ internal class TarReadOnlySubStream : NonDisposingStream
         if (disposing)
         {
             // Ensure we read all remaining blocks for this entry.
-            Stream.Skip(BytesLeftToRead);
+            BaseStream.Skip(BytesLeftToRead);
             _amountRead += BytesLeftToRead;
 
             // If the last block wasn't a full 512 bytes, skip the remaining padding bytes.
@@ -32,7 +32,7 @@ internal class TarReadOnlySubStream : NonDisposingStream
 
             if (bytesInLastBlock != 0)
             {
-                Stream.Skip(512 - bytesInLastBlock);
+                BaseStream.Skip(512 - bytesInLastBlock);
             }
         }
 
@@ -63,7 +63,7 @@ internal class TarReadOnlySubStream : NonDisposingStream
         {
             count = (int)BytesLeftToRead;
         }
-        var read = Stream.Read(buffer, offset, count);
+        var read = BaseStream.Read(buffer, offset, count);
         if (read > 0)
         {
             BytesLeftToRead -= read;
@@ -78,7 +78,7 @@ internal class TarReadOnlySubStream : NonDisposingStream
         {
             return -1;
         }
-        var value = Stream.ReadByte();
+        var value = BaseStream.ReadByte();
         if (value != -1)
         {
             --BytesLeftToRead;

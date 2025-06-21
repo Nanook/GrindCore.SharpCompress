@@ -100,7 +100,7 @@ public class TarFactory
 
     /// <inheritdoc/>
     internal override bool TryOpenReader(
-        RewindableStream rewindableStream,
+        SharpCompressStream rewindableStream,
         ReaderOptions options,
         out IReader? reader
     )
@@ -120,7 +120,7 @@ public class TarFactory
         {
             rewindableStream.Rewind(false);
             var testStream = new BZip2Stream(
-                NonDisposingStream.Create(rewindableStream),
+                SharpCompressStream.Create(rewindableStream, leaveOpen: true),
                 CompressionMode.Decompress,
                 false
             );
@@ -137,7 +137,7 @@ public class TarFactory
         {
             rewindableStream.Rewind(false);
             var testStream = new LZipStream(
-                NonDisposingStream.Create(rewindableStream),
+                SharpCompressStream.Create(rewindableStream, leaveOpen: true),
                 CompressionMode.Decompress
             );
             if (TarArchive.IsTarFile(testStream))

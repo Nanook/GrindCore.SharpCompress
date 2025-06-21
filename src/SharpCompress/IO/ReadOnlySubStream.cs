@@ -3,7 +3,7 @@ using System.IO;
 
 namespace SharpCompress.IO;
 
-internal class ReadOnlySubStream : NonDisposingStream
+internal class ReadOnlySubStream : SharpCompressStream
 {
     private long _position;
 
@@ -11,7 +11,7 @@ internal class ReadOnlySubStream : NonDisposingStream
         : this(stream, null, bytesToRead) { }
 
     public ReadOnlySubStream(Stream stream, long? origin, long bytesToRead)
-        : base(stream, throwOnDispose: false)
+        : base(stream, leaveOpen: true, throwOnDispose: false)
     {
         if (origin != null && stream.Position != origin.Value)
         {
@@ -45,7 +45,7 @@ internal class ReadOnlySubStream : NonDisposingStream
         {
             count = (int)BytesLeftToRead;
         }
-        var read = Stream.Read(buffer, offset, count);
+        var read = BaseStream.Read(buffer, offset, count);
         if (read > 0)
         {
             BytesLeftToRead -= read;
@@ -60,7 +60,7 @@ internal class ReadOnlySubStream : NonDisposingStream
         {
             return -1;
         }
-        var value = Stream.ReadByte();
+        var value = BaseStream.ReadByte();
         if (value != -1)
         {
             --BytesLeftToRead;
@@ -73,7 +73,7 @@ internal class ReadOnlySubStream : NonDisposingStream
     public override int Read(Span<byte> buffer)
     {
         var sliceLen = BytesLeftToRead < buffer.Length ? BytesLeftToRead : buffer.Length;
-        var read = Stream.Read(buffer.Slice(0, (int)sliceLen));
+        var read = BaseStream.Read(buffer.Slice(0, (int)sliceLen));
         if (read > 0)
         {
             BytesLeftToRead -= read;

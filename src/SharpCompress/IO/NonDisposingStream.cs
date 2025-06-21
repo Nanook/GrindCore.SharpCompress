@@ -1,73 +1,84 @@
-using System;
-using System.IO;
+////using System;
+//using System.IO;
+//using SharpCompress.IO;
 
-namespace SharpCompress.IO;
+////namespace SharpCompress.IO;
 
-public class NonDisposingStream : Stream
-{
-    public static NonDisposingStream Create(Stream stream, bool throwOnDispose = false)
-    {
-        if (
-            stream is NonDisposingStream nonDisposingStream
-            && nonDisposingStream.ThrowOnDispose == throwOnDispose
-        )
-        {
-            return nonDisposingStream;
-        }
-        return new NonDisposingStream(stream, throwOnDispose);
-    }
+//public class NonDisposingStream  //: Stream
+//{
+//    private NonDisposingStream() //prevent construction
+//    {
+//    }
 
-    protected NonDisposingStream(Stream stream, bool throwOnDispose = false)
-    {
-        Stream = stream;
-        ThrowOnDispose = throwOnDispose;
-    }
+//    public static Stream Create(SharpCompressStream stream, bool throwOnDispose = false)
+//    {
+//        if (stream is SharpCompressStream sc)
+//        {
+//            sc.LeaveOpen = true;
+//            sc.ThrowOnDispose = throwOnDispose;
+//        }
+//        return stream;
+////        if (
+////            stream is NonDisposingStream nonDisposingStream
+////            && nonDisposingStream.ThrowOnDispose == throwOnDispose
+////        )
+////        {
+////            return nonDisposingStream;
+////        }
+////        return new NonDisposingStream(stream, throwOnDispose);
+//    }
 
-    public bool ThrowOnDispose { get; set; }
+////    protected NonDisposingStream(Stream stream, bool throwOnDispose = false)
+////    {
+////        Stream = stream;
+////        ThrowOnDispose = throwOnDispose;
+////    }
 
-    protected override void Dispose(bool disposing)
-    {
-        if (ThrowOnDispose)
-        {
-            throw new InvalidOperationException(
-                $"Attempt to dispose of a {nameof(NonDisposingStream)} when {nameof(ThrowOnDispose)} is {ThrowOnDispose}"
-            );
-        }
-    }
+////    public bool ThrowOnDispose { get; set; }
 
-    protected Stream Stream { get; }
+////    protected override void Dispose(bool disposing)
+////    {
+////        if (ThrowOnDispose)
+////        {
+////            throw new InvalidOperationException(
+////                $"Attempt to dispose of a {nameof(NonDisposingStream)} when {nameof(ThrowOnDispose)} is {ThrowOnDispose}"
+////            );
+////        }
+////    }
 
-    public override bool CanRead => Stream.CanRead;
+////    protected Stream Stream { get; }
 
-    public override bool CanSeek => Stream.CanSeek;
+////    public override bool CanRead => Stream.CanRead;
 
-    public override bool CanWrite => Stream.CanWrite;
+////    public override bool CanSeek => Stream.CanSeek;
 
-    public override void Flush() => Stream.Flush();
+////    public override bool CanWrite => Stream.CanWrite;
 
-    public override long Length => Stream.Length;
+////    public override void Flush() => Stream.Flush();
 
-    public override long Position
-    {
-        get => Stream.Position;
-        set => Stream.Position = value;
-    }
+////    public override long Length => Stream.Length;
 
-    public override int Read(byte[] buffer, int offset, int count) =>
-        Stream.Read(buffer, offset, count);
+////    public override long Position
+////    {
+////        get => Stream.Position;
+////        set => Stream.Position = value;
+////    }
 
-    public override long Seek(long offset, SeekOrigin origin) => Stream.Seek(offset, origin);
+////    public override int Read(byte[] buffer, int offset, int count) =>
+////        Stream.Read(buffer, offset, count);
 
-    public override void SetLength(long value) => Stream.SetLength(value);
+////    public override long Seek(long offset, SeekOrigin origin) => Stream.Seek(offset, origin);
 
-    public override void Write(byte[] buffer, int offset, int count) =>
-        Stream.Write(buffer, offset, count);
+////    public override void SetLength(long value) => Stream.SetLength(value);
 
-#if !NETFRAMEWORK && !NETSTANDARD2_0
+////    public override void Write(byte[] buffer, int offset, int count) =>
+////        Stream.Write(buffer, offset, count);
 
-    public override int Read(Span<byte> buffer) => Stream.Read(buffer);
+////#if !NETFRAMEWORK && !NETSTANDARD2_0
 
-    public override void Write(ReadOnlySpan<byte> buffer) => Stream.Write(buffer);
+////    public override int Read(Span<byte> buffer) => Stream.Read(buffer);
 
-#endif
-}
+////    public override void Write(ReadOnlySpan<byte> buffer) => Stream.Write(buffer);
+
+////#endif
+//}

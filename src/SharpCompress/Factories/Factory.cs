@@ -65,7 +65,7 @@ public abstract class Factory : IFactory
     /// <param name="reader"></param>
     /// <returns></returns>
     internal virtual bool TryOpenReader(
-        RewindableStream rewindableStream,
+        SharpCompressStream rewindableStream,
         ReaderOptions options,
         out IReader? reader
     )

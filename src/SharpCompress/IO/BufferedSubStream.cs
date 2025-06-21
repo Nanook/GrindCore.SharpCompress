@@ -4,7 +4,7 @@ using System.IO;
 namespace SharpCompress.IO;
 
 internal class BufferedSubStream(Stream stream, long origin, long bytesToRead)
-    : NonDisposingStream(stream, throwOnDispose: false)
+    : SharpCompressStream(stream, leaveOpen: true, throwOnDispose: false)
 {
     private int _cacheOffset;
     private int _cacheLength;
@@ -37,8 +37,8 @@ internal class BufferedSubStream(Stream stream, long origin, long bytesToRead)
             _cacheLength = 0;
             return;
         }
-        Stream.Position = origin;
-        _cacheLength = Stream.Read(_cache, 0, count);
+        BaseStream.Position = origin;
+        _cacheLength = BaseStream.Read(_cache, 0, count);
         origin += _cacheLength;
         BytesLeftToRead -= _cacheLength;
     }

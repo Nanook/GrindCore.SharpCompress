@@ -26,12 +26,12 @@ internal sealed class StreamingZipFilePart : ZipFilePart
         );
         if (LeaveStreamOpen)
         {
-            return NonDisposingStream.Create(_decompressionStream);
+            return SharpCompressStream.Create(_decompressionStream, leaveOpen: true);
         }
         return _decompressionStream;
     }
 
-    internal BinaryReader FixStreamedFileLocation(ref RewindableStream rewindableStream)
+    internal BinaryReader FixStreamedFileLocation(ref SharpCompressStream rewindableStream)
     {
         if (Header.IsDirectory)
         {

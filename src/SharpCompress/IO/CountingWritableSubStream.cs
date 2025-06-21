@@ -3,7 +3,7 @@ using System.IO;
 
 namespace SharpCompress.IO;
 
-internal class CountingWritableSubStream : NonDisposingStream
+internal class CountingWritableSubStream : SharpCompressStream
 {
     internal CountingWritableSubStream(Stream stream)
         : base(stream, throwOnDispose: false) { }
@@ -16,7 +16,7 @@ internal class CountingWritableSubStream : NonDisposingStream
 
     public override bool CanWrite => true;
 
-    public override void Flush() => Stream.Flush();
+    public override void Flush() => BaseStream.Flush();
 
     public override long Length => throw new NotSupportedException();
 
@@ -35,13 +35,13 @@ internal class CountingWritableSubStream : NonDisposingStream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        Stream.Write(buffer, offset, count);
+        BaseStream.Write(buffer, offset, count);
         Count += (uint)count;
     }
 
     public override void WriteByte(byte value)
     {
-        Stream.WriteByte(value);
+        BaseStream.WriteByte(value);
         ++Count;
     }
 }
