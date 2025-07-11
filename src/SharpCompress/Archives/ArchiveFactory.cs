@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using SharpCompress.Common;
 using SharpCompress.Factories;
+using SharpCompress.IO;
 using SharpCompress.Readers;
 
 namespace SharpCompress.Archives;
@@ -16,10 +17,10 @@ public static class ArchiveFactory
     /// <param name="stream"></param>
     /// <param name="readerOptions"></param>
     /// <returns></returns>
-    public static IArchive Open(Stream stream, ReaderOptions? readerOptions = null)
+    public static IArchive Open(Stream stream, ReaderOptions? readerOptions = null, int bufferSize = 0x10000)
     {
         readerOptions ??= new ReaderOptions();
-
+        stream = new SharpCompressStream(stream, bufferSize: bufferSize);
         return FindFactory<IArchiveFactory>(stream).Open(stream, readerOptions);
     }
 

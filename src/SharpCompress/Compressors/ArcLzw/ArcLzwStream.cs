@@ -4,9 +4,17 @@ using System.IO;
 using System.Linq;
 using SharpCompress.Compressors.RLE90;
 using SharpCompress.Compressors.Squeezed;
+using SharpCompress.IO;
 
-public partial class ArcLzwStream : Stream
+public partial class ArcLzwStream : Stream, IStreamStack
 {
+#if DEBUG_STREAMS
+    long IStreamStack.InstanceId { get; set; }
+#endif
+    Stream IStreamStack.BaseStream() => _stream;
+    int IStreamStack.BufferSize { get => 0; set { } }
+    int IStreamStack.BufferPosition { get => 0; set { } }
+
     private Stream _stream;
     private bool _processed;
     private bool _useCrunched;
@@ -33,6 +41,9 @@ public partial class ArcLzwStream : Stream
     public ArcLzwStream(Stream stream, int compressedSize, bool useCrunched = true)
     {
         _stream = stream;
+#if DEBUG_STREAMS
+        this.DebugConstruct(typeof(ArcLzwStream));
+#endif
         _useCrunched = useCrunched;
         _compressedSize = compressedSize;
 
@@ -196,4 +207,12 @@ public partial class ArcLzwStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count) =>
         throw new NotImplementedException();
+
+    protected override void Dispose(bool disposing)
+    {
+#if DEBUG_STREAMS
+        this.DebugDispose(typeof(ArcLzwStream));
+#endif
+        base.Dispose(disposing);
+    }
 }

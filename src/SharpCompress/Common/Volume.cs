@@ -9,14 +9,17 @@ public abstract class Volume : IVolume
 {
     private readonly Stream _actualStream;
 
-    internal Volume(Stream stream, ReaderOptions? readerOptions, int index = 0)
+    internal Volume(Stream stream, ReaderOptions? readerOptions, int index = 0, int bufferSize = 0x10000)
     {
         Index = index;
         ReaderOptions = readerOptions ?? new ReaderOptions();
         if (ReaderOptions.LeaveStreamOpen)
         {
-            stream = NonDisposingStream.Create(stream);
+            stream = SharpCompressStream.Create(stream, leaveOpen: true, forceBuffer: true, bufferSize: bufferSize);
         }
+        else if (stream is IStreamStack ss && ss.BufferSize != bufferSize)
+            ss.SetBuffer(bufferSize, true);
+
         _actualStream = stream;
     }
 

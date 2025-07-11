@@ -55,17 +55,17 @@ public abstract class Factory : IFactory
     public virtual FileInfo? GetFilePart(int index, FileInfo part1) => null;
 
     /// <summary>
-    /// Tries to open an <see cref="IReader"/> from a <see cref="RewindableStream"/>.
+    /// Tries to open an <see cref="IReader"/> from a <see cref="SharpCompressStream"/>.
     /// </summary>
     /// <remarks>
     /// This method provides extra insight to support loading compressed TAR files.
     /// </remarks>
-    /// <param name="rewindableStream"></param>
+    /// <param name="stream"></param>
     /// <param name="options"></param>
     /// <param name="reader"></param>
     /// <returns></returns>
     internal virtual bool TryOpenReader(
-        RewindableStream rewindableStream,
+        SharpCompressStream stream,
         ReaderOptions options,
         out IReader? reader
     )
@@ -74,11 +74,12 @@ public abstract class Factory : IFactory
 
         if (this is IReaderFactory readerFactory)
         {
-            rewindableStream.Rewind(false);
-            if (IsArchive(rewindableStream, options.Password))
+            long pos = ((IStreamStack)stream).GetPosition();
+
+            if (IsArchive(stream, options.Password))
             {
-                rewindableStream.Rewind(true);
-                reader = readerFactory.OpenReader(rewindableStream, options);
+                ((IStreamStack)stream).StackSeek(pos);
+                reader = readerFactory.OpenReader(stream, options);
                 return true;
             }
         }

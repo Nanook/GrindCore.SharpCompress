@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using SharpCompress.Common.Tar.Headers;
+using SharpCompress.IO;
 
 namespace SharpCompress.Compressors.Deflate;
 
@@ -42,8 +43,15 @@ internal enum ZlibStreamFlavor
     GZIP = 1952,
 }
 
-internal class ZlibBaseStream : Stream
+internal class ZlibBaseStream : Stream, IStreamStack
 {
+#if DEBUG_STREAMS
+    long IStreamStack.InstanceId { get; set; }
+#endif
+    Stream IStreamStack.BaseStream() => _stream;
+    int IStreamStack.BufferSize { get => 0; set { } }
+    int IStreamStack.BufferPosition { get => 0; set { } }
+
     protected internal ZlibCodec _z; // deferred init... new ZlibCodec();
 
     protected internal StreamMode _streamMode = StreamMode.Undefined;
@@ -86,6 +94,10 @@ internal class ZlibBaseStream : Stream
         _level = level;
 
         _encoding = encoding;
+
+#if DEBUG_STREAMS
+        this.DebugConstruct(typeof(ZlibBaseStream));
+#endif
 
         // workitem 7159
         if (flavor == ZlibStreamFlavor.GZIP)
@@ -334,6 +346,9 @@ internal class ZlibBaseStream : Stream
             return;
         }
         isDisposed = true;
+#if DEBUG_STREAMS
+        this.DebugDispose(typeof(ZlibBaseStream));
+#endif
         base.Dispose(disposing);
         if (disposing)
         {
@@ -354,7 +369,13 @@ internal class ZlibBaseStream : Stream
         }
     }
 
-    public override void Flush() => _stream.Flush();
+    public override void Flush()
+    {
+        _stream.Flush();
+        //rewind the buffer
+        ((IStreamStack)this).Rewind(z.AvailableBytesIn); //return bytes
+        z.AvailableBytesIn = 0;
+    }
 
     public override Int64 Seek(Int64 offset, SeekOrigin origin) =>
         throw new NotSupportedException();
@@ -632,6 +653,13 @@ internal class ZlibBaseStream : Stream
         if (crc != null)
         {
             crc.SlurpBlock(buffer, offset, rc);
+        }
+
+        if (rc == ZlibConstants.Z_STREAM_END && z.AvailableBytesIn != 0 && !_wantCompress)
+        {
+            //rewind the buffer
+            ((IStreamStack)this).Rewind(z.AvailableBytesIn); //unused
+            z.AvailableBytesIn = 0;
         }
 
         return rc;

@@ -17,17 +17,17 @@ internal class StreamingZipHeaderFactory : ZipHeaderFactory
     )
         : base(StreamingMode.Streaming, password, archiveEncoding) => _entries = entries;
 
-    internal IEnumerable<ZipHeader> ReadStreamHeader(Stream stream)
+    internal IEnumerable<ZipHeader> ReadStreamHeader(Stream stream, int bufferSize = 0x10000)
     {
-        RewindableStream rewindableStream;
+        SharpCompressStream rewindableStream;
 
-        if (stream is RewindableStream rs)
+        if (stream is SharpCompressStream rs)
         {
             rewindableStream = rs;
         }
         else
         {
-            rewindableStream = new RewindableStream(stream);
+            rewindableStream = new SharpCompressStream(stream, bufferSize: bufferSize);
         }
         while (true)
         {
@@ -43,9 +43,8 @@ internal class StreamingZipHeaderFactory : ZipHeaderFactory
                 {
                     continue;
                 }
-                reader = ((StreamingZipFilePart)_lastEntryHeader.Part).FixStreamedFileLocation(
-                    ref rewindableStream
-                );
+
+                // FixStreamedFileLocation() not required
 
                 var pos = rewindableStream.CanSeek ? (long?)rewindableStream.Position : null;
 
@@ -62,18 +61,23 @@ internal class StreamingZipHeaderFactory : ZipHeaderFactory
 
                 // Check if we have header or 64bit DataDescriptor
                 headerBytes = reader.ReadUInt32();
+
+                //check for zip64 sentinel or unexpected header
+                bool isSentinel = compressed_size == 0xFFFFFFFF || uncompressed_size == 0xFFFFFFFF;
                 var test_header = !(headerBytes == 0x04034b50 || headerBytes == 0x02014b50);
 
-                var test_64bit = ((long)uncompressed_size << 32) | compressed_size;
-                if (test_64bit == _lastEntryHeader.CompressedSize && test_header)
+                if (test_header && !isSentinel)
                 {
-                    _lastEntryHeader.UncompressedSize =
-                        ((long)reader.ReadUInt32() << 32) | headerBytes;
+                    //reshuffle into 64-bit values
+                    _lastEntryHeader.CompressedSize = ((long)uncompressed_size << 32) | compressed_size;
+                    _lastEntryHeader.UncompressedSize = ((long)headerBytes << 32) | reader.ReadUInt32();
                     headerBytes = reader.ReadUInt32();
                 }
-                else
+                else if (isSentinel)
                 {
-                    _lastEntryHeader.UncompressedSize = uncompressed_size;
+                    //standards-compliant zip64 descriptor
+                    _lastEntryHeader.CompressedSize = (long)reader.ReadUInt64();
+                    _lastEntryHeader.UncompressedSize = (long)reader.ReadUInt64();
                 }
 
                 if (pos.HasValue)
@@ -81,14 +85,12 @@ internal class StreamingZipHeaderFactory : ZipHeaderFactory
                     _lastEntryHeader.DataStartPosition = pos - _lastEntryHeader.CompressedSize;
                 }
             }
-            else if (_lastEntryHeader != null && _lastEntryHeader.IsZip64)
+            else if (_lastEntryHeader != null && _lastEntryHeader.IsZip64) //IsZip64 requires _lastEntryHeader.CompressedSize to be set
             {
                 if (_lastEntryHeader.Part is null)
                     continue;
 
-                reader = ((StreamingZipFilePart)_lastEntryHeader.Part).FixStreamedFileLocation(
-                    ref rewindableStream
-                );
+                // FixStreamedFileLocation() not required
 
                 var pos = rewindableStream.CanSeek ? (long?)rewindableStream.Position : null;
 
@@ -173,16 +175,11 @@ internal class StreamingZipHeaderFactory : ZipHeaderFactory
                 } // Check if zip is streaming ( Length is 0 and is declared in PostDataDescriptor )
                 else if (local_header.Flags.HasFlag(HeaderFlags.UsePostDataDescriptor))
                 {
-                    var isRecording = rewindableStream.IsRecording;
-                    if (!isRecording)
-                    {
-                        rewindableStream.StartRecording();
-                    }
                     var nextHeaderBytes = reader.ReadUInt32();
 
                     // Check if next data is PostDataDescriptor, streamed file with 0 length
                     header.HasData = !IsHeader(nextHeaderBytes);
-                    rewindableStream.Rewind(!isRecording);
+                    ((IStreamStack)rewindableStream).Rewind(4);
                 }
                 else // We are not streaming and compressed size is 0, we have no data
                 {

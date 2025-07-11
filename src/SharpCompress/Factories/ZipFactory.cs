@@ -64,6 +64,8 @@ public class ZipFactory
             return true;
         }
 
+        stream.Position = startPosition;
+
         return false;
     }
 

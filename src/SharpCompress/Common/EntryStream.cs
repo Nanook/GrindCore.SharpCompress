@@ -1,11 +1,19 @@
 using System;
 using System.IO;
 using SharpCompress.Readers;
+using SharpCompress.IO;
 
 namespace SharpCompress.Common;
 
-public class EntryStream : Stream
+public class EntryStream : Stream, IStreamStack
 {
+#if DEBUG_STREAMS
+    long IStreamStack.InstanceId { get; set; }
+#endif
+    Stream IStreamStack.BaseStream() => _stream;
+    int IStreamStack.BufferSize { get => 0; set { } }
+    int IStreamStack.BufferPosition { get => 0; set { } }
+
     private readonly IReader _reader;
     private readonly Stream _stream;
     private bool _completed;
@@ -15,6 +23,9 @@ public class EntryStream : Stream
     {
         _reader = reader;
         _stream = stream;
+#if DEBUG_STREAMS
+        this.DebugConstruct(typeof(EntryStream));
+#endif
     }
 
     /// <summary>
@@ -32,11 +43,23 @@ public class EntryStream : Stream
         {
             SkipEntry();
         }
+
+        if (_stream is IStreamStack ss)
+        {
+            if (ss.BaseStream() is SharpCompress.Compressors.Deflate.DeflateStream deflateStream)
+            {
+                deflateStream.Flush(); //Deflate over reads. Knock it back
+            }
+        }
+
         if (_isDisposed)
         {
             return;
         }
         _isDisposed = true;
+#if DEBUG_STREAMS
+        this.DebugDispose(typeof(EntryStream));
+#endif
         base.Dispose(disposing);
         _stream.Dispose();
     }
@@ -53,7 +76,7 @@ public class EntryStream : Stream
 
     public override long Position
     {
-        get => throw new NotSupportedException();
+        get => _stream.Position; //throw new NotSupportedException();
         set => throw new NotSupportedException();
     }
 
