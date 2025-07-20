@@ -1,10 +1,17 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace SharpCompress.IO;
 
-internal class ReadOnlySubStream : SharpCompressStream
+internal class ReadOnlySubStream : SharpCompressStream, IStreamStack
 {
+#if DEBUG_STREAMS
+    long IStreamStack.InstanceId { get; set; }
+#endif
+
+    Stream IStreamStack.BaseStream() => base.Stream;
+
     private long _position;
 
     public ReadOnlySubStream(Stream stream, long bytesToRead)
@@ -19,6 +26,9 @@ internal class ReadOnlySubStream : SharpCompressStream
         }
         BytesLeftToRead = bytesToRead;
         _position = 0;
+#if DEBUG_STREAMS
+        this.DebugConstruct(typeof(ReadOnlySubStream));
+#endif
     }
 
     private long BytesLeftToRead { get; set; }
@@ -45,7 +55,7 @@ internal class ReadOnlySubStream : SharpCompressStream
         {
             count = (int)BytesLeftToRead;
         }
-        var read = BaseStream.Read(buffer, offset, count);
+        var read = Stream.Read(buffer, offset, count);
         if (read > 0)
         {
             BytesLeftToRead -= read;
@@ -60,7 +70,7 @@ internal class ReadOnlySubStream : SharpCompressStream
         {
             return -1;
         }
-        var value = BaseStream.ReadByte();
+        var value = Stream.ReadByte();
         if (value != -1)
         {
             --BytesLeftToRead;
@@ -73,7 +83,7 @@ internal class ReadOnlySubStream : SharpCompressStream
     public override int Read(Span<byte> buffer)
     {
         var sliceLen = BytesLeftToRead < buffer.Length ? BytesLeftToRead : buffer.Length;
-        var read = BaseStream.Read(buffer.Slice(0, (int)sliceLen));
+        var read = Stream.Read(buffer.Slice(0, (int)sliceLen));
         if (read > 0)
         {
             BytesLeftToRead -= read;
@@ -89,4 +99,12 @@ internal class ReadOnlySubStream : SharpCompressStream
 
     public override void Write(byte[] buffer, int offset, int count) =>
         throw new NotSupportedException();
+
+    protected override void Dispose(bool disposing)
+    {
+#if DEBUG_STREAMS
+        this.DebugDispose(typeof(ReadOnlySubStream));
+#endif
+        base.Dispose(disposing);
+    }
 }

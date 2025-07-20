@@ -40,8 +40,11 @@ public class GZipFactory
     }
 
     /// <inheritdoc/>
-    public override bool IsArchive(Stream stream, string? password = null) =>
-        GZipArchive.IsGZipFile(stream);
+    public override bool IsArchive(
+        Stream stream,
+        string? password = null,
+        int bufferSize = ReaderOptions.DefaultBufferSize
+    ) => GZipArchive.IsGZipFile(stream);
 
     #endregion
 
@@ -80,19 +83,23 @@ public class GZipFactory
     {
         reader = null;
 
-        rewindableStream.Rewind(false);
+        //rewindableStream.Rewind(false);
+        ((IStreamStack)rewindableStream).StackSeek(0);
         if (GZipArchive.IsGZipFile(rewindableStream))
         {
-            rewindableStream.Rewind(false);
+            //rewindableStream.Rewind(false);
+            ((IStreamStack)rewindableStream).StackSeek(0);
             var testStream = new GZipStream(rewindableStream, CompressionMode.Decompress);
             if (TarArchive.IsTarFile(testStream))
             {
-                rewindableStream.Rewind(true);
+                //rewindableStream.Rewind(true);
+                ((IStreamStack)rewindableStream).StackSeek(0);
                 reader = new TarReader(rewindableStream, options, CompressionType.GZip);
                 return true;
             }
 
-            rewindableStream.Rewind(true);
+            //rewindableStream.Rewind(true);
+            ((IStreamStack)rewindableStream).StackSeek(0);
             reader = OpenReader(rewindableStream, options);
             return true;
         }

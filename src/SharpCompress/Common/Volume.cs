@@ -7,16 +7,22 @@ namespace SharpCompress.Common;
 
 public abstract class Volume : IVolume
 {
+    private readonly Stream _baseStream;
     private readonly Stream _actualStream;
 
     internal Volume(Stream stream, ReaderOptions? readerOptions, int index = 0)
     {
         Index = index;
         ReaderOptions = readerOptions ?? new ReaderOptions();
+        _baseStream = stream;
         if (ReaderOptions.LeaveStreamOpen)
         {
             stream = SharpCompressStream.Create(stream, leaveOpen: true);
         }
+
+        if (stream is IStreamStack ss)
+            ss.SetBuffer(ReaderOptions.BufferSize, true);
+
         _actualStream = stream;
     }
 
@@ -32,7 +38,7 @@ public abstract class Volume : IVolume
 
     public virtual int Index { get; internal set; }
 
-    public string? FileName => (_actualStream as FileStream)?.Name;
+    public string? FileName => (_baseStream as FileStream)?.Name;
 
     /// <summary>
     /// RarArchive is part of a multi-part archive.

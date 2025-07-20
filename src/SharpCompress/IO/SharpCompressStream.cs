@@ -1,185 +1,335 @@
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Threading;
 
 namespace SharpCompress.IO;
 
-public class SharpCompressStream : Stream
+public class SharpCompressStream : Stream, IStreamStack
 {
-    protected Stream BaseStream { get; }
-    private MemoryStream _bufferStream = new();
-    private bool _isRewound;
+#if DEBUG_STREAMS
+    long IStreamStack.InstanceId { get; set; }
+#endif
+    int IStreamStack.DefaultBufferSize { get; set; }
+
+    Stream IStreamStack.BaseStream() => Stream;
+
+    // Buffering fields
+    private int _bufferSize;
+    private byte[]? _buffer;
+    private int _bufferPosition;
+    private int _bufferedLength;
+    private bool _bufferingEnabled;
+    private long _baseInitialPos;
+
+    private void ValidateBufferState()
+    {
+        if (_bufferPosition < 0 || _bufferPosition > _bufferedLength)
+        {
+            throw new InvalidOperationException(
+                "Buffer state is inconsistent: _bufferPosition is out of range."
+            );
+        }
+    }
+
+    int IStreamStack.BufferSize
+    {
+        get => _bufferingEnabled ? _bufferSize : 0;
+        set //need to adjust an already existing buffer
+        {
+            if (_bufferSize != value)
+            {
+                _bufferSize = value;
+                _bufferingEnabled = _bufferSize > 0;
+                if (_bufferingEnabled)
+                {
+                    _buffer = new byte[_bufferSize];
+                    _bufferPosition = 0;
+                    _bufferedLength = 0;
+                    if (_bufferingEnabled)
+                    {
+                        ValidateBufferState(); // Add here
+                    }
+                    try
+                    {
+                        _internalPosition = Stream.Position;
+                    }
+                    catch
+                    {
+                        _internalPosition = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    int IStreamStack.BufferPosition
+    {
+        get => _bufferingEnabled ? _bufferPosition : 0;
+        set
+        {
+            if (_bufferingEnabled)
+            {
+                if (value < 0 || value > _bufferedLength)
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                _internalPosition = value;
+                _bufferPosition = value;
+                ValidateBufferState(); // Add here
+            }
+        }
+    }
+
+    void IStreamStack.SetPostion(long position) { }
+
+    public Stream Stream { get; }
+
+    //private MemoryStream _bufferStream = new();
+
+    private bool _readOnly; //some archive detection requires seek to be disabled to cause it to exception to try the next arc type
+
+    //private bool _isRewound;
     private bool _isDisposed;
+    private long _internalPosition = 0;
 
     public bool ThrowOnDispose { get; set; }
     public bool LeaveOpen { get; set; }
 
-    public static SharpCompressStream Create(Stream stream, bool leaveOpen = false, bool throwOnDispose = false)
+    public long InternalPosition => _internalPosition;
+
+    public static SharpCompressStream Create(
+        Stream stream,
+        bool leaveOpen = false,
+        bool throwOnDispose = false,
+        int bufferSize = 0,
+        bool forceBuffer = false
+    )
     {
-        if (stream is SharpCompressStream sc)
+        if (
+            stream is SharpCompressStream sc
+            && sc.LeaveOpen == leaveOpen
+            && sc.ThrowOnDispose == throwOnDispose
+        )
         {
-            sc.LeaveOpen = true;
-            sc.ThrowOnDispose = throwOnDispose;
+            if (bufferSize != 0)
+                ((IStreamStack)stream).SetBuffer(bufferSize, forceBuffer);
             return sc;
         }
-        return new SharpCompressStream(stream, leaveOpen, throwOnDispose);
+        return new SharpCompressStream(stream, leaveOpen, throwOnDispose, bufferSize, forceBuffer);
     }
 
-    protected SharpCompressStream(Stream stream, bool leaveOpen = false, bool throwOnDispose = false)
+    public SharpCompressStream(
+        Stream stream,
+        bool leaveOpen = false,
+        bool throwOnDispose = false,
+        int bufferSize = 0,
+        bool forceBuffer = false
+    )
     {
-        this.BaseStream = stream;
+        Stream = stream;
         this.LeaveOpen = leaveOpen;
         this.ThrowOnDispose = throwOnDispose;
-        this.BaseStream = stream;
+        _readOnly = !Stream.CanSeek;
+
+        ((IStreamStack)this).SetBuffer(bufferSize, forceBuffer);
+        try
+        {
+            _baseInitialPos = stream.Position;
+        }
+        catch
+        {
+            _baseInitialPos = 0;
+        }
+
+#if DEBUG_STREAMS
+        this.DebugConstruct(typeof(SharpCompressStream));
+#endif
     }
 
     internal bool IsRecording { get; private set; }
 
     protected override void Dispose(bool disposing)
     {
-        if (ThrowOnDispose)
-        {
-            throw new InvalidOperationException(
-                $"Attempt to dispose of a {nameof(SharpCompressStream)} when {nameof(ThrowOnDispose)} is {ThrowOnDispose}"
-            );
-        }
+#if DEBUG_STREAMS
+        this.DebugDispose(typeof(SharpCompressStream));
+#endif
         if (_isDisposed)
         {
             return;
         }
         _isDisposed = true;
         base.Dispose(disposing);
-        if (disposing && !this.LeaveOpen)
-        {
-            BaseStream.Dispose();
-        }
 
+        if (this.LeaveOpen)
+        {
+            return;
+        }
+        if (ThrowOnDispose)
+        {
+            throw new InvalidOperationException(
+                $"Attempt to dispose of a {nameof(SharpCompressStream)} when {nameof(ThrowOnDispose)} is {ThrowOnDispose}"
+            );
+        }
+        if (disposing)
+        {
+            Stream.Dispose();
+        }
     }
 
-    public void Rewind(bool stopRecording)
+    public override bool CanRead => Stream.CanRead;
+
+    public override bool CanSeek => !_readOnly && Stream.CanSeek;
+
+    public override bool CanWrite => !_readOnly && Stream.CanWrite;
+
+    public override void Flush()
     {
-        _isRewound = true;
-        IsRecording = !stopRecording;
-        _bufferStream.Position = 0;
+        Stream.Flush();
     }
 
-    public void Rewind(MemoryStream buffer)
+    public override long Length
     {
-        if (_bufferStream.Position >= buffer.Length)
-        {
-            _bufferStream.Position -= buffer.Length;
-        }
-        else
-        {
-            _bufferStream.TransferTo(buffer);
-            //create new memorystream to allow proper resizing as memorystream could be a user provided buffer
-            //https://github.com/adamhathcock/sharpcompress/issues/306
-            _bufferStream = new MemoryStream();
-            buffer.Position = 0;
-            buffer.TransferTo(_bufferStream);
-            _bufferStream.Position = 0;
-        }
-        _isRewound = true;
+        get { return Stream.Length; }
     }
-
-    public void StartRecording()
-    {
-        //if (isRewound && bufferStream.Position != 0)
-        //   throw new System.NotImplementedException();
-        if (_bufferStream.Position != 0)
-        {
-            var data = _bufferStream.ToArray();
-            var position = _bufferStream.Position;
-            _bufferStream.SetLength(0);
-            _bufferStream.Write(data, (int)position, data.Length - (int)position);
-            _bufferStream.Position = 0;
-        }
-        IsRecording = true;
-    }
-
-    public override bool CanRead => BaseStream.CanRead;
-
-    public override bool CanSeek => BaseStream.CanSeek;
-
-    public override bool CanWrite => BaseStream.CanWrite;
-
-    public override void Flush() => BaseStream.Flush();
-
-    public override long Length => BaseStream.Length;
-
 
     public override long Position
     {
-        get => BaseStream.Position + _bufferStream.Position - _bufferStream.Length;
-        set
+        get
         {
-            if (!_isRewound)
-            {
-                BaseStream.Position = value;
-            }
-            else if (value < BaseStream.Position - _bufferStream.Length || value >= BaseStream.Position)
-            {
-                BaseStream.Position = value;
-                _isRewound = false;
-                _bufferStream.SetLength(0);
-            }
-            else
-            {
-                _bufferStream.Position = value - BaseStream.Position + _bufferStream.Length;
-            }
+            long pos = _internalPosition; // Stream.Position + _bufferStream.Position - _bufferStream.Length;
+            return pos;
         }
+        set { Seek(value, SeekOrigin.Begin); }
     }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        //don't actually read if we don't really want to read anything
-        //currently a network stream bug on Windows for .NET Core
         if (count == 0)
-        {
             return 0;
-        }
-        int read;
-        if (_isRewound && _bufferStream.Position != _bufferStream.Length)
+
+        if (_bufferingEnabled)
         {
-            // don't read more than left
-            var readCount = Math.Min(count, (int)(_bufferStream.Length - _bufferStream.Position));
-            read = _bufferStream.Read(buffer, offset, readCount);
-            if (read < readCount)
+            ValidateBufferState();
+
+            // Fill buffer if needed
+            if (_bufferedLength == 0)
             {
-                var tempRead = BaseStream.Read(buffer, offset + read, count - read);
-                if (IsRecording)
-                {
-                    _bufferStream.Write(buffer, offset + read, tempRead);
-                }
-                read += tempRead;
+                _bufferedLength = Stream.Read(_buffer!, 0, _bufferSize);
+                _bufferPosition = 0;
             }
-            if (_bufferStream.Position == _bufferStream.Length && !IsRecording)
+            int available = _bufferedLength - _bufferPosition;
+            int toRead = Math.Min(count, available);
+            if (toRead > 0)
             {
-                _isRewound = false;
-                _bufferStream.SetLength(0);
+                Array.Copy(_buffer!, _bufferPosition, buffer, offset, toRead);
+                _bufferPosition += toRead;
+                _internalPosition += toRead;
+                return toRead;
             }
+            // If buffer exhausted, refill
+            int r = Stream.Read(_buffer!, 0, _bufferSize);
+            if (r == 0)
+                return 0;
+            _bufferedLength = r;
+            _bufferPosition = 0;
+            if (_bufferedLength == 0)
+            {
+                return 0;
+            }
+            toRead = Math.Min(count, _bufferedLength);
+            Array.Copy(_buffer!, 0, buffer, offset, toRead);
+            _bufferPosition = toRead;
+            _internalPosition += toRead;
+            return toRead;
+        }
+        else
+        {
+            if (count == 0)
+            {
+                return 0;
+            }
+            int read;
+            read = Stream.Read(buffer, offset, count);
+            _internalPosition += read;
             return read;
         }
-
-        read = BaseStream.Read(buffer, offset, count);
-        if (IsRecording)
-        {
-            _bufferStream.Write(buffer, offset, read);
-        }
-        return read;
     }
 
-    public override long Seek(long offset, SeekOrigin origin) => BaseStream.Seek(offset, origin);
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        if (_bufferingEnabled)
+        {
+            ValidateBufferState();
+        }
 
-    public override void SetLength(long value) => BaseStream.SetLength(value);
+        long orig = _internalPosition;
+        long targetPos;
+        // Calculate the absolute target position based on origin
+        switch (origin)
+        {
+            case SeekOrigin.Begin:
+                targetPos = offset;
+                break;
+            case SeekOrigin.Current:
+                targetPos = _internalPosition + offset;
+                break;
+            case SeekOrigin.End:
+                targetPos = this.Length + offset;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(origin), origin, null);
+        }
 
-    public override void Write(byte[] buffer, int offset, int count) =>
-        BaseStream.Write(buffer, offset, count);
+        long bufferPos = _internalPosition - _bufferPosition;
+
+        if (targetPos >= bufferPos && targetPos < bufferPos + _bufferedLength)
+        {
+            _bufferPosition = (int)(targetPos - bufferPos); //repoint within the buffer
+            _internalPosition = targetPos;
+        }
+        else
+        {
+            long newStreamPos =
+                Stream.Seek(targetPos + _baseInitialPos, SeekOrigin.Begin) - _baseInitialPos;
+            _internalPosition = newStreamPos;
+            _bufferPosition = 0;
+            _bufferedLength = 0;
+        }
+
+        return _internalPosition;
+    }
+
+    public override void SetLength(long value)
+    {
+        throw new NotSupportedException();
+    }
+
+    public override void WriteByte(byte value)
+    {
+        Stream.WriteByte(value);
+        ++_internalPosition;
+    }
+
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        Stream.Write(buffer, offset, count);
+        _internalPosition += count;
+    }
 
 #if !NETFRAMEWORK && !NETSTANDARD2_0
 
-    public override int Read(Span<byte> buffer) => BaseStream.Read(buffer);
+    //public override int Read(Span<byte> buffer)
+    //{
+    //    int bytesRead = Stream.Read(buffer);
+    //    _internalPosition += bytesRead;
+    //    return bytesRead;
+    //}
 
-    public override void Write(ReadOnlySpan<byte> buffer) => BaseStream.Write(buffer);
+    //    public override void Write(ReadOnlySpan<byte> buffer)
+    //    {
+    //        Stream.Write(buffer);
+    //        _internalPosition += buffer.Length;
+    //    }
 
 #endif
 }
