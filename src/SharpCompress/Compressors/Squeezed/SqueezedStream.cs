@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using SharpCompress.Compressors.RLE90;
 using SharpCompress.IO;
-using ZstdSharp.Unsafe;
 
 namespace SharpCompress.Compressors.Squeezed
 {
@@ -30,7 +29,7 @@ namespace SharpCompress.Compressors.Squeezed
             set { }
         }
 
-        void IStreamStack.SetPostion(long position) { }
+        void IStreamStack.SetPosition(long position) { }
 
         private readonly Stream _stream;
         private readonly int _compressedSize;
