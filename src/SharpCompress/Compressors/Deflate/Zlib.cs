@@ -193,6 +193,7 @@ public class ZlibException : SharpCompressException
         : base(s) { }
 }
 
+#if !GRINDCORE
 internal class SharedUtils
 {
     /// <summary>
@@ -1000,3 +1001,4 @@ internal sealed class StaticTree
         );
     }
 }
+#endif

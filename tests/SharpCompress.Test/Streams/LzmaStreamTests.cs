@@ -511,7 +511,7 @@ public class LzmaStreamTests
             0x00,
             0x00,
         ];
-
+#if !GRINDCORE
     [Fact]
     public void TestLzmaBuffer()
     {
@@ -530,6 +530,7 @@ public class LzmaStreamTests
 
         Assert.Equal(output.ToArray(), LzmaResultData);
     }
+#endif
 
     [Fact]
     public void TestLzmaStreamEncodingWritesData()

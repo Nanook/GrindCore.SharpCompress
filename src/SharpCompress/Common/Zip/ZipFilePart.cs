@@ -14,7 +14,9 @@ using SharpCompress.Compressors.Reduce;
 using SharpCompress.Compressors.Shrink;
 using SharpCompress.Compressors.Xz;
 using SharpCompress.IO;
+#if !GRINDCORE
 using ZstdSharp;
+#endif
 
 namespace SharpCompress.Common.Zip;
 
@@ -154,7 +156,11 @@ internal abstract class ZipFilePart : FilePart
             }
             case ZipCompressionMethod.ZStd:
             {
+#if !GRINDCORE
                 return new DecompressionStream(stream);
+#else
+                return new Nanook.GrindCore.ZStd.ZStdStream(stream, new Nanook.GrindCore.CompressionOptions() { Type = Nanook.GrindCore.CompressionType.Decompress, BufferSize = 0x10000 });
+#endif
             }
             case ZipCompressionMethod.PPMd:
             {

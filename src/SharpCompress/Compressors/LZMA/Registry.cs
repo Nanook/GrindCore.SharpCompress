@@ -7,8 +7,9 @@ using SharpCompress.Compressors.Deflate;
 using SharpCompress.Compressors.Filters;
 using SharpCompress.Compressors.LZMA.Utilites;
 using SharpCompress.Compressors.PPMd;
+#if !GRINDCORE
 using ZstdSharp;
-
+#endif
 namespace SharpCompress.Compressors.LZMA;
 
 internal static class DecoderRegistry
@@ -79,7 +80,11 @@ internal static class DecoderRegistry
             case K_DEFLATE:
                 return new DeflateStream(inStreams.Single(), CompressionMode.Decompress);
             case K_ZSTD:
+#if !GRINDCORE
                 return new DecompressionStream(inStreams.Single());
+#else
+                return new Nanook.GrindCore.ZStd.ZStdStream(inStreams.Single(), new Nanook.GrindCore.CompressionOptions() { Type = Nanook.GrindCore.CompressionType.Decompress, BufferSize = 0x10000 });
+#endif
             default:
                 throw new NotSupportedException();
         }
