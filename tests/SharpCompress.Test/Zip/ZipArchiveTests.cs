@@ -820,4 +820,27 @@ public class ZipArchiveTests : ArchiveTests
         using var _ = firstEntry.OpenEntryStream();
         Assert.Equal(199, firstEntry.Size);
     }
+
+    [Fact]
+    public void Zip_EntryCommentAfterEntryRead()
+    {
+        using var archive = ZipArchive.Open(
+            Path.Combine(TEST_ARCHIVES_PATH, "Zip.EntryComment.zip")
+        );
+        var firstEntry = archive.Entries.First();
+        Assert.Equal(29, firstEntry.Comment!.Length);
+        using var _ = firstEntry.OpenEntryStream();
+        Assert.Equal(29, firstEntry.Comment.Length);
+    }
+
+    [Fact]
+    public void Zip_FilePermissions()
+    {
+        using var archive = ArchiveFactory.Open(Path.Combine(TEST_ARCHIVES_PATH, "Zip.644.zip"));
+
+        var firstEntry = archive.Entries.First();
+        const int S_IFREG = 0x8000;
+        const int expected = (S_IFREG | 0b110_100_100) << 16; // 0644 mode regular file
+        Assert.Equal(expected, firstEntry.Attrib);
+    }
 }

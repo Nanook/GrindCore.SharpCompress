@@ -120,4 +120,8 @@ internal abstract class ZipFileEntry : ZipHeader
     internal ZipFilePart? Part { get; set; }
 
     internal bool IsZip64 => CompressedSize >= uint.MaxValue;
+
+    internal uint ExternalFileAttributes { get; set; }
+
+    internal string? Comment { get; set; }
 }

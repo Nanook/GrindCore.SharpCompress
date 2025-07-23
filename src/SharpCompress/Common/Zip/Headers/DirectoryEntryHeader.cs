@@ -123,11 +123,7 @@ internal class DirectoryEntryHeader : ZipFileEntry
 
     public long RelativeOffsetOfEntryHeader { get; set; }
 
-    public uint ExternalFileAttributes { get; set; }
-
     public ushort InternalFileAttributes { get; set; }
 
     public ushort DiskNumberStart { get; set; }
-
-    public string? Comment { get; private set; }
 }
