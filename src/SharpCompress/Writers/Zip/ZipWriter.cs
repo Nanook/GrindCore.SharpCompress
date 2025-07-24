@@ -396,7 +396,11 @@ public class ZipWriter : AbstractWriter
                 }
                 case ZipCompressionMethod.ZStandard:
                 {
+#if !GRINDCORE
                     return new ZstdSharp.CompressionStream(counting, compressionLevel);
+#else
+                    return new Nanook.GrindCore.ZStd.ZStdStream(counting, new Nanook.GrindCore.CompressionOptions() { Type = (Nanook.GrindCore.CompressionType)compressionLevel, BufferSize = 0x10000 });
+#endif
                 }
                 default:
                 {

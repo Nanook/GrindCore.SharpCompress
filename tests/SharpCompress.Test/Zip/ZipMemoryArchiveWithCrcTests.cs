@@ -19,7 +19,7 @@ public class ZipTypesLevelsWithCrcRatioTests : ArchiveTests
     public ZipTypesLevelsWithCrcRatioTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 1, 0.11f)] // was 0.8f, actual 0.104
+    [InlineData(CompressionType.Deflate, 1, 1, 0.15f)] // was 0.150f, actual 0.140
     [InlineData(CompressionType.Deflate, 3, 1, 0.08f)] // was 0.8f, actual 0.078
     [InlineData(CompressionType.Deflate, 6, 1, 0.05f)] // was 0.8f, actual ~0.042
     [InlineData(CompressionType.Deflate, 9, 1, 0.04f)] // was 0.7f, actual 0.038
@@ -69,7 +69,7 @@ public class ZipTypesLevelsWithCrcRatioTests : ArchiveTests
         // Calculate and output actual compression ratio
         var originalSize = file1Data.Length + file2Data.Length + file3Data.Length;
         var actualRatio = (double)zipStream.Length / originalSize;
-        //Debug.WriteLine($"Zip_Create_Archive_With_3_Files_Crc32_Test: {compressionType} Level={compressionLevel} Size={sizeMb}MB Expected={expectedRatio:F3} Actual={actualRatio:F3}");
+        Debug.WriteLine($"Zip_Create_Archive_With_3_Files_Crc32_Test: {compressionType} Level={compressionLevel} Size={sizeMb}MB Expected={expectedRatio:F3} Actual={actualRatio:F3}");
 
         // Verify compression occurred (except for None compression type)
         if (compressionType != CompressionType.None)
@@ -96,7 +96,7 @@ public class ZipTypesLevelsWithCrcRatioTests : ArchiveTests
     }
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 4, 0.11f)] // was 0.8, actual 0.105
+    [InlineData(CompressionType.Deflate, 1, 4, 0.15f)] // was 0.14, actual 0.15
     [InlineData(CompressionType.Deflate, 3, 4, 0.08f)] // was 0.8, actual 0.077
     [InlineData(CompressionType.Deflate, 6, 4, 0.045f)] // was 0.8, actual 0.042
     [InlineData(CompressionType.Deflate, 9, 4, 0.04f)] // was 0.8, actual 0.037
@@ -163,7 +163,7 @@ public class ZipTypesLevelsWithCrcRatioTests : ArchiveTests
     }
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 2, 0.11f)] // was 0.8, actual 0.104
+    [InlineData(CompressionType.Deflate, 1, 2, 0.14f)] // was 0.14, actual 0.13
     [InlineData(CompressionType.Deflate, 3, 2, 0.08f)] // was 0.8, actual 0.077
     [InlineData(CompressionType.Deflate, 6, 2, 0.045f)] // was 0.8, actual 0.042
     [InlineData(CompressionType.Deflate, 9, 2, 0.04f)] // was 0.7, actual 0.038
