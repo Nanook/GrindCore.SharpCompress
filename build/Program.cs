@@ -110,7 +110,7 @@ Target(
     {
         Run(
             "dotnet",
-            $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/ -r {runtimeIdentifier}"
+            $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/"
         );
     }
 );
