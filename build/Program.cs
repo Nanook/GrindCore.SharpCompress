@@ -14,7 +14,8 @@ const string Format = "format";
 const string Publish = "publish";
 
 // Get runtime identifier from environment or detect automatically
-var runtimeIdentifier = Environment.GetEnvironmentVariable("RUNTIME_IDENTIFIER") ?? GetDefaultRuntimeIdentifier();
+var runtimeIdentifier =
+    Environment.GetEnvironmentVariable("RUNTIME_IDENTIFIER") ?? GetDefaultRuntimeIdentifier();
 
 static string GetDefaultRuntimeIdentifier()
 {
@@ -91,7 +92,10 @@ Target(
 
         foreach (var file in GetFiles("**/*.Test.csproj"))
         {
-            Run("dotnet", $"test {file} -c Release -f {framework} --no-restore --verbosity=normal  -r {runtimeIdentifier}");
+            Run(
+                "dotnet",
+                $"test {file} -c Release -f {framework} --no-restore --verbosity=normal  -r {runtimeIdentifier}"
+            );
         }
     }
 );
