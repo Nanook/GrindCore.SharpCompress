@@ -108,10 +108,7 @@ Target(
     [Test],
     () =>
     {
-        Run(
-            "dotnet",
-            $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/"
-        );
+        Run("dotnet", $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/");
     }
 );
 
