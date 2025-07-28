@@ -159,7 +159,7 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "sharpcompress": {
+      "GrindCore.SharpCompress": {
         "type": "Project",
         "dependencies": {
           "GrindCore": "[0.1.0, )",
@@ -359,7 +359,7 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "sharpcompress": {
+      "GrindCore.SharpCompress": {
         "type": "Project",
         "dependencies": {
           "GrindCore": "[0.1.0, )",

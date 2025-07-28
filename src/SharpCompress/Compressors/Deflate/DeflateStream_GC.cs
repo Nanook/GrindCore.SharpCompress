@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Text;
 using SharpCompress.IO;
+using SharpCompress.Readers;
+using SharpCompress.Writers;
 using NGC = Nanook.GrindCore;
 
 namespace SharpCompress.Compressors.Deflate;
@@ -17,12 +19,24 @@ public class DeflateStream : Stream, IStreamStack
     long IStreamStack.InstanceId { get; set; }
 #endif
     int IStreamStack.DefaultBufferSize { get; set; }
+
     Stream IStreamStack.BaseStream() => _baseStream;
-    int IStreamStack.BufferSize { get => 0; set { } }
-    int IStreamStack.BufferPosition { get => 0; set { } }
+
+    int IStreamStack.BufferSize
+    {
+        get => 0;
+        set { }
+    }
+    int IStreamStack.BufferPosition
+    {
+        get => 0;
+        set { }
+    }
+
     void IStreamStack.SetPosition(long position) { }
 
     private readonly Stream _baseStream;
+    private readonly bool _leaveOpen;
     private bool _disposed;
     private MemoryStream? _internalBuffer;
     private bool _isEncoder;
@@ -35,6 +49,10 @@ public class DeflateStream : Stream, IStreamStack
     private bool _compressionComplete;
     private bool _modeInitialized;
 
+    // Buffer options storage for deferred initialization
+    private WriterOptions? _writerOptions;
+    private ReaderOptions? _readerOptions;
+
     /// <summary>
     /// Initializes a new instance of the DeflateStream class using the GrindCore deflate implementation.
     /// </summary>
@@ -42,26 +60,46 @@ public class DeflateStream : Stream, IStreamStack
     /// <param name="mode">The compression mode (compress or decompress).</param>
     /// <param name="level">The compression level (used only for compression mode).</param>
     /// <param name="forceEncoding">Encoding parameter (currently unused).</param>
+    /// <param name="leaveOpen">true to leave the stream open after the DeflateStream object is disposed; otherwise, false.</param>
+    /// <param name="writerOptions">Optional writer options for buffer size configuration when compressing.</param>
+    /// <param name="readerOptions">Optional reader options for buffer size configuration when decompressing.</param>
     public DeflateStream(
         Stream stream,
         CompressionMode mode,
         CompressionLevel level = CompressionLevel.Default,
-        Encoding? forceEncoding = null
+        Encoding? forceEncoding = null,
+        bool leaveOpen = false,
+        WriterOptions? writerOptions = null,
+        ReaderOptions? readerOptions = null
     )
     {
         _baseStream = stream;
+        _leaveOpen = leaveOpen;
         _isEncoder = mode == CompressionMode.Compress;
         _compressionLevel = level;
+        _writerOptions = writerOptions;
+        _readerOptions = readerOptions;
 
         // For decompression mode, initialize immediately
         if (!_isEncoder)
         {
-            _grindCoreStream = new NGC.DeflateZLib.DeflateStream(stream, new NGC.CompressionOptions()
+            var options = new NGC.CompressionOptions()
             {
                 Type = NGC.CompressionType.Decompress,
                 BufferSize = 0x10000,
-                LeaveOpen = true
-            });
+                LeaveOpen = _leaveOpen,
+            };
+
+            // Apply buffer size options using the helper
+            GrindCoreBufferHelper.ApplyBufferSizeOptions(
+                options,
+                this,
+                false,
+                null,
+                _readerOptions
+            );
+
+            _grindCoreStream = new NGC.DeflateZLib.DeflateStream(_baseStream, options);
             _modeInitialized = true;
         }
         // For compression mode, defer initialization until first Read/Write call
@@ -207,7 +245,11 @@ public class DeflateStream : Stream, IStreamStack
                         _grindCoreStream.Complete(); //finalise without dispose
                     _grindCoreStream?.Dispose();
                     _compressionBuffer?.Dispose();
-                    _baseStream?.Dispose();
+
+                    if (!_leaveOpen)
+                    {
+                        _baseStream?.Dispose();
+                    }
                 }
                 _disposed = true;
             }
@@ -415,12 +457,17 @@ public class DeflateStream : Stream, IStreamStack
 
         _readToCompressMode = true;
         _compressionBuffer = new MemoryStream();
-        _grindCoreStream = new NGC.DeflateZLib.DeflateStream(_compressionBuffer, new NGC.CompressionOptions()
+
+        var options = new NGC.CompressionOptions()
         {
             Type = (NGC.CompressionType)_compressionLevel,
-            BufferSize = 0x10000,
-            LeaveOpen = true
-        });
+            LeaveOpen = true,
+        };
+
+        // Apply buffer size options using the helper
+        GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, _writerOptions, null);
+
+        _grindCoreStream = new NGC.DeflateZLib.DeflateStream(_compressionBuffer, options);
         _modeInitialized = true;
     }
 
@@ -433,12 +480,17 @@ public class DeflateStream : Stream, IStreamStack
             return;
 
         _readToCompressMode = false;
-        _grindCoreStream = new NGC.DeflateZLib.DeflateStream(_baseStream, new NGC.CompressionOptions()
+
+        var options = new NGC.CompressionOptions()
         {
             Type = (NGC.CompressionType)_compressionLevel,
-            BufferSize = 0x10000,
-            LeaveOpen = true
-        });
+            LeaveOpen = _leaveOpen,
+        };
+
+        // Apply buffer size options using the helper
+        GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, _writerOptions, null);
+
+        _grindCoreStream = new NGC.DeflateZLib.DeflateStream(_baseStream, options);
         _modeInitialized = true;
     }
 

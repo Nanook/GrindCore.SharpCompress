@@ -4,7 +4,12 @@ using System;
 using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.InteropServices.ComTypes;
+using System.Xml.Linq;
+using SharpCompress.Common;
+using SharpCompress.Compressors;
 using SharpCompress.IO;
+using SharpCompress.Readers;
+using SharpCompress.Writers;
 
 namespace SharpCompress.Compressors.LZMA;
 
@@ -14,25 +19,51 @@ public class LzmaStream : Stream, IStreamStack
     long IStreamStack.InstanceId { get; set; }
 #endif
     int IStreamStack.DefaultBufferSize { get; set; }
+
     Stream IStreamStack.BaseStream() => _inputStream;
-    int IStreamStack.BufferSize { get => 0; set { } }
-    int IStreamStack.BufferPosition { get => 0; set { } }
+
+    int IStreamStack.BufferSize
+    {
+        get => 0;
+        set { }
+    }
+    int IStreamStack.BufferPosition
+    {
+        get => 0;
+        set { }
+    }
+
     void IStreamStack.SetPosition(long position) { }
 
     private readonly Stream _inputStream;
     private readonly bool _isLzma2;
     private readonly bool _isEncoder;
     private readonly Nanook.GrindCore.CompressionStream _grindCoreStream;
+    private bool _leaveOpen;
     private bool _isDisposed;
 
-    public LzmaStream(byte[] properties, Stream inputStream)
-        : this(properties, inputStream, -1, -1, null, properties.Length < 5) { }
+    public LzmaStream(byte[] properties, Stream inputStream, bool leaveOpen = false)
+        : this(properties, inputStream, -1, -1, null, properties.Length < 5, leaveOpen) { }
 
-    public LzmaStream(byte[] properties, Stream inputStream, long inputSize)
-        : this(properties, inputStream, inputSize, -1, null, properties.Length < 5) { }
+    public LzmaStream(byte[] properties, Stream inputStream, long inputSize, bool leaveOpen = false)
+        : this(properties, inputStream, inputSize, -1, null, properties.Length < 5, leaveOpen) { }
 
-    public LzmaStream(byte[] properties, Stream inputStream, long inputSize, long outputSize)
-        : this(properties, inputStream, inputSize, outputSize, null, properties.Length < 5) { }
+    public LzmaStream(
+        byte[] properties,
+        Stream inputStream,
+        long inputSize,
+        long outputSize,
+        bool leaveOpen = false
+    )
+        : this(
+            properties,
+            inputStream,
+            inputSize,
+            outputSize,
+            null,
+            properties.Length < 5,
+            leaveOpen
+        ) { }
 
     public LzmaStream(
         byte[] properties,
@@ -40,41 +71,58 @@ public class LzmaStream : Stream, IStreamStack
         long inputSize,
         long outputSize,
         Stream presetDictionary,
-        bool isLzma2
+        bool isLzma2,
+        bool leaveOpen = false,
+        Readers.ReaderOptions readerOptions = null
     )
     {
         _inputStream = inputStream;
         _isLzma2 = isLzma2;
         _isEncoder = false;
+        _leaveOpen = leaveOpen;
 
 #if DEBUG_STREAMS
         this.DebugConstruct(typeof(LzmaStream));
 #endif
 
-        Nanook.GrindCore.CompressionOptions options = new Nanook.GrindCore.CompressionOptions()
+        var options = new Nanook.GrindCore.CompressionOptions()
         {
             Type = Nanook.GrindCore.CompressionType.Decompress,
             InitProperties = properties,
-            LeaveOpen = true,
-            BufferSize = 0x10000
+            LeaveOpen = _leaveOpen,
+            BufferSize = 0x10000,
         };
+
+        // Apply buffer size options using the helper
+        GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, false, null, readerOptions);
 
         if (inputSize >= 0)
         {
             options.PositionLimit = inputSize;
         }
 
-        if (inputSize == -1 && _inputStream is BufferedSubStream && _inputStream.Length != 0)
+        long length = 0;
+        try
         {
-            options.PositionLimit = _inputStream.Length;
+            length = _inputStream.Length;
+        }
+        catch { }
+        if (
+            inputSize == -1
+            && /*_inputStream is BufferedSubStream &&*/
+            length != 0
+        )
+        {
+            options.PositionLimit = length;
         }
         else if (outputSize >= 0)
         {
             options.PositionFullSizeLimit = outputSize;
         }
 
-        // Create the appropriate GrindCore stream
-        if (_isLzma2)
+        // Create the appropriate GrindCore stream - use helper to determine LZMA2
+        var shouldUseLzma2 = GrindCoreBufferHelper.IsLzma2(null, _isLzma2);
+        if (shouldUseLzma2)
         {
             _grindCoreStream = new Nanook.GrindCore.Lzma.Lzma2Stream(inputStream, options);
         }
@@ -86,19 +134,28 @@ public class LzmaStream : Stream, IStreamStack
         Properties = properties;
     }
 
-    public LzmaStream(LzmaEncoderProperties properties, bool isLzma2, Stream outputStream)
-        : this(properties, isLzma2, null, outputStream) { }
+    public LzmaStream(
+        LzmaEncoderProperties properties,
+        bool isLzma2,
+        Stream outputStream,
+        bool leaveOpen = false,
+        WriterOptions writerOptions = null
+    )
+        : this(properties, isLzma2, null, outputStream, leaveOpen, writerOptions) { }
 
     public LzmaStream(
         LzmaEncoderProperties properties,
         bool isLzma2,
         Stream presetDictionary,
-        Stream outputStream
+        Stream outputStream,
+        bool leaveOpen = false,
+        WriterOptions writerOptions = null
     )
     {
         _inputStream = outputStream;
         _isLzma2 = isLzma2;
         _isEncoder = true;
+        _leaveOpen = leaveOpen;
 
 #if DEBUG_STREAMS
         this.DebugConstruct(typeof(LzmaStream));
@@ -107,14 +164,46 @@ public class LzmaStream : Stream, IStreamStack
         var options = new Nanook.GrindCore.CompressionOptions
         {
             Type = ConvertToCompressionType(properties), //Convert LzmaEncoderProperties to GrindCore compression level
-            LeaveOpen = true
+            LeaveOpen = _leaveOpen,
         };
 
-        _grindCoreStream = new Nanook.GrindCore.Lzma.LzmaStream(outputStream, options);
+        // Apply buffer size options using the helper and get compression buffer size for extensions
+        var compressionBufferSize = GrindCoreBufferHelper.ApplyBufferSizeOptions(
+            options,
+            this,
+            true,
+            writerOptions,
+            null
+        );
+
+        // Apply LZMA2-specific extensions (block size setting) - check both enum and boolean
+        GrindCoreBufferHelper.ApplyCompressionBufferSizeExtensions(
+            options,
+            compressionBufferSize,
+            writerOptions?.CompressionType,
+            _isLzma2
+        );
+
+        // Create the appropriate GrindCore stream - use helper to determine LZMA2
+        var shouldUseLzma2 = GrindCoreBufferHelper.IsLzma2(
+            writerOptions?.CompressionType,
+            _isLzma2
+        );
+        if (shouldUseLzma2)
+        {
+            _grindCoreStream = new Nanook.GrindCore.Lzma.Lzma2Stream(outputStream, options);
+        }
+        else
+        {
+            _grindCoreStream = new Nanook.GrindCore.Lzma.LzmaStream(outputStream, options);
+        }
+
         Properties = _grindCoreStream.Properties;
     }
 
-    private static Nanook.GrindCore.CompressionType ConvertToCompressionType(LzmaEncoderProperties properties)
+    private static Nanook.GrindCore.CompressionType ConvertToCompressionType(
+        LzmaEncoderProperties properties
+    )
     {
         // The algorithm/level is stored at index 4 in the Properties array
         if (properties.Properties != null && properties.Properties.Length > 4)
@@ -136,7 +225,9 @@ public class LzmaStream : Stream, IStreamStack
                     7 => Nanook.GrindCore.CompressionType.Level7,
                     8 => Nanook.GrindCore.CompressionType.Level8,
                     9 => Nanook.GrindCore.CompressionType.SmallestSize,
-                    _ => level <= 9 ? (Nanook.GrindCore.CompressionType)level : Nanook.GrindCore.CompressionType.SmallestSize
+                    _ => level <= 9
+                        ? (Nanook.GrindCore.CompressionType)level
+                        : Nanook.GrindCore.CompressionType.SmallestSize,
                 };
             }
         }
@@ -151,10 +242,10 @@ public class LzmaStream : Stream, IStreamStack
                 // Map dictionary size to compression level (rough approximation)
                 return dictSize switch
                 {
-                    <= (1 << 16) => Nanook.GrindCore.CompressionType.Fastest,      // 64KB
-                    <= (1 << 20) => Nanook.GrindCore.CompressionType.Optimal,      // 1MB  
-                    <= (1 << 24) => Nanook.GrindCore.CompressionType.Level7,       // 16MB
-                    _ => Nanook.GrindCore.CompressionType.SmallestSize              // >16MB
+                    <= (1 << 16) => Nanook.GrindCore.CompressionType.Fastest, // 64KB
+                    <= (1 << 20) => Nanook.GrindCore.CompressionType.Optimal, // 1MB
+                    <= (1 << 24) => Nanook.GrindCore.CompressionType.Level7, // 16MB
+                    _ => Nanook.GrindCore.CompressionType.SmallestSize, // >16MB
                 };
             }
         }
@@ -172,9 +263,13 @@ public class LzmaStream : Stream, IStreamStack
     public override void Flush()
     {
         if (!_isEncoder)
-            ((IStreamStack)this).Rewind((int)(_grindCoreStream.BasePosition - _grindCoreStream.Position)); //seek back to the bytes used
+            ((IStreamStack)this).Rewind(
+                (int)(_grindCoreStream.BasePosition - _grindCoreStream.Position)
+            ); //seek back to the bytes used
         else
+        {
             _grindCoreStream?.Flush();
+        }
     }
 
     protected override void Dispose(bool disposing)
@@ -192,10 +287,6 @@ public class LzmaStream : Stream, IStreamStack
         if (disposing)
         {
             _grindCoreStream?.Dispose();
-            if (!_isEncoder) // Only dispose input stream for decompression
-            {
-                _inputStream?.Dispose();
-            }
         }
         base.Dispose(disposing);
     }

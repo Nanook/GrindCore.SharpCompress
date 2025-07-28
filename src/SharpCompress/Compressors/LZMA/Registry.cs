@@ -2,14 +2,17 @@ using System;
 using System.IO;
 using System.Linq;
 using SharpCompress.Common.SevenZip;
+using SharpCompress.Compressors.Brotli;
 using SharpCompress.Compressors.BZip2;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Compressors.Filters;
+using SharpCompress.Compressors.LZ4;
 using SharpCompress.Compressors.LZMA.Utilites;
 using SharpCompress.Compressors.PPMd;
 #if !GRINDCORE
 using ZstdSharp;
 #endif
+
 namespace SharpCompress.Compressors.LZMA;
 
 internal static class DecoderRegistry
@@ -31,6 +34,8 @@ internal static class DecoderRegistry
     private const uint K_DEFLATE = 0x040108;
     private const uint K_B_ZIP2 = 0x040202;
     private const uint K_ZSTD = 0x4F71101;
+    private const uint K_BROTLI = 0x4F71102;
+    private const uint K_LZ4 = 0x4F71104;
 
     internal static Stream CreateDecoderStream(
         CMethodId id,
@@ -83,7 +88,40 @@ internal static class DecoderRegistry
 #if !GRINDCORE
                 return new DecompressionStream(inStreams.Single());
 #else
-                return new Nanook.GrindCore.ZStd.ZStdStream(inStreams.Single(), new Nanook.GrindCore.CompressionOptions() { Type = Nanook.GrindCore.CompressionType.Decompress, BufferSize = 0x10000 });
+                return new Nanook.GrindCore.ZStd.ZStdStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#endif
+            case K_BROTLI:
+#if GRINDCORE
+                return new Nanook.GrindCore.Brotli.BrotliStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                return new BrotliStream(inStreams.Single(), leaveOpen: true);
+#endif
+            case K_LZ4:
+#if GRINDCORE
+                return new Nanook.GrindCore.Lz4.Lz4Stream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                return new LZ4Stream(inStreams.Single(), leaveOpen: true);
 #endif
             default:
                 throw new NotSupportedException();

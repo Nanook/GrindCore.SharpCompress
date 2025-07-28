@@ -69,7 +69,9 @@ public class ZipTypesLevelsWithCrcRatioTests : ArchiveTests
         // Calculate and output actual compression ratio
         var originalSize = file1Data.Length + file2Data.Length + file3Data.Length;
         var actualRatio = (double)zipStream.Length / originalSize;
-        Debug.WriteLine($"Zip_Create_Archive_With_3_Files_Crc32_Test: {compressionType} Level={compressionLevel} Size={sizeMb}MB Expected={expectedRatio:F3} Actual={actualRatio:F3}");
+        Debug.WriteLine(
+            $"Zip_Create_Archive_With_3_Files_Crc32_Test: {compressionType} Level={compressionLevel} Size={sizeMb}MB Expected={expectedRatio:F3} Actual={actualRatio:F3}"
+        );
 
         // Verify compression occurred (except for None compression type)
         if (compressionType != CompressionType.None)

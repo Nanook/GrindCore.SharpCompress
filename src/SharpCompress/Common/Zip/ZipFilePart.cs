@@ -159,7 +159,44 @@ internal abstract class ZipFilePart : FilePart
 #if !GRINDCORE
                 return new DecompressionStream(stream);
 #else
-                return new Nanook.GrindCore.ZStd.ZStdStream(stream, new Nanook.GrindCore.CompressionOptions() { Type = Nanook.GrindCore.CompressionType.Decompress, BufferSize = 0x10000 });
+                return new Nanook.GrindCore.ZStd.ZStdStream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#endif
+            }
+            case ZipCompressionMethod.LZ4:
+            {
+#if GRINDCORE
+                return new Nanook.GrindCore.Lz4.Lz4Stream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                throw new NotSupportedException("LZ4 decompression requires GrindCore library");
+#endif
+            }
+            case ZipCompressionMethod.Brotli:
+            {
+#if GRINDCORE
+                return new Nanook.GrindCore.Brotli.BrotliStream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                throw new NotSupportedException("Brotli decompression requires GrindCore library");
 #endif
             }
             case ZipCompressionMethod.PPMd:
@@ -246,6 +283,8 @@ internal abstract class ZipFilePart : FilePart
                 case ZipCompressionMethod.BZip2:
                 case ZipCompressionMethod.LZMA:
                 case ZipCompressionMethod.PPMd:
+                case ZipCompressionMethod.LZ4:
+                case ZipCompressionMethod.Brotli:
                 {
                     return new PkwareTraditionalCryptoStream(
                         plainStream,

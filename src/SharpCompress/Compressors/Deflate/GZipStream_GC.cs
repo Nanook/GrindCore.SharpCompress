@@ -6,6 +6,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 using SharpCompress.IO;
+using SharpCompress.Readers;
+using SharpCompress.Writers;
 using NGC = Nanook.GrindCore;
 
 namespace SharpCompress.Compressors.Deflate;
@@ -18,12 +20,24 @@ public class GZipStream : Stream, IStreamStack
     long IStreamStack.InstanceId { get; set; }
 #endif
     int IStreamStack.DefaultBufferSize { get; set; }
+
     Stream IStreamStack.BaseStream() => _inputStream;
-    int IStreamStack.BufferSize { get => 0; set { } }
-    int IStreamStack.BufferPosition { get => 0; set { } }
+
+    int IStreamStack.BufferSize
+    {
+        get => 0;
+        set { }
+    }
+    int IStreamStack.BufferPosition
+    {
+        get => 0;
+        set { }
+    }
+
     void IStreamStack.SetPosition(long position) { }
 
     private readonly Stream _inputStream;
+    private readonly bool _leaveOpen;
     private readonly bool _isEncoder;
     private readonly Nanook.GrindCore.CompressionStream _grindCoreStream;
     private readonly CompressionLevel _compressionLevel;
@@ -37,29 +51,50 @@ public class GZipStream : Stream, IStreamStack
     private DateTime? _lastModified;
 
     public GZipStream(Stream stream, CompressionMode mode)
-        : this(stream, mode, CompressionLevel.Default, Encoding.UTF8) { }
+        : this(stream, mode, CompressionLevel.Default, Encoding.UTF8, false) { }
 
     public GZipStream(Stream stream, CompressionMode mode, CompressionLevel level)
-        : this(stream, mode, level, Encoding.UTF8) { }
+        : this(stream, mode, level, Encoding.UTF8, false) { }
+
+    public GZipStream(Stream stream, CompressionMode mode, bool leaveOpen)
+        : this(stream, mode, CompressionLevel.Default, Encoding.UTF8, leaveOpen) { }
+
+    public GZipStream(Stream stream, CompressionMode mode, CompressionLevel level, bool leaveOpen)
+        : this(stream, mode, level, Encoding.UTF8, leaveOpen) { }
 
     public GZipStream(
         Stream stream,
         CompressionMode mode,
         CompressionLevel level,
-        Encoding encoding
+        Encoding encoding,
+        bool leaveOpen = false,
+        WriterOptions writerOptions = null,
+        ReaderOptions readerOptions = null
     )
     {
         _inputStream = stream;
+        _leaveOpen = leaveOpen;
         _isEncoder = mode == CompressionMode.Compress;
         _compressionLevel = level;
         _encoding = encoding;
 
-        _grindCoreStream = new NGC.GZip.GZipStream(stream, new NGC.CompressionOptions()
+        var options = new NGC.CompressionOptions()
         {
             Type = _isEncoder ? (NGC.CompressionType)level : NGC.CompressionType.Decompress,
             BufferSize = 0x10000,
-            LeaveOpen = true
-        });
+            LeaveOpen = _leaveOpen,
+        };
+
+        // Apply buffer size options using the helper
+        GrindCoreBufferHelper.ApplyBufferSizeOptions(
+            options,
+            this,
+            _isEncoder,
+            writerOptions,
+            readerOptions
+        );
+
+        _grindCoreStream = new NGC.GZip.GZipStream(stream, options);
 
 #if DEBUG_STREAMS
         this.DebugConstruct(typeof(GZipStream));
@@ -155,7 +190,6 @@ public class GZipStream : Stream, IStreamStack
             {
                 throw new ObjectDisposedException("GZipStream");
             }
-            // GrindCore manages buffer size internally, so this is essentially a no-op
         }
     }
 
@@ -183,7 +217,9 @@ public class GZipStream : Stream, IStreamStack
         }
 
         if (!_isEncoder)
-            ((IStreamStack)this).Rewind((int)(_grindCoreStream.BasePosition - _grindCoreStream.Position)); //seek back to the bytes used
+            ((IStreamStack)this).Rewind(
+                (int)(_grindCoreStream.BasePosition - _grindCoreStream.Position)
+            ); //seek back to the bytes used
         else
             _grindCoreStream?.Flush();
     }
@@ -210,7 +246,8 @@ public class GZipStream : Stream, IStreamStack
             }
 
             _grindCoreStream?.Dispose();
-            if (!_isEncoder) // Only dispose input stream for decompression
+
+            if (!_leaveOpen)
             {
                 _inputStream?.Dispose();
             }

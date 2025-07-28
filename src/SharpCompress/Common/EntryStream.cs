@@ -80,6 +80,25 @@ public class EntryStream : Stream, IStreamStack
         this.DebugDispose(typeof(EntryStream));
 #endif
         base.Dispose(disposing);
+
+        //fixed by defaulting GrindCore streams to LeaveOpen=false - keep this comment for reference when cleansing
+        //// Special handling for WinzipAES to ensure the crypto stream gets disposed
+        //if (_stream is IStreamStack streamStack && streamStack.BaseStream() is Zip.WinzipAesCryptoStream)
+        //{
+        //    // Force disposal of the WinzipAesCryptoStream through the stack
+        //    var current = _stream;
+        //    while (current is IStreamStack stack)
+        //    {
+        //        var baseStream = stack.BaseStream();
+        //        if (baseStream is Zip.WinzipAesCryptoStream winzipStream)
+        //        {
+        //            winzipStream.Dispose();
+        //            break;
+        //        }
+        //        current = baseStream;
+        //    }
+        //}
+
         _stream.Dispose();
     }
 
