@@ -14,7 +14,8 @@ const string Format = "format";
 const string Publish = "publish";
 
 // Get runtime identifier from environment or detect automatically
-var runtimeIdentifier = Environment.GetEnvironmentVariable("RUNTIME_IDENTIFIER") ?? GetDefaultRuntimeIdentifier();
+var runtimeIdentifier =
+    Environment.GetEnvironmentVariable("RUNTIME_IDENTIFIER") ?? GetDefaultRuntimeIdentifier();
 
 static string GetDefaultRuntimeIdentifier()
 {
@@ -24,7 +25,7 @@ static string GetDefaultRuntimeIdentifier()
         return "linux-x64";
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         return "osx-x64";
-    
+
     throw new PlatformNotSupportedException("Unsupported platform");
 }
 
@@ -70,7 +71,10 @@ Target(
     [Restore],
     () =>
     {
-        Run("dotnet", $"build src/SharpCompress/SharpCompress.csproj -c Release --no-restore -r {runtimeIdentifier}");
+        Run(
+            "dotnet",
+            $"build src/SharpCompress/SharpCompress.csproj -c Release --no-restore -r {runtimeIdentifier}"
+        );
     }
 );
 
@@ -92,7 +96,10 @@ Target(
 
         foreach (var file in GetFiles("**/*.Test.csproj"))
         {
-            Run("dotnet", $"test {file} -c Release -f {framework} --no-restore --verbosity=normal -r {runtimeIdentifier}");
+            Run(
+                "dotnet",
+                $"test {file} -c Release -f {framework} --no-restore --verbosity=normal -r {runtimeIdentifier}"
+            );
         }
     }
 );
@@ -102,7 +109,10 @@ Target(
     [Test],
     () =>
     {
-        Run("dotnet", $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/ -r {runtimeIdentifier}");
+        Run(
+            "dotnet",
+            $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/ -r {runtimeIdentifier}"
+        );
     }
 );
 
