@@ -63,14 +63,17 @@ Target(
         Run("dotnet", "csharpier check .");
     }
 );
-Target(Restore, [Format], () => Run("dotnet", "restore"));
+Target(Restore, [Format], () => Run("dotnet", $"restore -r {runtimeIdentifier}"));
 
 Target(
     Build,
     [Restore],
     () =>
     {
-        Run("dotnet", "build src/SharpCompress/SharpCompress.csproj -c Release --no-restore");
+        Run(
+            "dotnet",
+            $"build src/SharpCompress/SharpCompress.csproj -c Release --no-restore -r {runtimeIdentifier}"
+        );
     }
 );
 
@@ -79,7 +82,7 @@ Target(
     [Build],
     ["net9.0", "net48"],
     framework =>
-    {
+    {a
         IEnumerable<string> GetFiles(string d)
         {
             return Glob.Files(".", d);
@@ -94,7 +97,7 @@ Target(
         {
             Run(
                 "dotnet",
-                $"test {file} -c Release -f {framework} --no-restore --verbosity=normal  -r {runtimeIdentifier}"
+                $"test {file} -c Release -f {framework} --no-restore --verbosity=normal -r {runtimeIdentifier}"
             );
         }
     }
@@ -105,7 +108,10 @@ Target(
     [Test],
     () =>
     {
-        Run("dotnet", "pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/");
+        Run(
+            "dotnet",
+            $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/ -r {runtimeIdentifier}"
+        );
     }
 );
 

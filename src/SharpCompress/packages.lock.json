@@ -83,6 +83,14 @@
         }
       }
     },
+    ".NETFramework,Version=v4.8/win-x64": {
+      "GrindCore": {
+        "type": "Direct",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+      }
+    },
     ".NETFramework,Version=v4.8.1": {
       "GrindCore": {
         "type": "Direct",
@@ -177,6 +185,14 @@
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.5.3"
         }
+      }
+    },
+    ".NETFramework,Version=v4.8.1/win-x64": {
+      "GrindCore": {
+        "type": "Direct",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
       }
     },
     ".NETStandard,Version=v2.0": {
@@ -275,6 +291,14 @@
         }
       }
     },
+    ".NETStandard,Version=v2.0/win-x64": {
+      "GrindCore": {
+        "type": "Direct",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+      }
+    },
     "net6.0": {
       "GrindCore": {
         "type": "Direct",
@@ -307,6 +331,14 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
+      }
+    },
+    "net6.0/win-x64": {
+      "GrindCore": {
+        "type": "Direct",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
       }
     },
     "net8.0": {
@@ -349,6 +381,14 @@
         "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
       }
     },
+    "net8.0/win-x64": {
+      "GrindCore": {
+        "type": "Direct",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+      }
+    },
     "net9.0": {
       "GrindCore": {
         "type": "Direct",
@@ -387,6 +427,14 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
+      }
+    },
+    "net9.0/win-x64": {
+      "GrindCore": {
+        "type": "Direct",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
       }
     }
   }
