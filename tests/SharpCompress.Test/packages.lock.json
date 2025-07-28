@@ -212,6 +212,14 @@
         }
       }
     },
+    ".NETFramework,Version=v4.8/win-x64": {
+      "GrindCore": {
+        "type": "CentralTransitive",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+      }
+    },
     "net9.0": {
       "AwesomeAssertions": {
         "type": "Direct",
@@ -377,6 +385,20 @@
         "requested": "[4.6.0, )",
         "resolved": "4.6.0",
         "contentHash": "lN6tZi7Q46zFzAbRYXTIvfXcyvQQgxnY7Xm6C6xQ9784dEL1amjM6S6Iw4ZpsvesAKnRVsM4scrDQaDqSClkjA=="
+      }
+    },
+    "net9.0/win-x64": {
+      "Mono.Posix.NETStandard": {
+        "type": "Direct",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "vSN/L1uaVwKsiLa95bYu2SGkF0iY3xMblTfxc8alSziPuVfJpj3geVqHGAA75J7cZkMuKpFVikz82Lo6y6LLdA=="
+      },
+      "GrindCore": {
+        "type": "CentralTransitive",
+        "requested": "[0.1.0, )",
+        "resolved": "0.1.0",
+        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
       }
     }
   }

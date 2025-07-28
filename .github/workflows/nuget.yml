@@ -1,0 +1,72 @@
+name: Publish NuGet Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'CI Run ID to download artifacts from (leave empty for latest successful run)'
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Get latest successful CI run
+      if: inputs.run_id == ''
+      id: get-run-id
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const runs = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'dotnetcore.yml',
+            status: 'completed',
+            conclusion: 'success',
+            per_page: 1
+          });
+          
+          if (runs.data.workflow_runs.length === 0) {
+            core.setFailed('No successful CI runs found');
+            return;
+          }
+          
+          core.setOutput('run_id', runs.data.workflow_runs[0].id);
+
+    - name: Download CI artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ubuntu-latest-sharpcompress.nupkg
+        path: ./artifacts
+        run-id: ${{ inputs.run_id || steps.get-run-id.outputs.run_id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish NuGet package
+      run: |
+        for package in ./artifacts/*.nupkg; do
+          if [[ ! "$package" == *".symbols."* ]]; then
+            echo "Publishing: $(basename "$package")"
+            dotnet nuget push "$package" \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          fi
+        done
+      shell: bash
+
+    - name: Upload published packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-packages
+        path: ./artifacts/*.nupkg
+        retention-days: 30
