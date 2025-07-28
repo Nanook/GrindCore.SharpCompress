@@ -82,7 +82,7 @@ Target(
     [Build],
     ["net9.0", "net48"],
     framework =>
-    {a
+    {
         IEnumerable<string> GetFiles(string d)
         {
             return Glob.Files(".", d);
