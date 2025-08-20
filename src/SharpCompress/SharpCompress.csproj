@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyTitle>GrindCore.SharpCompress - Native Decompression/Compression</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
@@ -43,7 +43,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Buffers" />
-    <PackageReference Condition="'$(UseGrindCore)' != 'true'" Include="ZstdSharp.Port" />
   </ItemGroup>
   <!-- GrindCore: Remove unused files -->
   <ItemGroup Condition="'$(UseGrindCore)' == 'true'">

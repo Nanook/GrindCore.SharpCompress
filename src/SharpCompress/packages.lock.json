@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.8": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "wKEUfWR4t9HsNxeciCTNwxncUTypY0Gue9tR7ll3ebuKDzwRnXVKz2PhbAm7pmCWNLiE2l+bTiZ+t0m4cN0puQ=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -86,9 +86,9 @@
     ".NETFramework,Version=v4.8.1": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "wKEUfWR4t9HsNxeciCTNwxncUTypY0Gue9tR7ll3ebuKDzwRnXVKz2PhbAm7pmCWNLiE2l+bTiZ+t0m4cN0puQ=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -182,9 +182,9 @@
     ".NETStandard,Version=v2.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "wKEUfWR4t9HsNxeciCTNwxncUTypY0Gue9tR7ll3ebuKDzwRnXVKz2PhbAm7pmCWNLiE2l+bTiZ+t0m4cN0puQ=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -278,9 +278,9 @@
     "net6.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "wKEUfWR4t9HsNxeciCTNwxncUTypY0Gue9tR7ll3ebuKDzwRnXVKz2PhbAm7pmCWNLiE2l+bTiZ+t0m4cN0puQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -312,9 +312,9 @@
     "net8.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "wKEUfWR4t9HsNxeciCTNwxncUTypY0Gue9tR7ll3ebuKDzwRnXVKz2PhbAm7pmCWNLiE2l+bTiZ+t0m4cN0puQ=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
@@ -352,9 +352,9 @@
     "net9.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "BKtaO5SuCQQ7JtbkvZtvsz5Yce63DhtFbuAGTFg72FvjQZe12liyVUJSElzHeQEgStRRNgRVYwh8fxSzPk37wg=="
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "wKEUfWR4t9HsNxeciCTNwxncUTypY0Gue9tR7ll3ebuKDzwRnXVKz2PhbAm7pmCWNLiE2l+bTiZ+t0m4cN0puQ=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
