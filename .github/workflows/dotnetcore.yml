@@ -25,17 +25,13 @@ jobs:
             rid: linux-x64
 
     steps:
+    - name: Force git to use LF line endings
+      run: git config --global core.autocrlf input
+
     - uses: actions/checkout@v4
     - uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
-
-    - name: Normalize line endings to LF
-      if: runner.os == 'Linux'
-      run: |
-         sudo apt-get update && sudo apt-get install -y dos2unix
-         find . -name "*.cs" -exec dos2unix {} +
-
 
     - run: dotnet run --project build/build.csproj
 
