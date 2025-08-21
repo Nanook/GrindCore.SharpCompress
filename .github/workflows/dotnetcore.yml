@@ -25,9 +25,6 @@ jobs:
             rid: linux-x64
 
     steps:
-    - name: Force git to use LF line endings
-      run: git config --global core.autocrlf input
-
     - uses: actions/checkout@v4
     - uses: actions/setup-dotnet@v4
       with:
