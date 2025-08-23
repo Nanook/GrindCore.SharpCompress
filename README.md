@@ -238,9 +238,9 @@ Contributions are always welcome! Areas of particular interest for this fork inc
 * **New**: **Revolutionary first-of-its-kind** native compression integration
 * **New**: **10x Native Performance** via GrindCore for all supported algorithms
 * **New**: Native GZip/Deflate performance via GrindCore ZLib-NG v2.2.1 (levels 1-9)
-* **New**: Native LZMA/LZMA2 performance via GrindCore v24.7.0 (levels 1-9)
-* **New**: Native ZStandard compression via GrindCore v1.5.6 (levels 1-22)
-* **New**: Native LZ4 compression via GrindCore v1.9.4 (levels 1-12)
+* **New**: Native LZMA/LZMA2 performance via GrindCore v25.1.0 (levels 1-9)
+* **New**: Native ZStandard compression via GrindCore v1.5.7 (levels 1-22)
+* **New**: Native LZ4 compression via GrindCore v1.10.0 (levels 1-12)
 * **New**: Native Brotli compression via GrindCore v1.1.0 (levels 1-11)
 * **New**: LZMA2 Block and Solid modes with configurable block sizes (levels 1-9)
 * **New**: Multiplatform native library support (Windows/Linux/macOS on x64/ARM64/ARM/x86)
