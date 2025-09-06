@@ -24,7 +24,7 @@ jobs:
     - name: Get latest successful CI run
       if: inputs.run_id == ''
       id: get-run-id
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const runs = await github.rest.actions.listWorkflowRuns({
