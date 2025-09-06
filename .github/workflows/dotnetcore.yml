@@ -8,7 +8,7 @@ on:
         type: string
   push:
     branches:
-      - 'main-grindcore'
+      - 'main'
       - 'test/*'
   pull_request:
     types: [ opened, synchronize, reopened, ready_for_review ]
@@ -33,7 +33,7 @@ jobs:
     - run: dotnet run --project build/build.csproj
 
     - name: Publish NuGet package
-      if: startsWith(github.ref, 'refs/heads/main-grindcore')
+      if: startsWith(github.ref, 'refs/heads/main')
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.os }}-sharpcompress.nupkg
