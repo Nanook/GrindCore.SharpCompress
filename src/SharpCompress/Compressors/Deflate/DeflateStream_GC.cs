@@ -70,7 +70,8 @@ public class DeflateStream : Stream, IStreamStack
         Encoding? forceEncoding = null,
         bool leaveOpen = false,
         WriterOptions? writerOptions = null,
-        ReaderOptions? readerOptions = null
+        ReaderOptions? readerOptions = null,
+        bool isNg = true
     )
     {
         _baseStream = stream;
@@ -88,6 +89,7 @@ public class DeflateStream : Stream, IStreamStack
                 Type = NGC.CompressionType.Decompress,
                 BufferSize = 0x10000,
                 LeaveOpen = _leaveOpen,
+                Version = isNg ? NGC.CompressionVersion.ZLibNgLatest() : NGC.CompressionVersion.ZLibLatest()
             };
 
             // Apply buffer size options using the helper
@@ -462,7 +464,8 @@ public class DeflateStream : Stream, IStreamStack
         {
             Type = (NGC.CompressionType)_compressionLevel,
             LeaveOpen = true,
-        };
+            Version = NGC.CompressionVersion.ZLibNgLatest(),
+        }.WithDeflate(9);
 
         // Apply buffer size options using the helper
         GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, _writerOptions, null);
@@ -485,7 +488,8 @@ public class DeflateStream : Stream, IStreamStack
         {
             Type = (NGC.CompressionType)_compressionLevel,
             LeaveOpen = _leaveOpen,
-        };
+            Version = NGC.CompressionVersion.ZLibNgLatest(),
+        }.WithDeflate(9);
 
         // Apply buffer size options using the helper
         GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, _writerOptions, null);

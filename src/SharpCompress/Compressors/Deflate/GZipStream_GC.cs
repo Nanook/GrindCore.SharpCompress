@@ -69,7 +69,8 @@ public class GZipStream : Stream, IStreamStack
         Encoding encoding,
         bool leaveOpen = false,
         WriterOptions writerOptions = null,
-        ReaderOptions readerOptions = null
+        ReaderOptions readerOptions = null,
+        bool isNg = true
     )
     {
         _inputStream = stream;
@@ -83,6 +84,7 @@ public class GZipStream : Stream, IStreamStack
             Type = _isEncoder ? (NGC.CompressionType)level : NGC.CompressionType.Decompress,
             BufferSize = 0x10000,
             LeaveOpen = _leaveOpen,
+            Version = isNg ? NGC.CompressionVersion.ZLibNgLatest() : NGC.CompressionVersion.ZLibLatest()
         };
 
         // Apply buffer size options using the helper

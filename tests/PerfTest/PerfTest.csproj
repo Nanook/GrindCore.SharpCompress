@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GrindCore">
+      <Aliases>GC</Aliases>
+    </PackageReference>
+    <PackageReference Include="K4os.Compression.LZ4.Streams" />
+    <PackageReference Include="SharpCompress" />
+    <PackageReference Include="ZstdSharp.Port" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SharpCompress\SharpCompress.csproj">
+      <Aliases>GC</Aliases>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>

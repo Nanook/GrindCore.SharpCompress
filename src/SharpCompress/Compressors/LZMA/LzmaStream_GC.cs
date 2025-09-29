@@ -90,7 +90,7 @@ public class LzmaStream : Stream, IStreamStack
             Type = Nanook.GrindCore.CompressionType.Decompress,
             InitProperties = properties,
             LeaveOpen = _leaveOpen,
-            BufferSize = 0x10000,
+            BufferSize = 0x200000,
         };
 
         // Apply buffer size options using the helper
@@ -163,33 +163,20 @@ public class LzmaStream : Stream, IStreamStack
 
         var options = new Nanook.GrindCore.CompressionOptions
         {
-            Type = ConvertToCompressionType(properties), //Convert LzmaEncoderProperties to GrindCore compression level
+            Type = (Nanook.GrindCore.CompressionType)(writerOptions?.CompressionLevel ?? 9), //Convert LzmaEncoderProperties to GrindCore compression level
             LeaveOpen = _leaveOpen,
         };
 
+        bool useLzma2 = GrindCoreBufferHelper.IsLzma2(writerOptions?.CompressionType, _isLzma2);
+
         // Apply buffer size options using the helper and get compression buffer size for extensions
-        var compressionBufferSize = GrindCoreBufferHelper.ApplyBufferSizeOptions(
-            options,
-            this,
-            true,
-            writerOptions,
-            null
-        );
+        var compressionBufferSize = GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, writerOptions, null);
 
         // Apply LZMA2-specific extensions (block size setting) - check both enum and boolean
-        GrindCoreBufferHelper.ApplyCompressionBufferSizeExtensions(
-            options,
-            compressionBufferSize,
-            writerOptions?.CompressionType,
-            _isLzma2
-        );
+        GrindCoreBufferHelper.ApplyCompressionBufferSizeExtensions(options, compressionBufferSize, writerOptions?.CompressionType, useLzma2);
 
         // Create the appropriate GrindCore stream - use helper to determine LZMA2
-        var shouldUseLzma2 = GrindCoreBufferHelper.IsLzma2(
-            writerOptions?.CompressionType,
-            _isLzma2
-        );
-        if (shouldUseLzma2)
+        if (useLzma2)
         {
             _grindCoreStream = new Nanook.GrindCore.Lzma.Lzma2Stream(outputStream, options);
         }
@@ -199,59 +186,6 @@ public class LzmaStream : Stream, IStreamStack
         }
 
         Properties = _grindCoreStream.Properties;
-    }
-
-    private static Nanook.GrindCore.CompressionType ConvertToCompressionType(
-        LzmaEncoderProperties properties
-    )
-    {
-        // The algorithm/level is stored at index 4 in the Properties array
-        if (properties.Properties != null && properties.Properties.Length > 4)
-        {
-            var algorithmValue = properties.Properties[4];
-
-            // Convert to int - the algorithm value is the compression level
-            if (algorithmValue is int level)
-            {
-                return level switch
-                {
-                    0 => Nanook.GrindCore.CompressionType.NoCompression,
-                    1 => Nanook.GrindCore.CompressionType.Fastest,
-                    2 => Nanook.GrindCore.CompressionType.Level2,
-                    3 => Nanook.GrindCore.CompressionType.Level3,
-                    4 => Nanook.GrindCore.CompressionType.Level4,
-                    5 => Nanook.GrindCore.CompressionType.Optimal, // Default level
-                    6 => Nanook.GrindCore.CompressionType.Level6,
-                    7 => Nanook.GrindCore.CompressionType.Level7,
-                    8 => Nanook.GrindCore.CompressionType.Level8,
-                    9 => Nanook.GrindCore.CompressionType.SmallestSize,
-                    _ => level <= 9
-                        ? (Nanook.GrindCore.CompressionType)level
-                        : Nanook.GrindCore.CompressionType.SmallestSize,
-                };
-            }
-        }
-
-        // For LZMA2 or when properties are not available, try to extract from dictionary size
-        // This is a fallback approach - not as accurate but better than arbitrary mapping
-        if (properties.Properties != null && properties.Properties.Length > 0)
-        {
-            var dictionarySize = properties.Properties[0];
-            if (dictionarySize is int dictSize)
-            {
-                // Map dictionary size to compression level (rough approximation)
-                return dictSize switch
-                {
-                    <= (1 << 16) => Nanook.GrindCore.CompressionType.Fastest, // 64KB
-                    <= (1 << 20) => Nanook.GrindCore.CompressionType.Optimal, // 1MB
-                    <= (1 << 24) => Nanook.GrindCore.CompressionType.Level7, // 16MB
-                    _ => Nanook.GrindCore.CompressionType.SmallestSize, // >16MB
-                };
-            }
-        }
-
-        // Final fallback
-        return Nanook.GrindCore.CompressionType.Optimal;
     }
 
     public override bool CanRead => !_isEncoder && _grindCoreStream?.CanRead == true;

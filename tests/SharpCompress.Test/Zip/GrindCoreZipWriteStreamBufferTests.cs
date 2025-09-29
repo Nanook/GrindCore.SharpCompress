@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using SharpCompress.Common;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.Brotli;
@@ -297,14 +298,17 @@ public class GrindCoreZipWriteStreamBufferTests
                 baseStream,
                 isEncoder ? CompressionMode.Compress : CompressionMode.Decompress,
                 (Compressors.Deflate.CompressionLevel)level,
-                leaveOpen: true
+                leaveOpen: true,
+                isNg: false
             ),
 
             CompressionType.GZip => new GZipStream(
                 baseStream,
                 isEncoder ? CompressionMode.Compress : CompressionMode.Decompress,
                 (Compressors.Deflate.CompressionLevel)level,
-                leaveOpen: true
+                Encoding.UTF8,
+                leaveOpen: true,
+                isNg: false
             ),
 
             CompressionType.LZMA or CompressionType.LZMA2 when isEncoder => new LzmaStream(
