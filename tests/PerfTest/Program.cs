@@ -17,11 +17,12 @@ internal class Program
         //    lzma2Stream.CopyTo(file);
         //}
 
-
         if (args == null || args.Length == 0)
         {
             Console.WriteLine("Usage: PerfTest <file-to-compress>");
-            Console.WriteLine("Runs comprehensive compression tests with GrindCore, SharpCompress, K4os LZ4, and ZstdSharp");
+            Console.WriteLine(
+                "Runs comprehensive compression tests with GrindCore, SharpCompress, K4os LZ4, and ZstdSharp"
+            );
             Console.WriteLine("Results are output as JSON objects, one per line.");
             return 2;
         }
@@ -104,12 +105,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 5, 9 };
-        
+
         foreach (var level in levels)
         {
             results.Add(GCCompressorTests.RunLzma(input, level, false));
         }
-        
+
         return results;
     }
 
@@ -117,12 +118,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 5, 9 };
-        
+
         foreach (var level in levels)
         {
             results.Add(GCCompressorTests.RunLzma(input, level, true));
         }
-        
+
         return results;
     }
 
@@ -130,12 +131,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 6, 12 };
-        
+
         foreach (var level in levels)
         {
             results.Add(GCCompressorTests.RunLz4(input, level));
         }
-        
+
         return results;
     }
 
@@ -143,12 +144,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 3, 19 };
-        
+
         foreach (var level in levels)
         {
             results.Add(GCCompressorTests.RunZstd(input, level));
         }
-        
+
         return results;
     }
 
@@ -156,12 +157,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 6, 9 };
-        
+
         foreach (var level in levels)
         {
             results.Add(GCCompressorTests.RunGZip(input, entryName, level, "v1.3.1"));
         }
-        
+
         return results;
     }
 
@@ -169,12 +170,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 6, 9 };
-        
+
         foreach (var level in levels)
         {
             results.Add(GCCompressorTests.RunGZipNg(input, entryName, level, "v2.2.1"));
         }
-        
+
         return results;
     }
 
@@ -182,12 +183,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 6, 12 };
-        
+
         foreach (var level in levels)
         {
             results.Add(OfficialCompressorTests.RunLz4(input, level));
         }
-        
+
         return results;
     }
 
@@ -195,22 +196,22 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 3, 19 }; // Note: Level 12 instead of 19 for official ZSTD
-        
+
         foreach (var level in levels)
         {
             results.Add(OfficialCompressorTests.RunZstd(input, level));
         }
-        
+
         return results;
     }
 
     private static List<CompressionResult> RunSharpCompressLzmaTests(byte[] input)
     {
         var results = new List<CompressionResult>();
-        
+
         // SharpCompress LZMA has no level support, so we test with default
         results.Add(OfficialCompressorTests.RunLzma(input, 5, false)); // Use level 5 as default
-        
+
         return results;
     }
 
@@ -218,12 +219,12 @@ internal class Program
     {
         var results = new List<CompressionResult>();
         var levels = new[] { 1, 6, 9 };
-        
+
         foreach (var level in levels)
         {
             results.Add(OfficialCompressorTests.RunGZip(input, entryName, level));
         }
-        
+
         return results;
     }
 }

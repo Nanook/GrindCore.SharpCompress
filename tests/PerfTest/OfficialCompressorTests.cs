@@ -18,14 +18,20 @@ internal static class OfficialCompressorTests
             Implementation = "Official",
             Algorithm = "Deflate",
             Level = level,
-            OriginalSizeBytes = input.Length
+            OriginalSizeBytes = input.Length,
         };
 
         using var compressedStream = new MemoryStream();
         var sw = Stopwatch.StartNew();
 
         // wrap underlying stream so disposing the deflate stream doesn't close it
-        using (var def = new DeflateStream(new NonClosingStream(compressedStream), CompressionMode.Compress, (CompressionLevel)ClampLevel(level, 0, 9)))
+        using (
+            var def = new DeflateStream(
+                new NonClosingStream(compressedStream),
+                CompressionMode.Compress,
+                (CompressionLevel)ClampLevel(level, 0, 9)
+            )
+        )
         {
             def.Write(input, 0, input.Length);
             def.Flush();
@@ -46,7 +52,7 @@ internal static class OfficialCompressorTests
             Implementation = "Official",
             Algorithm = isLzma2 ? "LZMA2" : "LZMA",
             Level = level,
-            OriginalSizeBytes = input.Length
+            OriginalSizeBytes = input.Length,
         };
 
         using var compressedStream = new MemoryStream();
@@ -74,7 +80,7 @@ internal static class OfficialCompressorTests
             Implementation = "Official",
             Algorithm = "ZSTD",
             Level = level,
-            OriginalSizeBytes = input.Length
+            OriginalSizeBytes = input.Length,
         };
 
         using var compressedStream = new MemoryStream();
@@ -102,7 +108,7 @@ internal static class OfficialCompressorTests
             Implementation = "Official",
             Algorithm = "LZ4",
             Level = level,
-            OriginalSizeBytes = input.Length
+            OriginalSizeBytes = input.Length,
         };
 
         using var compressedStream = new MemoryStream();
@@ -130,17 +136,20 @@ internal static class OfficialCompressorTests
             Implementation = "Official",
             Algorithm = "GZip Deflate",
             Level = level,
-            OriginalSizeBytes = input.Length
+            OriginalSizeBytes = input.Length,
         };
 
         using var compressedStream = new MemoryStream();
         var sw = Stopwatch.StartNew();
 
         // Use SharpCompress GZipStream with NonClosingStream wrapper
-        using (var gzip = new GZipStream(
-                    new NonClosingStream(compressedStream), 
-                    CompressionMode.Compress, 
-                    (CompressionLevel)ClampLevel(level, 0, 9)))
+        using (
+            var gzip = new GZipStream(
+                new NonClosingStream(compressedStream),
+                CompressionMode.Compress,
+                (CompressionLevel)ClampLevel(level, 0, 9)
+            )
+        )
         {
             gzip.Write(input, 0, input.Length);
             gzip.Flush();

@@ -170,10 +170,21 @@ public class LzmaStream : Stream, IStreamStack
         bool useLzma2 = GrindCoreBufferHelper.IsLzma2(writerOptions?.CompressionType, _isLzma2);
 
         // Apply buffer size options using the helper and get compression buffer size for extensions
-        var compressionBufferSize = GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, writerOptions, null);
+        var compressionBufferSize = GrindCoreBufferHelper.ApplyBufferSizeOptions(
+            options,
+            this,
+            true,
+            writerOptions,
+            null
+        );
 
         // Apply LZMA2-specific extensions (block size setting) - check both enum and boolean
-        GrindCoreBufferHelper.ApplyCompressionBufferSizeExtensions(options, compressionBufferSize, writerOptions?.CompressionType, useLzma2);
+        GrindCoreBufferHelper.ApplyCompressionBufferSizeExtensions(
+            options,
+            compressionBufferSize,
+            writerOptions?.CompressionType,
+            useLzma2
+        );
 
         // Create the appropriate GrindCore stream - use helper to determine LZMA2
         if (useLzma2)

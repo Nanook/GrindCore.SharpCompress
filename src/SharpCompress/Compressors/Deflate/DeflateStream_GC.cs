@@ -89,7 +89,9 @@ public class DeflateStream : Stream, IStreamStack
                 Type = NGC.CompressionType.Decompress,
                 BufferSize = 0x10000,
                 LeaveOpen = _leaveOpen,
-                Version = isNg ? NGC.CompressionVersion.ZLibNgLatest() : NGC.CompressionVersion.ZLibLatest()
+                Version = isNg
+                    ? NGC.CompressionVersion.ZLibNgLatest()
+                    : NGC.CompressionVersion.ZLibLatest(),
             };
 
             // Apply buffer size options using the helper

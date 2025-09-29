@@ -82,7 +82,8 @@
   <!-- GrindCore project reference - only when GrindCore is enabled -->
   <ItemGroup Condition="'$(UseGrindCore)' == 'true'">
     <PackageReference Include="GrindCore" />
-  </ItemGroup>  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' ">
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' ">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Text.Encoding.CodePages" />
     <PackageReference Include="System.Memory" />
