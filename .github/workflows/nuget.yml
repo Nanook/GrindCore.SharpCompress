@@ -65,7 +65,7 @@ jobs:
       shell: bash
 
     - name: Upload published packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: published-packages
         path: ./artifacts/*.nupkg
