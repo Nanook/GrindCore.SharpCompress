@@ -512,7 +512,7 @@ public class LzmaStreamTests
         0x00,
     ];
 
-#if !GRINDCORE
+    // Adjusted for GRINDCORE as there no Decoder()
     [Fact]
     public void TestLzmaBuffer()
     {
@@ -525,13 +525,20 @@ public class LzmaStreamTests
         input.Read(fileLengthBytes, 0, 8);
         var fileLength = BitConverter.ToInt64(fileLengthBytes, 0);
 
-        var coder = new Decoder();
-        coder.SetDecoderProperties(properties);
-        coder.Code(input, output, input.Length, fileLength, null);
+        //var coder = new Decoder();
+        //coder.SetDecoderProperties(properties);
+        //coder.Code(input, output, input.Length, fileLength, null);
 
+        //Assert.Equal(output.ToArray(), LzmaResultData);
+
+        // Use the project's LzmaStream to decompress
+        var compressedSize = input.Length - input.Position;
+        using (var lzma = new LzmaStream(properties, input, compressedSize, fileLength, null, false, leaveOpen: true))
+        {
+            lzma.CopyTo(output);
+        }
         Assert.Equal(output.ToArray(), LzmaResultData);
     }
-#endif
 
     [Fact]
     public void TestLzmaStreamEncodingWritesData()

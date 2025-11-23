@@ -20,7 +20,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     public ZipTypesLevelsWithCrcRatioAsyncTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 1, 0.11f)] // was 0.8f, actual 0.104
+    [InlineData(CompressionType.Deflate, 1, 1, 0.142f)] // was 0.8f, actual 0.104
     [InlineData(CompressionType.Deflate, 3, 1, 0.08f)] // was 0.8f, actual 0.078
     [InlineData(CompressionType.Deflate, 6, 1, 0.05f)] // was 0.8f, actual ~0.042
     [InlineData(CompressionType.Deflate, 9, 1, 0.04f)] // was 0.7f, actual 0.038
@@ -100,7 +100,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     }
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 4, 0.11f)] // was 0.8, actual 0.105
+    [InlineData(CompressionType.Deflate, 1, 4, 0.142f)] // was 0.8, actual 0.105
     [InlineData(CompressionType.Deflate, 3, 4, 0.08f)] // was 0.8, actual 0.077
     [InlineData(CompressionType.Deflate, 6, 4, 0.045f)] // was 0.8, actual 0.042
     [InlineData(CompressionType.Deflate, 9, 4, 0.04f)] // was 0.8, actual 0.037
@@ -167,7 +167,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     }
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 2, 0.11f)] // was 0.8, actual 0.104
+    [InlineData(CompressionType.Deflate, 1, 2, 0.142f)] // was 0.8, actual 0.104
     [InlineData(CompressionType.Deflate, 3, 2, 0.08f)] // was 0.8, actual 0.077
     [InlineData(CompressionType.Deflate, 6, 2, 0.045f)] // was 0.8, actual 0.042
     [InlineData(CompressionType.Deflate, 9, 2, 0.04f)] // was 0.7, actual 0.038

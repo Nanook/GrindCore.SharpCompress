@@ -189,6 +189,7 @@ public class LzmaStream : Stream, IStreamStack
         // Create the appropriate GrindCore stream - use helper to determine LZMA2
         if (useLzma2)
         {
+            // options.BufferSize = 4 * 1024 * 1024;
             _grindCoreStream = new Nanook.GrindCore.Lzma.Lzma2Stream(outputStream, options);
         }
         else

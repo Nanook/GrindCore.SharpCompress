@@ -297,7 +297,7 @@ public class GrindCoreZipWriteStreamBufferTests
             CompressionType.Deflate => new DeflateStream(
                 baseStream,
                 isEncoder ? CompressionMode.Compress : CompressionMode.Decompress,
-                (Compressors.Deflate.CompressionLevel)level,
+                (CompressionLevel)level,
                 leaveOpen: true,
                 isNg: false
             ),
@@ -305,7 +305,7 @@ public class GrindCoreZipWriteStreamBufferTests
             CompressionType.GZip => new GZipStream(
                 baseStream,
                 isEncoder ? CompressionMode.Compress : CompressionMode.Decompress,
-                (Compressors.Deflate.CompressionLevel)level,
+                (CompressionLevel)level,
                 Encoding.UTF8,
                 leaveOpen: true,
                 isNg: false

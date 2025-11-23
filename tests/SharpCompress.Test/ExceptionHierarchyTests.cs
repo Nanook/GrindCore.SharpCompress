@@ -79,6 +79,8 @@ public class ExceptionHierarchyTests
         Assert.True(caughtException, "Exception should have been caught as SharpCompressException");
     }
 
+#if !GRINDCORE
+    // Types not used by native code
     [Fact]
     public void InternalLzmaExceptions_InheritFromSharpCompressException()
     {
@@ -95,6 +97,7 @@ public class ExceptionHierarchyTests
         Assert.NotNull(invalidParamExceptionType);
         Assert.True(typeof(SharpCompressException).IsAssignableFrom(invalidParamExceptionType));
     }
+#endif
 
     [Fact]
     public void ExceptionConstructors_WorkCorrectly()

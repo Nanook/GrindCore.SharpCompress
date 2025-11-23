@@ -33,17 +33,17 @@
           "JetBrains.HabitatDetector": "1.4.5"
         }
       },
-      "sharpcompress": {
+      "GrindCore.SharpCompress": {
         "type": "Project",
         "dependencies": {
-          "ZstdSharp.Port": "[0.8.6, )"
+          "GrindCore": "[0.5.4, )"
         }
       },
-      "ZstdSharp.Port": {
+      "GrindCore": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "iP4jVLQoQmUjMU88g1WObiNr6YKZGvh4aOXn3yOJsHqZsflwRsxZPcIBvNXgjXO3vQKSLctXGLTpcBPLnWPS8A=="
+        "requested": "[0.5.4, )",
+        "resolved": "0.5.4",
+        "contentHash": "Au7RTt1lYPAcctCJeHz/RvWBN7tucavPLX8NyqUoIt2jQf8BGcM9JI6DMH0z/5m6RMi6rmodrpQ8OyCmz3vZsQ=="
       }
     }
   }

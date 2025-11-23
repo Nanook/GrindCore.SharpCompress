@@ -516,6 +516,7 @@ public class LzmaStreamAsyncTests
         0x00,
     ];
 
+    // Adjusted for GRINDCORE as there no Decoder()
     [Fact]
     public async Task TestLzmaBufferAsync()
     {
@@ -528,11 +529,19 @@ public class LzmaStreamAsyncTests
         await input.ReadAsync(fileLengthBytes, 0, 8).ConfigureAwait(false);
         var fileLength = BitConverter.ToInt64(fileLengthBytes, 0);
 
-        var coder = new Decoder();
-        coder.SetDecoderProperties(properties);
-        coder.Code(input, output, input.Length, fileLength, null);
+        // var coder = new Decoder();
+        // coder.SetDecoderProperties(properties);
+        // coder.Code(input, output, input.Length, fileLength, null);
+        // Compute remaining compressed size from current position to the end
 
-        Assert.Equal(output.ToArray(), LzmaResultData);
+        // Use the project's LzmaStream to decompress
+        var compressedSize = input.Length - input.Position;
+        using (var lzma = new LzmaStream(properties, input, compressedSize, fileLength, null, false, leaveOpen: true))
+        {
+            await lzma.CopyToAsync(output).ConfigureAwait(false);
+        }
+        // Assert.Equal(output.ToArray(), LzmaResultData);
+        Assert.Equal(LzmaResultData, output.ToArray());
     }
 
     [Fact]
@@ -540,7 +549,7 @@ public class LzmaStreamAsyncTests
     {
         using var inputStream = new MemoryStream(LzmaResultData);
         using MemoryStream outputStream = new();
-        using var lzmaStream = new LzmaStream(LzmaEncoderProperties.Default, false, outputStream);
+        using var lzmaStream = new LzmaStream(LzmaEncoderProperties.Default, false, outputStream, leaveOpen: true);
         await inputStream.CopyToAsync(lzmaStream).ConfigureAwait(false);
         lzmaStream.Close();
         Assert.NotEqual(0, outputStream.Length);
@@ -551,7 +560,7 @@ public class LzmaStreamAsyncTests
     {
         var input = new MemoryStream(LzmaResultData);
         var compressed = new MemoryStream();
-        var lzmaEncodingStream = new LzmaStream(LzmaEncoderProperties.Default, false, compressed);
+        var lzmaEncodingStream = new LzmaStream(LzmaEncoderProperties.Default, false, compressed, leaveOpen: true);
         await input.CopyToAsync(lzmaEncodingStream).ConfigureAwait(false);
         lzmaEncodingStream.Close();
         compressed.Position = 0;

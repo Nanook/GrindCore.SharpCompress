@@ -1,8 +1,15 @@
-name: SharpCompress
+name: GrindCore.SharpCompress
 on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'CI Run ID to download artifacts from (leave empty for latest successful run)'
+        required: false
+        type: string
   push:
     branches:
-      - 'master'
+      - 'main'
+      - 'test/*'
   pull_request:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
@@ -11,15 +18,23 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
 
     steps:
     - uses: actions/checkout@v5
     - uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
+
     - run: dotnet run --project build/build.csproj
-    - uses: actions/upload-artifact@v5
+
+    - name: Publish NuGet package
+      if: startsWith(github.ref, 'refs/heads/main')
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ matrix.os }}-sharpcompress.nupkg
         path: artifacts/*
