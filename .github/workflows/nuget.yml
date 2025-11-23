@@ -19,7 +19,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
 
     - name: Get latest successful CI run
       if: inputs.run_id == ''
@@ -44,7 +44,7 @@ jobs:
           core.setOutput('run_id', runs.data.workflow_runs[0].id);
 
     - name: Download CI artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: ubuntu-latest-sharpcompress.nupkg
         path: ./artifacts
@@ -65,7 +65,7 @@ jobs:
       shell: bash
 
     - name: Upload published packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: published-packages
         path: ./artifacts/*.nupkg
