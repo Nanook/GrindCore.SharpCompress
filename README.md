@@ -1,14 +1,18 @@
 # GrindCore.SharpCompress
 
+For more in-depth information, see [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nanook/GrindCore.SharpCompress).
+
 GrindCore.SharpCompress is an enhanced version of the popular **SharpCompress** library that integrates **GrindCore** native compression technology. This project delivers extensive native compression support built using the **System.IO.Compression** pattern, utilizing compression algorithms directly from their original C implementations.
 
 This enhanced fork replaces GZip, LZMA, Deflate, ZStandard, LZ4, and Brotli implementations with **native C streams** from [GrindCore](https://github.com/Nanook/GrindCore.net), providing significant performance improvements while maintaining full API compatibility.
 
-This compression library supports .NET 9, .NET 8, .NET 6, .NET Standard 2.0+, and .NET Framework 4.8+ and can unrar, un7zip, unzip, untar, unbzip2, ungzip, unlzip with forward-only reading and file random access APIs. Write support for zip/tar/bzip2/gzip/lzip are implemented with enhanced native performance.
+This compression library supports .NET 10, .NET 9, .NET 8, .NET 6, .NET Standard 2.1 (and 2.0+), and .NET Framework 4.8+ and can unrar, un7zip, unzip, untar, unbzip2, ungzip, unlzip with forward-only reading and file random access APIs. Write support for zip/tar/bzip2/gzip/lzip are implemented with enhanced native performance.
 
 The library maintains support for non-seekable streams so large files can be processed on the fly (i.e., download streams), now with native-level performance.
 
-> **⚠️ First Release Notice**: This is the initial release of GrindCore.SharpCompress. While tested with comprehensive unit tests, there may be some rough edges as the library gains real-world usage. Please report any issues encountered to help improve the library.
+> **Release:** GrindCore.SharpCompress has graduated from alpha and is now released as a production-ready component. It has completed alpha testing and is intended for use in real-world applications. If you encounter issues, please report them on the project GitHub repository.
+
+For more in-depth information, see [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nanook/GrindCore.SharpCompress).
 
 ## 🔧 Native C Integration
 
@@ -26,7 +30,7 @@ The library maintains support for non-seekable streams so large files can be pro
 - **AOT Compatible**: Full support for Ahead-of-Time compilation scenarios
 - **Enhanced Stream Management**: Advanced buffer management with precise stream position correction
 - **API Compatibility**: Drop-in replacement for existing SharpCompress usage
-- **Framework Support**: .NET 9, .NET 8, .NET 6, .NET Standard 2.0+, .NET Framework 4.8+
+- **Framework Support**: .NET 10, .NET 9, .NET 8, .NET 6, .NET Standard 2.1 (and 2.0+), .NET Framework 4.8+
 
 ## 📊 Native Stream Classes
 
@@ -178,8 +182,8 @@ Native libraries are automatically selected for:
 
 ## 🌐 Framework Compatibility
 
-- **.NET**: 9.0, 8.0, 6.0
-- **.NET Standard**: 2.0+
+- **.NET**: 10.0, 9.0, 8.0, 6.0
+- **.NET Standard**: 2.1, 2.0+
 - **.NET Framework**: 4.8.1, 4.8
 - **NativeAOT**: Complete compatibility with native compilation
 

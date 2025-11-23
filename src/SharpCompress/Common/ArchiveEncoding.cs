@@ -35,7 +35,7 @@ public class ArchiveEncoding
         Password = password;
     }
 
-#if !NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1
     static ArchiveEncoding() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 #endif
 

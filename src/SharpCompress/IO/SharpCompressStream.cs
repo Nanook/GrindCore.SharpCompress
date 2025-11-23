@@ -1,8 +1,10 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SharpCompress.IO;
 
@@ -44,7 +46,11 @@ public class SharpCompressStream : Stream, IStreamStack
                 _bufferingEnabled = _bufferSize > 0;
                 if (_bufferingEnabled)
                 {
-                    _buffer = new byte[_bufferSize];
+                    if (_buffer is not null)
+                    {
+                        ArrayPool<byte>.Shared.Return(_buffer);
+                    }
+                    _buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
                     _bufferPosition = 0;
                     _bufferedLength = 0;
                     if (_bufferingEnabled)
@@ -73,7 +79,7 @@ public class SharpCompressStream : Stream, IStreamStack
             {
                 if (value < 0 || value > _bufferedLength)
                     throw new ArgumentOutOfRangeException(nameof(value));
-                _internalPosition = value;
+                _internalPosition = _internalPosition - _bufferPosition + value;
                 _bufferPosition = value;
                 ValidateBufferState(); // Add here
             }
@@ -83,8 +89,6 @@ public class SharpCompressStream : Stream, IStreamStack
     void IStreamStack.SetPosition(long position) { }
 
     public Stream Stream { get; }
-
-    //private MemoryStream _bufferStream = new();
 
     private bool _readOnly; //some archive detection requires seek to be disabled to cause it to exception to try the next arc type
 
@@ -173,6 +177,11 @@ public class SharpCompressStream : Stream, IStreamStack
         if (disposing)
         {
             Stream.Dispose();
+            if (_buffer != null)
+            {
+                ArrayPool<byte>.Shared.Return(_buffer);
+                _buffer = null;
+            }
         }
     }
 
@@ -282,7 +291,7 @@ public class SharpCompressStream : Stream, IStreamStack
 
         long bufferPos = _internalPosition - _bufferPosition;
 
-        if (targetPos >= bufferPos && targetPos < bufferPos + _bufferedLength)
+        if (targetPos >= bufferPos && targetPos <= bufferPos + _bufferedLength)
         {
             _bufferPosition = (int)(targetPos - bufferPos); //repoint within the buffer
             _internalPosition = targetPos;
@@ -316,20 +325,146 @@ public class SharpCompressStream : Stream, IStreamStack
         _internalPosition += count;
     }
 
+    public override async Task<int> ReadAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
+    )
+    {
+        if (count == 0)
+            return 0;
+
+        if (_bufferingEnabled)
+        {
+            ValidateBufferState();
+
+            // Fill buffer if needed
+            if (_bufferedLength == 0)
+            {
+                _bufferedLength = await Stream
+                    .ReadAsync(_buffer!, 0, _bufferSize, cancellationToken)
+                    .ConfigureAwait(false);
+                _bufferPosition = 0;
+            }
+            int available = _bufferedLength - _bufferPosition;
+            int toRead = Math.Min(count, available);
+            if (toRead > 0)
+            {
+                Array.Copy(_buffer!, _bufferPosition, buffer, offset, toRead);
+                _bufferPosition += toRead;
+                _internalPosition += toRead;
+                return toRead;
+            }
+            // If buffer exhausted, refill
+            int r = await Stream
+                .ReadAsync(_buffer!, 0, _bufferSize, cancellationToken)
+                .ConfigureAwait(false);
+            if (r == 0)
+                return 0;
+            _bufferedLength = r;
+            _bufferPosition = 0;
+            if (_bufferedLength == 0)
+            {
+                return 0;
+            }
+            toRead = Math.Min(count, _bufferedLength);
+            Array.Copy(_buffer!, 0, buffer, offset, toRead);
+            _bufferPosition = toRead;
+            _internalPosition += toRead;
+            return toRead;
+        }
+        else
+        {
+            int read = await Stream
+                .ReadAsync(buffer, offset, count, cancellationToken)
+                .ConfigureAwait(false);
+            _internalPosition += read;
+            return read;
+        }
+    }
+
+    public override async Task WriteAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
+    )
+    {
+        await Stream.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+        _internalPosition += count;
+    }
+
+    public override async Task FlushAsync(CancellationToken cancellationToken)
+    {
+        await Stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+
 #if !NETFRAMEWORK && !NETSTANDARD2_0
 
-    //public override int Read(Span<byte> buffer)
-    //{
-    //    int bytesRead = Stream.Read(buffer);
-    //    _internalPosition += bytesRead;
-    //    return bytesRead;
-    //}
+    public override async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (buffer.Length == 0)
+            return 0;
 
-    //    public override void Write(ReadOnlySpan<byte> buffer)
-    //    {
-    //        Stream.Write(buffer);
-    //        _internalPosition += buffer.Length;
-    //    }
+        if (_bufferingEnabled)
+        {
+            ValidateBufferState();
+
+            // Fill buffer if needed
+            if (_bufferedLength == 0)
+            {
+                _bufferedLength = await Stream
+                    .ReadAsync(_buffer.AsMemory(0, _bufferSize), cancellationToken)
+                    .ConfigureAwait(false);
+                _bufferPosition = 0;
+            }
+            int available = _bufferedLength - _bufferPosition;
+            int toRead = Math.Min(buffer.Length, available);
+            if (toRead > 0)
+            {
+                _buffer.AsSpan(_bufferPosition, toRead).CopyTo(buffer.Span);
+                _bufferPosition += toRead;
+                _internalPosition += toRead;
+                return toRead;
+            }
+            // If buffer exhausted, refill
+            int r = await Stream
+                .ReadAsync(_buffer.AsMemory(0, _bufferSize), cancellationToken)
+                .ConfigureAwait(false);
+            if (r == 0)
+                return 0;
+            _bufferedLength = r;
+            _bufferPosition = 0;
+            if (_bufferedLength == 0)
+            {
+                return 0;
+            }
+            toRead = Math.Min(buffer.Length, _bufferedLength);
+            _buffer.AsSpan(0, toRead).CopyTo(buffer.Span);
+            _bufferPosition = toRead;
+            _internalPosition += toRead;
+            return toRead;
+        }
+        else
+        {
+            int read = await Stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+            _internalPosition += read;
+            return read;
+        }
+    }
+
+    public override async ValueTask WriteAsync(
+        ReadOnlyMemory<byte> buffer,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await Stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+        _internalPosition += buffer.Length;
+    }
 
 #endif
 }

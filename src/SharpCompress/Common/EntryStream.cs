@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
+using System.Threading.Tasks;
 using SharpCompress.IO;
 using SharpCompress.Readers;
 
@@ -51,8 +53,22 @@ public class EntryStream : Stream, IStreamStack
         _completed = true;
     }
 
+    /// <summary>
+    /// Asynchronously skip the rest of the entry stream.
+    /// </summary>
+    public async Task SkipEntryAsync(CancellationToken cancellationToken = default)
+    {
+        await this.SkipAsync(cancellationToken).ConfigureAwait(false);
+        _completed = true;
+    }
+
     protected override void Dispose(bool disposing)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
         if (!(_completed || _reader.Cancelled))
         {
             SkipEntry();
@@ -70,12 +86,6 @@ public class EntryStream : Stream, IStreamStack
                 lzmaStream.Flush(); //Lzma over reads. Knock it back
             }
         }
-
-        if (_isDisposed)
-        {
-            return;
-        }
-        _isDisposed = true;
 #if DEBUG_STREAMS
         this.DebugDispose(typeof(EntryStream));
 #endif
@@ -102,6 +112,39 @@ public class EntryStream : Stream, IStreamStack
         _stream.Dispose();
     }
 
+#if !NETFRAMEWORK && !NETSTANDARD2_0
+    public override async ValueTask DisposeAsync()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+        if (!(_completed || _reader.Cancelled))
+        {
+            await SkipEntryAsync().ConfigureAwait(false);
+        }
+
+        //Need a safe standard approach to this - it's okay for compression to overreads. Handling needs to be standardised
+        if (_stream is IStreamStack ss)
+        {
+            if (ss.BaseStream() is SharpCompress.Compressors.Deflate.DeflateStream deflateStream)
+            {
+                await deflateStream.FlushAsync().ConfigureAwait(false);
+            }
+            else if (ss.BaseStream() is SharpCompress.Compressors.LZMA.LzmaStream lzmaStream)
+            {
+                await lzmaStream.FlushAsync().ConfigureAwait(false);
+            }
+        }
+#if DEBUG_STREAMS
+        this.DebugDispose(typeof(EntryStream));
+#endif
+        await base.DisposeAsync().ConfigureAwait(false);
+        await _stream.DisposeAsync().ConfigureAwait(false);
+    }
+#endif
+
     public override bool CanRead => true;
 
     public override bool CanSeek => false;
@@ -109,6 +152,8 @@ public class EntryStream : Stream, IStreamStack
     public override bool CanWrite => false;
 
     public override void Flush() { }
+
+    public override Task FlushAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public override long Length => _stream.Length;
 
@@ -128,6 +173,38 @@ public class EntryStream : Stream, IStreamStack
         return read;
     }
 
+    public override async Task<int> ReadAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
+    )
+    {
+        var read = await _stream
+            .ReadAsync(buffer, offset, count, cancellationToken)
+            .ConfigureAwait(false);
+        if (read <= 0)
+        {
+            _completed = true;
+        }
+        return read;
+    }
+
+#if !NETFRAMEWORK && !NETSTANDARD2_0
+    public override async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var read = await _stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+        if (read <= 0)
+        {
+            _completed = true;
+        }
+        return read;
+    }
+#endif
+
     public override int ReadByte()
     {
         var value = _stream.ReadByte();
@@ -144,4 +221,11 @@ public class EntryStream : Stream, IStreamStack
 
     public override void Write(byte[] buffer, int offset, int count) =>
         throw new NotSupportedException();
+
+    public override Task WriteAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
+    ) => throw new NotSupportedException();
 }

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Common.GZip;
 using SharpCompress.IO;
@@ -21,7 +23,7 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
     /// <param name="readerOptions"></param>
     public static GZipArchive Open(string filePath, ReaderOptions? readerOptions = null)
     {
-        filePath.CheckNotNullOrEmpty(nameof(filePath));
+        filePath.NotNullOrEmpty(nameof(filePath));
         return Open(new FileInfo(filePath), readerOptions ?? new ReaderOptions());
     }
 
@@ -32,7 +34,7 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
     /// <param name="readerOptions"></param>
     public static GZipArchive Open(FileInfo fileInfo, ReaderOptions? readerOptions = null)
     {
-        fileInfo.CheckNotNull(nameof(fileInfo));
+        fileInfo.NotNull(nameof(fileInfo));
         return new GZipArchive(
             new SourceStream(
                 fileInfo,
@@ -52,7 +54,7 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
         ReaderOptions? readerOptions = null
     )
     {
-        fileInfos.CheckNotNull(nameof(fileInfos));
+        fileInfos.NotNull(nameof(fileInfos));
         var files = fileInfos.ToArray();
         return new GZipArchive(
             new SourceStream(
@@ -70,7 +72,7 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
     /// <param name="readerOptions"></param>
     public static GZipArchive Open(IEnumerable<Stream> streams, ReaderOptions? readerOptions = null)
     {
-        streams.CheckNotNull(nameof(streams));
+        streams.NotNull(nameof(streams));
         var strms = streams.ToArray();
         return new GZipArchive(
             new SourceStream(
@@ -88,7 +90,7 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
     /// <param name="readerOptions"></param>
     public static GZipArchive Open(Stream stream, ReaderOptions? readerOptions = null)
     {
-        stream.CheckNotNull(nameof(stream));
+        stream.NotNull(nameof(stream));
 
         if (stream is not { CanSeek: true })
         {
@@ -136,6 +138,16 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
         SaveTo(stream, new WriterOptions(CompressionType.GZip));
     }
 
+    public Task SaveToAsync(string filePath, CancellationToken cancellationToken = default) =>
+        SaveToAsync(new FileInfo(filePath), cancellationToken);
+
+    public async Task SaveToAsync(FileInfo fileInfo, CancellationToken cancellationToken = default)
+    {
+        using var stream = fileInfo.Open(FileMode.Create, FileAccess.Write);
+        await SaveToAsync(stream, new WriterOptions(CompressionType.GZip), cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public static bool IsGZipFile(Stream stream)
     {
         // read the header on the first read
@@ -173,6 +185,11 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
         return new GZipWritableArchiveEntry(this, source, filePath, size, modified, closeStream);
     }
 
+    protected override GZipArchiveEntry CreateDirectoryEntry(
+        string directoryPath,
+        DateTime? modified
+    ) => throw new NotSupportedException("GZip archives do not support directory entries.");
+
     protected override void SaveTo(
         Stream stream,
         WriterOptions options,
@@ -193,6 +210,28 @@ public class GZipArchive : AbstractWritableArchive<GZipArchiveEntry, GZipVolume>
                 entryStream,
                 entry.LastModifiedTime
             );
+        }
+    }
+
+    protected override async Task SaveToAsync(
+        Stream stream,
+        WriterOptions options,
+        IEnumerable<GZipArchiveEntry> oldEntries,
+        IEnumerable<GZipArchiveEntry> newEntries,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (Entries.Count > 1)
+        {
+            throw new InvalidFormatException("Only one entry is allowed in a GZip Archive");
+        }
+        using var writer = new GZipWriter(stream, new GZipWriterOptions(options));
+        foreach (var entry in oldEntries.Concat(newEntries).Where(x => !x.IsDirectory))
+        {
+            using var entryStream = entry.OpenEntryStream();
+            await writer
+                .WriteAsync(entry.Key.NotNull("Entry Key is null"), entryStream, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 

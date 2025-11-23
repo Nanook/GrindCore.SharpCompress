@@ -50,6 +50,9 @@ public class TarReaderTests : ReaderTests
     public void Tar_GZip_Reader() => Read("Tar.tar.gz", CompressionType.GZip);
 
     [Fact]
+    public void Tar_ZStandard_Reader() => Read("Tar.tar.zst", CompressionType.ZStandard);
+
+    [Fact]
     public void Tar_LZip_Reader() => Read("Tar.tar.lz", CompressionType.LZip);
 
     [Fact]
@@ -82,7 +85,7 @@ public class TarReaderTests : ReaderTests
                     var destinationFileName = Path.Combine(destdir, file.NotNull());
 
                     using var fs = File.OpenWrite(destinationFileName);
-                    entryStream.TransferTo(fs);
+                    entryStream.CopyTo(fs);
                 }
             }
         }
@@ -198,13 +201,10 @@ public class TarReaderTests : ReaderTests
         Assert.Throws<IncompleteArchiveException>(() => reader.MoveToNextEntry());
     }
 
-#if !NETFRAMEWORK
+#if LINUX
     [Fact]
     public void Tar_GZip_With_Symlink_Entries()
     {
-        var isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
-            System.Runtime.InteropServices.OSPlatform.Windows
-        );
         using Stream stream = File.OpenRead(
             Path.Combine(TEST_ARCHIVES_PATH, "TarWithSymlink.tar.gz")
         );
@@ -223,41 +223,89 @@ public class TarReaderTests : ReaderTests
                     Overwrite = true,
                     WriteSymbolicLink = (sourcePath, targetPath) =>
                     {
-                        if (!isWindows)
+                        var link = new Mono.Unix.UnixSymbolicLinkInfo(sourcePath);
+                        if (File.Exists(sourcePath))
                         {
-                            var link = new Mono.Unix.UnixSymbolicLinkInfo(sourcePath);
-                            if (File.Exists(sourcePath))
-                            {
-                                link.Delete(); // equivalent to ln -s -f
-                            }
-                            link.CreateSymbolicLinkTo(targetPath);
+                            link.Delete(); // equivalent to ln -s -f
                         }
+                        link.CreateSymbolicLinkTo(targetPath);
                     },
                 }
             );
-            if (!isWindows)
+            if (reader.Entry.LinkTarget != null)
             {
-                if (reader.Entry.LinkTarget != null)
+                var path = Path.Combine(SCRATCH_FILES_PATH, reader.Entry.Key.NotNull());
+                var link = new Mono.Unix.UnixSymbolicLinkInfo(path);
+                if (link.HasContents)
                 {
-                    var path = Path.Combine(SCRATCH_FILES_PATH, reader.Entry.Key.NotNull());
-                    var link = new Mono.Unix.UnixSymbolicLinkInfo(path);
-                    if (link.HasContents)
-                    {
-                        // need to convert the link to an absolute path for comparison
-                        var target = reader.Entry.LinkTarget;
-                        var realTarget = Path.GetFullPath(
-                            Path.Combine($"{Path.GetDirectoryName(path)}", target)
-                        );
+                    // need to convert the link to an absolute path for comparison
+                    var target = reader.Entry.LinkTarget;
+                    var realTarget = Path.GetFullPath(
+                        Path.Combine($"{Path.GetDirectoryName(path)}", target)
+                    );
 
-                        Assert.Equal(realTarget, link.GetContents().ToString());
-                    }
-                    else
-                    {
-                        Assert.True(false, "Symlink has no target");
-                    }
+                    Assert.Equal(realTarget, link.GetContents().ToString());
+                }
+                else
+                {
+                    Assert.True(false, "Symlink has no target");
                 }
             }
         }
     }
 #endif
+
+    [Fact]
+    public void Tar_Malformed_LongName_Excessive_Size()
+    {
+        // Create a malformed TAR header with an excessively large LongName size
+        // This simulates what happens during auto-detection of compressed files
+        var buffer = new byte[512];
+
+        // Set up a basic TAR header structure
+        // Name field (offset 0, 100 bytes) - set to "././@LongLink" which is typical for LongName
+        var nameBytes = System.Text.Encoding.ASCII.GetBytes("././@LongLink");
+        Array.Copy(nameBytes, 0, buffer, 0, nameBytes.Length);
+
+        // Set entry type to LongName (offset 156)
+        buffer[156] = (byte)'L'; // EntryType.LongName
+
+        // Set an excessively large size (offset 124, 12 bytes, octal format)
+        // This simulates a corrupted/misinterpreted size field
+        // Using "77777777777" (octal) = 8589934591 bytes (~8GB)
+        var sizeBytes = System.Text.Encoding.ASCII.GetBytes("77777777777 ");
+        Array.Copy(sizeBytes, 0, buffer, 124, sizeBytes.Length);
+
+        // Calculate and set checksum (offset 148, 8 bytes)
+        // Set checksum field to spaces first
+        for (var i = 148; i < 156; i++)
+        {
+            buffer[i] = (byte)' ';
+        }
+
+        // Calculate checksum
+        var checksum = 0;
+        foreach (var b in buffer)
+        {
+            checksum += b;
+        }
+
+        var checksumStr = Convert.ToString(checksum, 8).PadLeft(6, '0') + "\0 ";
+        var checksumBytes = System.Text.Encoding.ASCII.GetBytes(checksumStr);
+        Array.Copy(checksumBytes, 0, buffer, 148, checksumBytes.Length);
+
+        // Create a stream with this malformed header
+        using var stream = new MemoryStream();
+        stream.Write(buffer, 0, buffer.Length);
+        stream.Position = 0;
+
+        // Attempt to read this malformed archive
+        // The InvalidFormatException from the validation gets caught and converted to IncompleteArchiveException
+        // The important thing is it doesn't cause OutOfMemoryException
+        Assert.Throws<IncompleteArchiveException>(() =>
+        {
+            using var reader = TarReader.Open(stream);
+            reader.MoveToNextEntry();
+        });
+    }
 }

@@ -13,7 +13,7 @@ using SharpCompress.Compressors.Rar.VM;
 
 namespace SharpCompress.Compressors.Rar.UnpackV1;
 
-internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
+internal sealed partial class Unpack : BitInput, IRarUnpack
 {
     private readonly BitInput Inp;
     private bool disposed;
@@ -22,15 +22,17 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
         // to ease in porting Unpack50.cs
         Inp = this;
 
-    public void Dispose()
+    public override void Dispose()
     {
         if (!disposed)
         {
-            if (!externalWindow)
+            base.Dispose();
+            if (!externalWindow && window is not null)
             {
                 ArrayPool<byte>.Shared.Return(window);
                 window = null;
             }
+            rarVM.Dispose();
             disposed = true;
         }
     }
@@ -153,6 +155,25 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
         DoUnpack();
     }
 
+    public async System.Threading.Tasks.Task DoUnpackAsync(
+        FileHeader fileHeader,
+        Stream readStream,
+        Stream writeStream,
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        destUnpSize = fileHeader.UncompressedSize;
+        this.fileHeader = fileHeader;
+        this.readStream = readStream;
+        this.writeStream = writeStream;
+        if (!fileHeader.IsSolid)
+        {
+            Init(null);
+        }
+        suspended = false;
+        await DoUnpackAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public void DoUnpack()
     {
         if (fileHeader.CompressionMethod == 0)
@@ -187,6 +208,42 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
         }
     }
 
+    public async System.Threading.Tasks.Task DoUnpackAsync(
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        if (fileHeader.CompressionMethod == 0)
+        {
+            await UnstoreFileAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+        switch (fileHeader.CompressionAlgorithm)
+        {
+            case 15: // rar 1.5 compression
+                await unpack15Async(fileHeader.IsSolid, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case 20: // rar 2.x compression
+            case 26: // files larger than 2GB
+                await unpack20Async(fileHeader.IsSolid, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case 29: // rar 3.x compression
+            case 36: // alternative hash
+                await Unpack29Async(fileHeader.IsSolid, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case 50: // rar 5.x compression
+                await Unpack5Async(fileHeader.IsSolid, cancellationToken).ConfigureAwait(false);
+                break;
+
+            default:
+                throw new InvalidFormatException(
+                    "unknown rar compression version " + fileHeader.CompressionAlgorithm
+                );
+        }
+    }
+
     private void UnstoreFile()
     {
         Span<byte> buffer = stackalloc byte[(int)Math.Min(0x10000, destUnpSize)];
@@ -199,6 +256,26 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
             }
             code = code < destUnpSize ? code : (int)destUnpSize;
             writeStream.Write(buffer.Slice(0, code));
+            destUnpSize -= code;
+        } while (!suspended && destUnpSize > 0);
+    }
+
+    private async System.Threading.Tasks.Task UnstoreFileAsync(
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        var buffer = new byte[(int)Math.Min(0x10000, destUnpSize)];
+        do
+        {
+            var code = await readStream
+                .ReadAsync(buffer, 0, buffer.Length, cancellationToken)
+                .ConfigureAwait(false);
+            if (code == 0 || code == -1)
+            {
+                break;
+            }
+            code = code < destUnpSize ? code : (int)destUnpSize;
+            await writeStream.WriteAsync(buffer, 0, code, cancellationToken).ConfigureAwait(false);
             destUnpSize -= code;
         } while (!suspended && destUnpSize > 0);
     }
@@ -481,6 +558,281 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
         UnpWriteBuf();
     }
 
+    private async System.Threading.Tasks.Task Unpack29Async(
+        bool solid,
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        int[] DDecode = new int[PackDef.DC];
+        byte[] DBits = new byte[PackDef.DC];
+
+        int Bits;
+
+        if (DDecode[1] == 0)
+        {
+            int Dist = 0,
+                BitLength = 0,
+                Slot = 0;
+            for (var I = 0; I < DBitLengthCounts.Length; I++, BitLength++)
+            {
+                var count = DBitLengthCounts[I];
+                for (var J = 0; J < count; J++, Slot++, Dist += (1 << BitLength))
+                {
+                    DDecode[Slot] = Dist;
+                    DBits[Slot] = (byte)BitLength;
+                }
+            }
+        }
+
+        FileExtracted = true;
+
+        if (!suspended)
+        {
+            UnpInitData(solid);
+            if (!await unpReadBufAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+            if ((!solid || !tablesRead) && !ReadTables())
+            {
+                return;
+            }
+        }
+
+        if (ppmError)
+        {
+            return;
+        }
+
+        while (true)
+        {
+            unpPtr &= PackDef.MAXWINMASK;
+
+            if (inAddr > readBorder)
+            {
+                if (!await unpReadBufAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    break;
+                }
+            }
+
+            if (((wrPtr - unpPtr) & PackDef.MAXWINMASK) < 260 && wrPtr != unpPtr)
+            {
+                await UnpWriteBufAsync(cancellationToken).ConfigureAwait(false);
+                if (destUnpSize < 0)
+                {
+                    return;
+                }
+                if (suspended)
+                {
+                    FileExtracted = false;
+                    return;
+                }
+            }
+            if (unpBlockType == BlockTypes.BLOCK_PPM)
+            {
+                var ch = ppm.DecodeChar();
+                if (ch == -1)
+                {
+                    ppmError = true;
+                    break;
+                }
+                if (ch == PpmEscChar)
+                {
+                    var nextCh = ppm.DecodeChar();
+                    if (nextCh == 0)
+                    {
+                        if (!ReadTables())
+                        {
+                            break;
+                        }
+                        continue;
+                    }
+                    if (nextCh == 2 || nextCh == -1)
+                    {
+                        break;
+                    }
+                    if (nextCh == 3)
+                    {
+                        if (!ReadVMCode())
+                        {
+                            break;
+                        }
+                        continue;
+                    }
+                    if (nextCh == 4)
+                    {
+                        uint Distance = 0,
+                            Length = 0;
+                        var failed = false;
+                        for (var I = 0; I < 4 && !failed; I++)
+                        {
+                            var ch2 = ppm.DecodeChar();
+                            if (ch2 == -1)
+                            {
+                                failed = true;
+                            }
+                            else if (I == 3)
+                            {
+                                Length = (uint)ch2;
+                            }
+                            else
+                            {
+                                Distance = (Distance << 8) + (uint)ch2;
+                            }
+                        }
+                        if (failed)
+                        {
+                            break;
+                        }
+
+                        CopyString(Length + 32, Distance + 2);
+                        continue;
+                    }
+                    if (nextCh == 5)
+                    {
+                        var length = ppm.DecodeChar();
+                        if (length == -1)
+                        {
+                            break;
+                        }
+                        CopyString((uint)(length + 4), 1);
+                        continue;
+                    }
+                }
+                window[unpPtr++] = (byte)ch;
+                continue;
+            }
+
+            var Number = this.decodeNumber(LD);
+            if (Number < 256)
+            {
+                window[unpPtr++] = (byte)Number;
+                continue;
+            }
+            if (Number >= 271)
+            {
+                var Length = LDecode[Number -= 271] + 3;
+                if ((Bits = LBits[Number]) > 0)
+                {
+                    Length += GetBits() >> (16 - Bits);
+                    AddBits(Bits);
+                }
+
+                var DistNumber = this.decodeNumber(DD);
+                var Distance = DDecode[DistNumber] + 1;
+                if ((Bits = DBits[DistNumber]) > 0)
+                {
+                    if (DistNumber > 9)
+                    {
+                        if (Bits > 4)
+                        {
+                            Distance += (GetBits() >> (20 - Bits)) << 4;
+                            AddBits(Bits - 4);
+                        }
+                        if (lowDistRepCount > 0)
+                        {
+                            lowDistRepCount--;
+                            Distance += prevLowDist;
+                        }
+                        else
+                        {
+                            var LowDist = this.decodeNumber(LDD);
+                            if (LowDist == 16)
+                            {
+                                lowDistRepCount = PackDef.LOW_DIST_REP_COUNT - 1;
+                                Distance += prevLowDist;
+                            }
+                            else
+                            {
+                                Distance += LowDist;
+                                prevLowDist = (int)LowDist;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Distance += GetBits() >> (16 - Bits);
+                        AddBits(Bits);
+                    }
+                }
+
+                if (Distance >= 0x2000)
+                {
+                    Length++;
+                    if (Distance >= 0x40000)
+                    {
+                        Length++;
+                    }
+                }
+
+                InsertOldDist(Distance);
+                lastLength = Length;
+                CopyString(Length, Distance);
+                continue;
+            }
+            if (Number == 256)
+            {
+                if (!ReadEndOfBlock())
+                {
+                    break;
+                }
+                continue;
+            }
+            if (Number == 257)
+            {
+                if (!ReadVMCode())
+                {
+                    break;
+                }
+                continue;
+            }
+            if (Number == 258)
+            {
+                if (lastLength != 0)
+                {
+                    CopyString(lastLength, oldDist[0]);
+                }
+
+                continue;
+            }
+            if (Number < 263)
+            {
+                var DistNum = Number - 259;
+                var Distance = (uint)oldDist[DistNum];
+                for (var I = DistNum; I > 0; I--)
+                {
+                    oldDist[I] = oldDist[I - 1];
+                }
+                oldDist[0] = (int)Distance;
+
+                var LengthNumber = this.decodeNumber(RD);
+                var Length = LDecode[LengthNumber] + 2;
+                if ((Bits = LBits[LengthNumber]) > 0)
+                {
+                    Length += GetBits() >> (16 - Bits);
+                    AddBits(Bits);
+                }
+                lastLength = Length;
+                CopyString((uint)Length, Distance);
+                continue;
+            }
+            if (Number < 272)
+            {
+                var Distance = SDDecode[Number -= 263] + 1;
+                if ((Bits = SDBits[Number]) > 0)
+                {
+                    Distance += GetBits() >> (16 - Bits);
+                    AddBits(Bits);
+                }
+                InsertOldDist((uint)Distance);
+                lastLength = 2;
+                CopyString(2, (uint)Distance);
+            }
+        }
+        await UnpWriteBufAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private void UnpWriteBuf()
     {
         var WrittenBorder = wrPtr;
@@ -574,104 +926,111 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
 
                     var FilteredDataOffset = Prg.FilteredDataOffset;
                     var FilteredDataSize = Prg.FilteredDataSize;
-                    var FilteredData = new byte[FilteredDataSize];
-
-                    for (var i = 0; i < FilteredDataSize; i++)
+                    var FilteredData = ArrayPool<byte>.Shared.Rent(FilteredDataSize);
+                    try
                     {
-                        FilteredData[i] = rarVM.Mem[FilteredDataOffset + i];
+                        Array.Copy(
+                            rarVM.Mem,
+                            FilteredDataOffset,
+                            FilteredData,
+                            0,
+                            FilteredDataSize
+                        );
 
-                        // Prg.GlobalData.get(FilteredDataOffset
-                        // +
-                        // i);
-                    }
-
-                    prgStack[I] = null;
-                    while (I + 1 < prgStack.Count)
-                    {
-                        var NextFilter = prgStack[I + 1];
-                        if (
-                            NextFilter is null
-                            || NextFilter.BlockStart != BlockStart
-                            || NextFilter.BlockLength != FilteredDataSize
-                            || NextFilter.NextWindow
-                        )
-                        {
-                            break;
-                        }
-
-                        // apply several filters to same data block
-
-                        rarVM.setMemory(0, FilteredData, 0, FilteredDataSize);
-
-                        // .SetMemory(0,FilteredData,FilteredDataSize);
-
-                        var pPrg = filters[NextFilter.ParentFilter].Program;
-                        var NextPrg = NextFilter.Program;
-
-                        if (pPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
-                        {
-                            // copy global data from previous script execution
-                            // if any
-                            // NextPrg->GlobalData.Alloc(ParentPrg->GlobalData.Size());
-                            NextPrg.GlobalData.SetSize(pPrg.GlobalData.Count);
-
-                            // memcpy(&NextPrg->GlobalData[VM_FIXEDGLOBALSIZE],&ParentPrg->GlobalData[VM_FIXEDGLOBALSIZE],ParentPrg->GlobalData.Size()-VM_FIXEDGLOBALSIZE);
-                            for (
-                                var i = 0;
-                                i < pPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
-                                i++
-                            )
-                            {
-                                NextPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] = pPrg.GlobalData[
-                                    RarVM.VM_FIXEDGLOBALSIZE + i
-                                ];
-                            }
-                        }
-
-                        ExecuteCode(NextPrg);
-
-                        if (NextPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
-                        {
-                            // save global data for next script execution
-                            if (pPrg.GlobalData.Count < NextPrg.GlobalData.Count)
-                            {
-                                pPrg.GlobalData.SetSize(NextPrg.GlobalData.Count);
-                            }
-
-                            // memcpy(&ParentPrg->GlobalData[VM_FIXEDGLOBALSIZE],&NextPrg->GlobalData[VM_FIXEDGLOBALSIZE],NextPrg->GlobalData.Size()-VM_FIXEDGLOBALSIZE);
-                            for (
-                                var i = 0;
-                                i < NextPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
-                                i++
-                            )
-                            {
-                                pPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] = NextPrg.GlobalData[
-                                    RarVM.VM_FIXEDGLOBALSIZE + i
-                                ];
-                            }
-                        }
-                        else
-                        {
-                            pPrg.GlobalData.Clear();
-                        }
-                        FilteredDataOffset = NextPrg.FilteredDataOffset;
-                        FilteredDataSize = NextPrg.FilteredDataSize;
-
-                        FilteredData = new byte[FilteredDataSize];
-                        for (var i = 0; i < FilteredDataSize; i++)
-                        {
-                            FilteredData[i] = NextPrg.GlobalData[FilteredDataOffset + i];
-                        }
-
-                        I++;
                         prgStack[I] = null;
+                        while (I + 1 < prgStack.Count)
+                        {
+                            var NextFilter = prgStack[I + 1];
+                            if (
+                                NextFilter is null
+                                || NextFilter.BlockStart != BlockStart
+                                || NextFilter.BlockLength != FilteredDataSize
+                                || NextFilter.NextWindow
+                            )
+                            {
+                                break;
+                            }
+
+                            // apply several filters to same data block
+
+                            rarVM.setMemory(0, FilteredData, 0, FilteredDataSize);
+
+                            // .SetMemory(0,FilteredData,FilteredDataSize);
+
+                            var pPrg = filters[NextFilter.ParentFilter].Program;
+                            var NextPrg = NextFilter.Program;
+
+                            if (pPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
+                            {
+                                // copy global data from previous script execution
+                                // if any
+                                // NextPrg->GlobalData.Alloc(ParentPrg->GlobalData.Size());
+                                NextPrg.GlobalData.SetSize(pPrg.GlobalData.Count);
+
+                                // memcpy(&NextPrg->GlobalData[VM_FIXEDGLOBALSIZE],&ParentPrg->GlobalData[VM_FIXEDGLOBALSIZE],ParentPrg->GlobalData.Size()-VM_FIXEDGLOBALSIZE);
+                                for (
+                                    var i = 0;
+                                    i < pPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
+                                    i++
+                                )
+                                {
+                                    NextPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] =
+                                        pPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i];
+                                }
+                            }
+
+                            ExecuteCode(NextPrg);
+
+                            if (NextPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
+                            {
+                                // save global data for next script execution
+                                if (pPrg.GlobalData.Count < NextPrg.GlobalData.Count)
+                                {
+                                    pPrg.GlobalData.SetSize(NextPrg.GlobalData.Count);
+                                }
+
+                                // memcpy(&ParentPrg->GlobalData[VM_FIXEDGLOBALSIZE],&NextPrg->GlobalData[VM_FIXEDGLOBALSIZE],NextPrg->GlobalData.Size()-VM_FIXEDGLOBALSIZE);
+                                for (
+                                    var i = 0;
+                                    i < NextPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
+                                    i++
+                                )
+                                {
+                                    pPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] =
+                                        NextPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i];
+                                }
+                            }
+                            else
+                            {
+                                pPrg.GlobalData.Clear();
+                            }
+
+                            FilteredDataOffset = NextPrg.FilteredDataOffset;
+                            FilteredDataSize = NextPrg.FilteredDataSize;
+                            if (FilteredData.Length < FilteredDataSize)
+                            {
+                                ArrayPool<byte>.Shared.Return(FilteredData);
+                                FilteredData = ArrayPool<byte>.Shared.Rent(FilteredDataSize);
+                            }
+                            for (var i = 0; i < FilteredDataSize; i++)
+                            {
+                                FilteredData[i] = NextPrg.GlobalData[FilteredDataOffset + i];
+                            }
+
+                            I++;
+                            prgStack[I] = null;
+                        }
+
+                        writeStream.Write(FilteredData, 0, FilteredDataSize);
+                        writtenFileSize += FilteredDataSize;
+                        destUnpSize -= FilteredDataSize;
+                        WrittenBorder = BlockEnd;
+                        WriteSize = (unpPtr - WrittenBorder) & PackDef.MAXWINMASK;
                     }
-                    writeStream.Write(FilteredData, 0, FilteredDataSize);
-                    unpSomeRead = true;
-                    writtenFileSize += FilteredDataSize;
-                    destUnpSize -= FilteredDataSize;
-                    WrittenBorder = BlockEnd;
-                    WriteSize = (unpPtr - WrittenBorder) & PackDef.MAXWINMASK;
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(FilteredData);
+                    }
                 }
                 else
                 {
@@ -695,15 +1054,10 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
 
     private void UnpWriteArea(int startPtr, int endPtr)
     {
-        if (endPtr != startPtr)
-        {
-            unpSomeRead = true;
-        }
         if (endPtr < startPtr)
         {
             UnpWriteData(window, startPtr, -startPtr & PackDef.MAXWINMASK);
             UnpWriteData(window, 0, endPtr);
-            unpAllBuf = true;
         }
         else
         {
@@ -757,19 +1111,27 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
         // System.out.println("copyString(" + length + ", " + distance + ")");
 
         var destPtr = unpPtr - distance;
+        var safeZone = PackDef.MAXWINSIZE - 260;
 
-        // System.out.println(unpPtr+":"+distance);
-        if (destPtr >= 0 && destPtr < PackDef.MAXWINSIZE - 260 && unpPtr < PackDef.MAXWINSIZE - 260)
+        // Fast path: use Array.Copy for bulk operations when in safe zone
+        if (destPtr >= 0 && destPtr < safeZone && unpPtr < safeZone && distance >= length)
         {
-            window[unpPtr++] = window[destPtr++];
-
-            while (--length > 0)
+            // Non-overlapping copy: can use Array.Copy directly
+            Array.Copy(window, destPtr, window, unpPtr, length);
+            unpPtr += length;
+        }
+        else if (destPtr >= 0 && destPtr < safeZone && unpPtr < safeZone)
+        {
+            // Overlapping copy in safe zone: use byte-by-byte to handle self-referential copies
+            for (int i = 0; i < length; i++)
             {
-                window[unpPtr++] = window[destPtr++];
+                window[unpPtr + i] = window[destPtr + i];
             }
+            unpPtr += length;
         }
         else
         {
+            // Slow path with wraparound mask
             while (length-- != 0)
             {
                 window[unpPtr] = window[destPtr++ & PackDef.MAXWINMASK];
@@ -1028,7 +1390,7 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
             vmCode.Add((byte)(GetBits() >> 8));
             AddBits(8);
         }
-        return (AddVMCode(FirstByte, vmCode, Length));
+        return AddVMCode(FirstByte, vmCode);
     }
 
     private bool ReadVMCodePPM()
@@ -1073,12 +1435,12 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
             }
             vmCode.Add((byte)Ch); // VMCode[I]=Ch;
         }
-        return (AddVMCode(FirstByte, vmCode, Length));
+        return AddVMCode(FirstByte, vmCode);
     }
 
-    private bool AddVMCode(int firstByte, List<byte> vmCode, int length)
+    private bool AddVMCode(int firstByte, List<byte> vmCode)
     {
-        var Inp = new BitInput();
+        using var Inp = new BitInput();
         Inp.InitBitInput();
 
         // memcpy(Inp.InBuf,Code,Min(BitInput::MAX_SIZE,CodeSize));
@@ -1086,7 +1448,6 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
         {
             Inp.InBuf[i] = vmCode[i];
         }
-        rarVM.init();
 
         int FiltPos;
         if ((firstByte & 0x80) != 0)
@@ -1199,19 +1560,28 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
             {
                 return (false);
             }
-            Span<byte> VMCode = stackalloc byte[VMCodeSize];
-            for (var I = 0; I < VMCodeSize; I++)
-            {
-                if (Inp.Overflow(3))
-                {
-                    return (false);
-                }
-                VMCode[I] = (byte)(Inp.GetBits() >> 8);
-                Inp.AddBits(8);
-            }
 
-            // VM.Prepare(&VMCode[0],VMCodeSize,&Filter->Prg);
-            rarVM.prepare(VMCode, VMCodeSize, Filter.Program);
+            var VMCode = ArrayPool<byte>.Shared.Rent(VMCodeSize);
+            try
+            {
+                for (var I = 0; I < VMCodeSize; I++)
+                {
+                    if (Inp.Overflow(3))
+                    {
+                        return (false);
+                    }
+
+                    VMCode[I] = (byte)(Inp.GetBits() >> 8);
+                    Inp.AddBits(8);
+                }
+
+                // VM.Prepare(&VMCode[0],VMCodeSize,&Filter->Prg);
+                rarVM.prepare(VMCode.AsSpan(0, VMCodeSize), Filter.Program);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(VMCode);
+            }
         }
         StackFilter.Program.AltCommands = Filter.Program.Commands; // StackFilter->Prg.AltCmd=&Filter->Prg.Cmd[0];
         StackFilter.Program.CommandCount = Filter.Program.CommandCount;
@@ -1317,6 +1687,256 @@ internal sealed partial class Unpack : BitInput, IRarUnpack, IDisposable
             );
             rarVM.execute(Prg);
         }
+    }
+
+    private async System.Threading.Tasks.Task UnpWriteBufAsync(
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        var WrittenBorder = wrPtr;
+        var WriteSize = (unpPtr - WrittenBorder) & PackDef.MAXWINMASK;
+        for (var I = 0; I < prgStack.Count; I++)
+        {
+            var flt = prgStack[I];
+            if (flt is null)
+            {
+                continue;
+            }
+            if (flt.NextWindow)
+            {
+                flt.NextWindow = false;
+                continue;
+            }
+            var BlockStart = flt.BlockStart;
+            var BlockLength = flt.BlockLength;
+            if (((BlockStart - WrittenBorder) & PackDef.MAXWINMASK) < WriteSize)
+            {
+                if (WrittenBorder != BlockStart)
+                {
+                    await UnpWriteAreaAsync(WrittenBorder, BlockStart, cancellationToken)
+                        .ConfigureAwait(false);
+                    WrittenBorder = BlockStart;
+                    WriteSize = (unpPtr - WrittenBorder) & PackDef.MAXWINMASK;
+                }
+                if (BlockLength <= WriteSize)
+                {
+                    var BlockEnd = (BlockStart + BlockLength) & PackDef.MAXWINMASK;
+                    if (BlockStart < BlockEnd || BlockEnd == 0)
+                    {
+                        rarVM.setMemory(0, window, BlockStart, BlockLength);
+                    }
+                    else
+                    {
+                        var FirstPartLength = PackDef.MAXWINSIZE - BlockStart;
+                        rarVM.setMemory(0, window, BlockStart, FirstPartLength);
+                        rarVM.setMemory(FirstPartLength, window, 0, BlockEnd);
+                    }
+
+                    var ParentPrg = filters[flt.ParentFilter].Program;
+                    var Prg = flt.Program;
+
+                    if (ParentPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
+                    {
+                        Prg.GlobalData.Clear();
+                        for (
+                            var i = 0;
+                            i < ParentPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
+                            i++
+                        )
+                        {
+                            Prg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] = ParentPrg.GlobalData[
+                                RarVM.VM_FIXEDGLOBALSIZE + i
+                            ];
+                        }
+                    }
+
+                    ExecuteCode(Prg);
+
+                    if (Prg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
+                    {
+                        if (ParentPrg.GlobalData.Count < Prg.GlobalData.Count)
+                        {
+                            ParentPrg.GlobalData.SetSize(Prg.GlobalData.Count);
+                        }
+
+                        for (var i = 0; i < Prg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE; i++)
+                        {
+                            ParentPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] = Prg.GlobalData[
+                                RarVM.VM_FIXEDGLOBALSIZE + i
+                            ];
+                        }
+                    }
+                    else
+                    {
+                        ParentPrg.GlobalData.Clear();
+                    }
+
+                    var FilteredDataOffset = Prg.FilteredDataOffset;
+                    var FilteredDataSize = Prg.FilteredDataSize;
+                    var FilteredData = ArrayPool<byte>.Shared.Rent(FilteredDataSize);
+                    try
+                    {
+                        Array.Copy(
+                            rarVM.Mem,
+                            FilteredDataOffset,
+                            FilteredData,
+                            0,
+                            FilteredDataSize
+                        );
+
+                        prgStack[I] = null;
+                        while (I + 1 < prgStack.Count)
+                        {
+                            var NextFilter = prgStack[I + 1];
+                            if (
+                                NextFilter is null
+                                || NextFilter.BlockStart != BlockStart
+                                || NextFilter.BlockLength != FilteredDataSize
+                                || NextFilter.NextWindow
+                            )
+                            {
+                                break;
+                            }
+
+                            rarVM.setMemory(0, FilteredData, 0, FilteredDataSize);
+
+                            var pPrg = filters[NextFilter.ParentFilter].Program;
+                            var NextPrg = NextFilter.Program;
+
+                            if (pPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
+                            {
+                                NextPrg.GlobalData.SetSize(pPrg.GlobalData.Count);
+
+                                for (
+                                    var i = 0;
+                                    i < pPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
+                                    i++
+                                )
+                                {
+                                    NextPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] =
+                                        pPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i];
+                                }
+                            }
+
+                            ExecuteCode(NextPrg);
+
+                            if (NextPrg.GlobalData.Count > RarVM.VM_FIXEDGLOBALSIZE)
+                            {
+                                if (pPrg.GlobalData.Count < NextPrg.GlobalData.Count)
+                                {
+                                    pPrg.GlobalData.SetSize(NextPrg.GlobalData.Count);
+                                }
+
+                                for (
+                                    var i = 0;
+                                    i < NextPrg.GlobalData.Count - RarVM.VM_FIXEDGLOBALSIZE;
+                                    i++
+                                )
+                                {
+                                    pPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i] =
+                                        NextPrg.GlobalData[RarVM.VM_FIXEDGLOBALSIZE + i];
+                                }
+                            }
+                            else
+                            {
+                                pPrg.GlobalData.Clear();
+                            }
+
+                            FilteredDataOffset = NextPrg.FilteredDataOffset;
+                            FilteredDataSize = NextPrg.FilteredDataSize;
+                            if (FilteredData.Length < FilteredDataSize)
+                            {
+                                ArrayPool<byte>.Shared.Return(FilteredData);
+                                FilteredData = ArrayPool<byte>.Shared.Rent(FilteredDataSize);
+                            }
+                            for (var i = 0; i < FilteredDataSize; i++)
+                            {
+                                FilteredData[i] = NextPrg.GlobalData[FilteredDataOffset + i];
+                            }
+
+                            I++;
+                            prgStack[I] = null;
+                        }
+
+                        await writeStream
+                            .WriteAsync(FilteredData, 0, FilteredDataSize, cancellationToken)
+                            .ConfigureAwait(false);
+                        writtenFileSize += FilteredDataSize;
+                        destUnpSize -= FilteredDataSize;
+                        WrittenBorder = BlockEnd;
+                        WriteSize = (unpPtr - WrittenBorder) & PackDef.MAXWINMASK;
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(FilteredData);
+                    }
+                }
+                else
+                {
+                    for (var J = I; J < prgStack.Count; J++)
+                    {
+                        var filt = prgStack[J];
+                        if (filt != null && filt.NextWindow)
+                        {
+                            filt.NextWindow = false;
+                        }
+                    }
+                    wrPtr = WrittenBorder;
+                    return;
+                }
+            }
+        }
+
+        await UnpWriteAreaAsync(WrittenBorder, unpPtr, cancellationToken).ConfigureAwait(false);
+        wrPtr = unpPtr;
+    }
+
+    private async System.Threading.Tasks.Task UnpWriteAreaAsync(
+        int startPtr,
+        int endPtr,
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        if (endPtr < startPtr)
+        {
+            await UnpWriteDataAsync(
+                    window,
+                    startPtr,
+                    -startPtr & PackDef.MAXWINMASK,
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            await UnpWriteDataAsync(window, 0, endPtr, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            await UnpWriteDataAsync(window, startPtr, endPtr - startPtr, cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private async System.Threading.Tasks.Task UnpWriteDataAsync(
+        byte[] data,
+        int offset,
+        int size,
+        System.Threading.CancellationToken cancellationToken = default
+    )
+    {
+        if (destUnpSize < 0)
+        {
+            return;
+        }
+        var writeSize = size;
+        if (writeSize > destUnpSize)
+        {
+            writeSize = (int)destUnpSize;
+        }
+        await writeStream
+            .WriteAsync(data, offset, writeSize, cancellationToken)
+            .ConfigureAwait(false);
+
+        writtenFileSize += size;
+        destUnpSize -= size;
     }
 
     private void CleanUp()

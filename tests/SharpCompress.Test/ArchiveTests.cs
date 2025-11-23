@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Xz;
@@ -255,16 +256,10 @@ public class ArchiveTests : ReaderTests
     protected void ArchiveExtractToDirectory(
         string testArchive,
         ReaderOptions? readerOptions = null
-    ) => ArchiveExtractToDirectory(ArchiveFactory.AutoFactory, testArchive, readerOptions);
-
-    protected void ArchiveExtractToDirectory(
-        IArchiveFactory archiveFactory,
-        string testArchive,
-        ReaderOptions? readerOptions = null
     )
     {
         testArchive = Path.Combine(TEST_ARCHIVES_PATH, testArchive);
-        using (var archive = archiveFactory.Open(new FileInfo(testArchive), readerOptions))
+        using (var archive = ArchiveFactory.Open(new FileInfo(testArchive), readerOptions))
         {
             archive.ExtractToDirectory(SCRATCH_FILES_PATH);
         }
@@ -342,13 +337,12 @@ public class ArchiveTests : ReaderTests
     {
         testArchive = Path.Combine(TEST_ARCHIVES_PATH, testArchive);
         using var archive = ArchiveFactory.Open(testArchive);
-        using var reader = archive.ExtractAllEntries();
-        while (reader.MoveToNextEntry())
+        foreach (var entry in archive.Entries)
         {
-            if (!reader.Entry.IsDirectory)
+            if (!entry.IsDirectory)
             {
                 var memory = new MemoryStream();
-                reader.WriteEntryTo(memory);
+                entry.WriteTo(memory);
 
                 memory.Position = 0;
 
@@ -575,5 +569,89 @@ public class ArchiveTests : ReaderTests
         var crc = CalculateCrc32(extractedData);
 
         return (extractedData, crc);
+    }
+
+    protected async Task ArchiveStreamReadAsync(
+        string testArchive,
+        ReaderOptions? readerOptions = null
+    )
+    {
+        testArchive = Path.Combine(TEST_ARCHIVES_PATH, testArchive);
+        await ArchiveStreamReadAsync(
+            ArchiveFactory.AutoFactory,
+            readerOptions,
+            new[] { testArchive }
+        );
+    }
+
+    protected async Task ArchiveStreamReadAsync(
+        IArchiveFactory archiveFactory,
+        ReaderOptions? readerOptions,
+        IEnumerable<string> testArchives
+    )
+    {
+        foreach (var path in testArchives)
+        {
+            using (
+                var stream = SharpCompressStream.Create(
+                    File.OpenRead(path),
+                    leaveOpen: true,
+                    throwOnDispose: true
+                )
+            )
+            using (var archive = archiveFactory.Open(stream, readerOptions))
+            {
+                try
+                {
+                    foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+                    {
+                        await entry.WriteToDirectoryAsync(
+                            SCRATCH_FILES_PATH,
+                            new ExtractionOptions { ExtractFullPath = true, Overwrite = true }
+                        );
+                    }
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    //SevenZipArchive_BZip2_Split test needs this
+                    stream.ThrowOnDispose = false;
+                    throw;
+                }
+                stream.ThrowOnDispose = false;
+            }
+            VerifyFiles();
+        }
+    }
+
+    [Fact]
+    public void ArchiveFactory_Open_WithPreWrappedStream()
+    {
+        // Test that ArchiveFactory.Open works correctly with a stream that's already wrapped
+        // This addresses the issue where ZIP files fail to open on Linux
+        var testArchive = Path.Combine(TEST_ARCHIVES_PATH, "Zip.bzip2.noEmptyDirs.zip");
+
+        // Open with a pre-wrapped stream
+        using (var fileStream = File.OpenRead(testArchive))
+        using (var wrappedStream = SharpCompressStream.Create(fileStream, bufferSize: 32768))
+        using (var archive = ArchiveFactory.Open(wrappedStream))
+        {
+            Assert.Equal(ArchiveType.Zip, archive.Type);
+            Assert.Equal(3, archive.Entries.Count());
+        }
+    }
+
+    [Fact]
+    public void ArchiveFactory_Open_WithRawFileStream()
+    {
+        // Test that ArchiveFactory.Open works correctly with a raw FileStream
+        // This is the common use case reported in the issue
+        var testArchive = Path.Combine(TEST_ARCHIVES_PATH, "Zip.bzip2.noEmptyDirs.zip");
+
+        using (var stream = File.OpenRead(testArchive))
+        using (var archive = ArchiveFactory.Open(stream))
+        {
+            Assert.Equal(ArchiveType.Zip, archive.Type);
+            Assert.Equal(3, archive.Entries.Count());
+        }
     }
 }

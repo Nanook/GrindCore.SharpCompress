@@ -18,6 +18,7 @@ public abstract class Factory : IFactory
         RegisterFactory(new GZipFactory());
         RegisterFactory(new TarFactory());
         RegisterFactory(new ArcFactory());
+        RegisterFactory(new ArjFactory());
     }
 
     private static readonly HashSet<Factory> _factories = new();
@@ -34,7 +35,7 @@ public abstract class Factory : IFactory
     /// <exception cref="ArgumentNullException"><paramref name="factory"/> must not be null.</exception>
     public static void RegisterFactory(Factory factory)
     {
-        factory.CheckNotNull(nameof(factory));
+        factory.NotNull(nameof(factory));
 
         _factories.Add(factory);
     }

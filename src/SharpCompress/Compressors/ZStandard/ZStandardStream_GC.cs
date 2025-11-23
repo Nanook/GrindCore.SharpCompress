@@ -19,6 +19,17 @@ public sealed class ZStandardStream : Stream, IStreamStack
     private readonly bool _leaveOpen;
     private bool _disposed;
 
+    internal static bool IsZStandard(Stream stream)
+    {
+        var br = new BinaryReader(stream);
+        var magic = br.ReadUInt32();
+        if (ZstandardConstants.MAGIC != magic)
+        {
+            return false;
+        }
+        return true;
+    }
+
     /// <summary>
     /// Initializes a new instance of the ZStandardStream class for compression
     /// </summary>
@@ -32,7 +43,7 @@ public sealed class ZStandardStream : Stream, IStreamStack
             new CompressionOptions
             {
                 Type = (Nanook.GrindCore.CompressionType)compressionLevel,
-                BufferSize = DefaultBufferSize > 0 ? DefaultBufferSize : 0x10000,
+                BufferSize = DefaultBufferSize > 0 ? DefaultBufferSize : 0x200000,
             }
         );
         _leaveOpen = leaveOpen;
@@ -50,7 +61,7 @@ public sealed class ZStandardStream : Stream, IStreamStack
             new CompressionOptions
             {
                 Type = Nanook.GrindCore.CompressionType.Decompress,
-                BufferSize = DefaultBufferSize > 0 ? DefaultBufferSize : 0x10000,
+                BufferSize = DefaultBufferSize > 0 ? DefaultBufferSize : 0x200000,
             }
         );
         _leaveOpen = leaveOpen;
@@ -76,7 +87,7 @@ public sealed class ZStandardStream : Stream, IStreamStack
                 mode == CompressionMode.Compress
                     ? (Nanook.GrindCore.CompressionType)compressionLevel
                     : Nanook.GrindCore.CompressionType.Decompress,
-            BufferSize = DefaultBufferSize > 0 ? DefaultBufferSize : 0x10000,
+            BufferSize = DefaultBufferSize > 0 ? DefaultBufferSize : 0x200000,
         };
 
         _grindCoreStream = new GrindCoreZStdStream(baseStream, options);
@@ -109,7 +120,7 @@ public sealed class ZStandardStream : Stream, IStreamStack
 
     #region IStreamStack Implementation
 
-    public int DefaultBufferSize { get; set; } = 0x10000;
+    public int DefaultBufferSize { get; set; } = 0x200000;
 
     public Stream BaseStream()
     {

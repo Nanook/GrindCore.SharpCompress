@@ -24,13 +24,13 @@ namespace SharpCompress.Readers.Arc
         /// <returns></returns>
         public static ArcReader Open(Stream stream, ReaderOptions? options = null)
         {
-            stream.CheckNotNull(nameof(stream));
+            stream.NotNull(nameof(stream));
             return new ArcReader(stream, options ?? new ReaderOptions());
         }
 
         protected override IEnumerable<ArcEntry> GetEntries(Stream stream)
         {
-            ArcEntryHeader headerReader = new ArcEntryHeader(new ArchiveEncoding());
+            ArcEntryHeader headerReader = new ArcEntryHeader(Options.ArchiveEncoding);
             ArcEntryHeader? header;
             while ((header = headerReader.ReadHeader(stream)) != null)
             {

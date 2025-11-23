@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Common.Tar;
 using SharpCompress.Common.Tar.Headers;
@@ -22,7 +24,7 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
     /// <param name="readerOptions"></param>
     public static TarArchive Open(string filePath, ReaderOptions? readerOptions = null)
     {
-        filePath.CheckNotNullOrEmpty(nameof(filePath));
+        filePath.NotNullOrEmpty(nameof(filePath));
         return Open(new FileInfo(filePath), readerOptions ?? new ReaderOptions());
     }
 
@@ -33,7 +35,7 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
     /// <param name="readerOptions"></param>
     public static TarArchive Open(FileInfo fileInfo, ReaderOptions? readerOptions = null)
     {
-        fileInfo.CheckNotNull(nameof(fileInfo));
+        fileInfo.NotNull(nameof(fileInfo));
         return new TarArchive(
             new SourceStream(
                 fileInfo,
@@ -53,7 +55,7 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
         ReaderOptions? readerOptions = null
     )
     {
-        fileInfos.CheckNotNull(nameof(fileInfos));
+        fileInfos.NotNull(nameof(fileInfos));
         var files = fileInfos.ToArray();
         return new TarArchive(
             new SourceStream(
@@ -71,7 +73,7 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
     /// <param name="readerOptions"></param>
     public static TarArchive Open(IEnumerable<Stream> streams, ReaderOptions? readerOptions = null)
     {
-        streams.CheckNotNull(nameof(streams));
+        streams.NotNull(nameof(streams));
         var strms = streams.ToArray();
         return new TarArchive(
             new SourceStream(
@@ -89,7 +91,7 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
     /// <param name="readerOptions"></param>
     public static TarArchive Open(Stream stream, ReaderOptions? readerOptions = null)
     {
-        stream.CheckNotNull(nameof(stream));
+        stream.NotNull(nameof(stream));
 
         if (stream is not { CanSeek: true })
         {
@@ -178,7 +180,7 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
                         using (var entryStream = entry.OpenEntryStream())
                         {
                             using var memoryStream = new MemoryStream();
-                            entryStream.TransferTo(memoryStream);
+                            entryStream.CopyTo(memoryStream);
                             memoryStream.Position = 0;
                             var bytes = memoryStream.ToArray();
 
@@ -222,6 +224,11 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
             closeStream
         );
 
+    protected override TarArchiveEntry CreateDirectoryEntry(
+        string directoryPath,
+        DateTime? modified
+    ) => new TarWritableArchiveEntry(this, directoryPath, modified);
+
     protected override void SaveTo(
         Stream stream,
         WriterOptions options,
@@ -230,15 +237,62 @@ public class TarArchive : AbstractWritableArchive<TarArchiveEntry, TarVolume>
     )
     {
         using var writer = new TarWriter(stream, new TarWriterOptions(options));
-        foreach (var entry in oldEntries.Concat(newEntries).Where(x => !x.IsDirectory))
+        foreach (var entry in oldEntries.Concat(newEntries))
         {
-            using var entryStream = entry.OpenEntryStream();
-            writer.Write(
-                entry.Key.NotNull("Entry Key is null"),
-                entryStream,
-                entry.LastModifiedTime,
-                entry.Size
-            );
+            if (entry.IsDirectory)
+            {
+                writer.WriteDirectory(
+                    entry.Key.NotNull("Entry Key is null"),
+                    entry.LastModifiedTime
+                );
+            }
+            else
+            {
+                using var entryStream = entry.OpenEntryStream();
+                writer.Write(
+                    entry.Key.NotNull("Entry Key is null"),
+                    entryStream,
+                    entry.LastModifiedTime,
+                    entry.Size
+                );
+            }
+        }
+    }
+
+    protected override async Task SaveToAsync(
+        Stream stream,
+        WriterOptions options,
+        IEnumerable<TarArchiveEntry> oldEntries,
+        IEnumerable<TarArchiveEntry> newEntries,
+        CancellationToken cancellationToken = default
+    )
+    {
+        using var writer = new TarWriter(stream, new TarWriterOptions(options));
+        foreach (var entry in oldEntries.Concat(newEntries))
+        {
+            if (entry.IsDirectory)
+            {
+                await writer
+                    .WriteDirectoryAsync(
+                        entry.Key.NotNull("Entry Key is null"),
+                        entry.LastModifiedTime,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                using var entryStream = entry.OpenEntryStream();
+                await writer
+                    .WriteAsync(
+                        entry.Key.NotNull("Entry Key is null"),
+                        entryStream,
+                        entry.LastModifiedTime,
+                        entry.Size,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+            }
         }
     }
 

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Common.Zip;
 using SharpCompress.Common.Zip.Headers;
@@ -43,7 +45,7 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
     /// <param name="readerOptions"></param>
     public static ZipArchive Open(string filePath, ReaderOptions? readerOptions = null)
     {
-        filePath.CheckNotNullOrEmpty(nameof(filePath));
+        filePath.NotNullOrEmpty(nameof(filePath));
         return Open(new FileInfo(filePath), readerOptions ?? new ReaderOptions());
     }
 
@@ -54,7 +56,7 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
     /// <param name="readerOptions"></param>
     public static ZipArchive Open(FileInfo fileInfo, ReaderOptions? readerOptions = null)
     {
-        fileInfo.CheckNotNull(nameof(fileInfo));
+        fileInfo.NotNull(nameof(fileInfo));
         return new ZipArchive(
             new SourceStream(
                 fileInfo,
@@ -74,7 +76,7 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
         ReaderOptions? readerOptions = null
     )
     {
-        fileInfos.CheckNotNull(nameof(fileInfos));
+        fileInfos.NotNull(nameof(fileInfos));
         var files = fileInfos.ToArray();
         return new ZipArchive(
             new SourceStream(
@@ -92,7 +94,7 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
     /// <param name="readerOptions"></param>
     public static ZipArchive Open(IEnumerable<Stream> streams, ReaderOptions? readerOptions = null)
     {
-        streams.CheckNotNull(nameof(streams));
+        streams.NotNull(nameof(streams));
         var strms = streams.ToArray();
         return new ZipArchive(
             new SourceStream(
@@ -110,7 +112,7 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
     /// <param name="readerOptions"></param>
     public static ZipArchive Open(Stream stream, ReaderOptions? readerOptions = null)
     {
-        stream.CheckNotNull(nameof(stream));
+        stream.NotNull(nameof(stream));
 
         if (stream is not { CanSeek: true })
         {
@@ -306,14 +308,59 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
     )
     {
         using var writer = new ZipWriter(stream, new ZipWriterOptions(options));
-        foreach (var entry in oldEntries.Concat(newEntries).Where(x => !x.IsDirectory))
+        foreach (var entry in oldEntries.Concat(newEntries))
         {
-            using var entryStream = entry.OpenEntryStream();
-            writer.Write(
-                entry.Key.NotNull("Entry Key is null"),
-                entryStream,
-                entry.LastModifiedTime
-            );
+            if (entry.IsDirectory)
+            {
+                writer.WriteDirectory(
+                    entry.Key.NotNull("Entry Key is null"),
+                    entry.LastModifiedTime
+                );
+            }
+            else
+            {
+                using var entryStream = entry.OpenEntryStream();
+                writer.Write(
+                    entry.Key.NotNull("Entry Key is null"),
+                    entryStream,
+                    entry.LastModifiedTime
+                );
+            }
+        }
+    }
+
+    protected override async Task SaveToAsync(
+        Stream stream,
+        WriterOptions options,
+        IEnumerable<ZipArchiveEntry> oldEntries,
+        IEnumerable<ZipArchiveEntry> newEntries,
+        CancellationToken cancellationToken = default
+    )
+    {
+        using var writer = new ZipWriter(stream, new ZipWriterOptions(options));
+        foreach (var entry in oldEntries.Concat(newEntries))
+        {
+            if (entry.IsDirectory)
+            {
+                await writer
+                    .WriteDirectoryAsync(
+                        entry.Key.NotNull("Entry Key is null"),
+                        entry.LastModifiedTime,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                using var entryStream = entry.OpenEntryStream();
+                await writer
+                    .WriteAsync(
+                        entry.Key.NotNull("Entry Key is null"),
+                        entryStream,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+            }
         }
     }
 
@@ -324,6 +371,11 @@ public class ZipArchive : AbstractWritableArchive<ZipArchiveEntry, ZipVolume>
         DateTime? modified,
         bool closeStream
     ) => new ZipWritableArchiveEntry(this, source, filePath, size, modified, closeStream);
+
+    protected override ZipArchiveEntry CreateDirectoryEntry(
+        string directoryPath,
+        DateTime? modified
+    ) => new ZipWritableArchiveEntry(this, directoryPath, modified);
 
     public static ZipArchive Create() => new();
 
