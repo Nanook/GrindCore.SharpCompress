@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.IO;
 using SharpCompress.Writers;
@@ -94,6 +96,9 @@ public abstract class AbstractWritableArchive<TEntry, TVolume>
         DateTime? modified
     ) => AddEntry(key, source, closeStream, size, modified);
 
+    IArchiveEntry IWritableArchive.AddDirectoryEntry(string key, DateTime? modified) =>
+        AddDirectoryEntry(key, modified);
+
     public TEntry AddEntry(
         string key,
         Stream source,
@@ -134,11 +139,39 @@ public abstract class AbstractWritableArchive<TEntry, TVolume>
         return false;
     }
 
+    public TEntry AddDirectoryEntry(string key, DateTime? modified = null)
+    {
+        if (key.Length > 0 && key[0] is '/' or '\\')
+        {
+            key = key.Substring(1);
+        }
+        if (DoesKeyMatchExisting(key))
+        {
+            throw new ArchiveException("Cannot add entry with duplicate key: " + key);
+        }
+        var entry = CreateDirectoryEntry(key, modified);
+        newEntries.Add(entry);
+        RebuildModifiedCollection();
+        return entry;
+    }
+
     public void SaveTo(Stream stream, WriterOptions options)
     {
         //reset streams of new entries
         newEntries.Cast<IWritableArchiveEntry>().ForEach(x => x.Stream.Seek(0, SeekOrigin.Begin));
         SaveTo(stream, options, OldEntries, newEntries);
+    }
+
+    public async Task SaveToAsync(
+        Stream stream,
+        WriterOptions options,
+        CancellationToken cancellationToken = default
+    )
+    {
+        //reset streams of new entries
+        newEntries.Cast<IWritableArchiveEntry>().ForEach(x => x.Stream.Seek(0, SeekOrigin.Begin));
+        await SaveToAsync(stream, options, OldEntries, newEntries, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     protected TEntry CreateEntry(
@@ -166,11 +199,21 @@ public abstract class AbstractWritableArchive<TEntry, TVolume>
         bool closeStream
     );
 
+    protected abstract TEntry CreateDirectoryEntry(string key, DateTime? modified);
+
     protected abstract void SaveTo(
         Stream stream,
         WriterOptions options,
         IEnumerable<TEntry> oldEntries,
         IEnumerable<TEntry> newEntries
+    );
+
+    protected abstract Task SaveToAsync(
+        Stream stream,
+        WriterOptions options,
+        IEnumerable<TEntry> oldEntries,
+        IEnumerable<TEntry> newEntries,
+        CancellationToken cancellationToken = default
     );
 
     public override void Dispose()

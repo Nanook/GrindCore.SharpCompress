@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Common.Rar;
 using SharpCompress.Common.Rar.Headers;
@@ -68,20 +70,50 @@ public class RarArchiveEntry : RarEntry, IArchiveEntry
 
     public Stream OpenEntryStream()
     {
+        RarStream stream;
         if (IsRarV3)
         {
-            return new RarStream(
+            stream = new RarStream(
                 archive.UnpackV1.Value,
                 FileHeader,
                 new MultiVolumeReadOnlyStream(Parts.Cast<RarFilePart>(), archive)
             );
         }
+        else
+        {
+            stream = new RarStream(
+                archive.UnpackV2017.Value,
+                FileHeader,
+                new MultiVolumeReadOnlyStream(Parts.Cast<RarFilePart>(), archive)
+            );
+        }
 
-        return new RarStream(
-            archive.UnpackV2017.Value,
-            FileHeader,
-            new MultiVolumeReadOnlyStream(Parts.Cast<RarFilePart>(), archive)
-        );
+        stream.Initialize();
+        return stream;
+    }
+
+    public async Task<Stream> OpenEntryStreamAsync(CancellationToken cancellationToken = default)
+    {
+        RarStream stream;
+        if (IsRarV3)
+        {
+            stream = new RarStream(
+                archive.UnpackV1.Value,
+                FileHeader,
+                new MultiVolumeReadOnlyStream(Parts.Cast<RarFilePart>(), archive)
+            );
+        }
+        else
+        {
+            stream = new RarStream(
+                archive.UnpackV2017.Value,
+                FileHeader,
+                new MultiVolumeReadOnlyStream(Parts.Cast<RarFilePart>(), archive)
+            );
+        }
+
+        await stream.InitializeAsync(cancellationToken);
+        return stream;
     }
 
     public bool IsComplete

@@ -32,4 +32,5 @@ public enum CompressionType
     ZStandard,
     LZ4,
     Brotli,
+    ArjLZ77,
 }

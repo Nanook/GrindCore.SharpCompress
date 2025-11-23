@@ -1,25 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyTitle>GrindCore.SharpCompress - Native Decompression/Compression</AssemblyTitle>
+    <AssemblyTitle>SharpCompress - Pure C# Decompression/Compression</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionPrefix>0.40.4</VersionPrefix>
-    <VersionSuffix>alpha</VersionSuffix>
-    <AssemblyVersion>0.40.4</AssemblyVersion>
-    <FileVersion>0.40.4</FileVersion>
-    <Authors>Adam Hathcock, Nanook</Authors>
-    <TargetFrameworks>net48;net481;netstandard2.0;net6.0;net8.0;net9.0</TargetFrameworks>
-    <AssemblyName>GrindCore.SharpCompress</AssemblyName>
+    <VersionPrefix>0.41.0</VersionPrefix>
+    <AssemblyVersion>0.41.0</AssemblyVersion>
+    <FileVersion>0.41.0</FileVersion>
+    <Authors>Adam Hathcock</Authors>
+    <TargetFrameworks>net48;net481;netstandard2.0;net6.0;net8.0</TargetFrameworks>
+    <AssemblyName>SharpCompress</AssemblyName>
     <AssemblyOriginatorKeyFile>../../SharpCompress.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <PackageId>GrindCore.SharpCompress</PackageId>
-    <PackageTags>native;zstandard;lz4;rar;unrar;zip;unzip;bzip2;gzip;tar;7zip;lzip;xz;brotli;lzma;lzma2;performance;grindcore;</PackageTags>
-    <PackageProjectUrl>https://github.com/Nanook/GrindCore.SharpCompress</PackageProjectUrl>
+    <PackageId>SharpCompress</PackageId>
+    <PackageTags>rar;unrar;zip;unzip;bzip2;gzip;tar;7zip;lzip;xz</PackageTags>
+    <PackageProjectUrl>https://github.com/adamhathcock/sharpcompress</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Copyright>Copyright (c) 2025 Adam Hathcock, Nanook</Copyright>
-    <Description>GrindCore.SharpCompress is an enhanced version of SharpCompress with native compression performance via GrindCore. Supports .NET 9, .NET 8, .NET 6, .NET Standard 2.0, and .NET Framework 4.8+ with native performance for GZip, Deflate, LZMA, ZStandard, LZ4, and Brotli compression.</Description>
+    <Copyright>Copyright (c) 2025  Adam Hathcock</Copyright>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <Description>SharpCompress is a compression library for NET Standard 2.0/NET 4.8/NET 4.8.1/NET 6.0/NET 8.0 that can unrar, decompress 7zip, decompress xz, zip/unzip, tar/untar lzip/unlzip, bzip2/unbzip2 and gzip/ungzip with forward-only reading and file random access APIs. Write support for zip/tar/bzip2/gzip is implemented.</Description>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DebugType>embedded</DebugType>
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -27,63 +28,27 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0' or '$(TargetFramework)' == 'net8.0' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
     <DefineConstants>$(DefineConstants);DEBUG_STREAMS</DefineConstants>
   </PropertyGroup>
-  <!-- GrindCore build configuration - Default to enabled -->
-  <PropertyGroup>
-    <UseGrindCore Condition="'$(UseGrindCore)' == ''">true</UseGrindCore>
-  </PropertyGroup>
-  <!-- Define GRINDCORE  -->
-  <PropertyGroup Condition="'$(UseGrindCore)' == 'true'">
-    <DefineConstants>$(DefineConstants);GRINDCORE</DefineConstants>
-  </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="ZstdSharp.Port" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net481' ">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="System.Text.Encoding.CodePages" />
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
   </ItemGroup>
-  <!-- GrindCore: Remove unused files -->
-  <ItemGroup Condition="'$(UseGrindCore)' == 'true'">
-    <Compile Remove="Compressors\Deflate\DeflateStream.cs" />
-    <Compile Remove="Compressors\Deflate\GZipStream.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibStream.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaStream.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibBaseStream.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibCodec.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibConstants.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibException.cs" />
-    <Compile Remove="Checksums\CRC32.cs" />
-    <Compile Remove="Checksums\Adler32.cs" />
-    <Compile Remove="Compressors\Deflate\Tree.cs" />
-    <Compile Remove="Compressors\Deflate\Inflate.cs" />
-    <Compile Remove="Compressors\Deflate\InfTree.cs" />
-    <Compile Remove="Compressors\Deflate\StaticTree.cs" />
-    <Compile Remove="Compressors\Deflate\InflateManager.cs" />
-    <Compile Remove="Compressors\Deflate\DeflateManager.cs" />
-    <Compile Remove="Compressors\Deflate\InflateBlocks.cs" />
-    <Compile Remove="Compressors\Deflate\InflateCodes.cs" />
-    <Compile Remove="Compressors\Deflate\InternalConstants.cs" />
-    <Compile Remove="Compressors\Deflate\InternalInflateConstants.cs" />
-    <Compile Remove="Compressors\LZMA\LZ\*.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaEncoder.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaDecoder.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaBase.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaStream.cs" />
-  </ItemGroup>
-  <!-- NOT GrindCore -->
-  <ItemGroup Condition="'$(UseGrindCore)' != 'true'">
-    <Compile Remove="Compressors\Deflate\DeflateStream_GC.cs" />
-    <Compile Remove="Compressors\Deflate\GZipStream_GC.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibStream_GC.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaStream_GC.cs" />
-  </ItemGroup>
-  <!-- GrindCore project reference - only when GrindCore is enabled -->
-  <ItemGroup Condition="'$(UseGrindCore)' == 'true'">
-    <PackageReference Include="GrindCore" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Text.Encoding.CodePages" />
     <PackageReference Include="System.Memory" />
