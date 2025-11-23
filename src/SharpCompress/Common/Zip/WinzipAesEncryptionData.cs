@@ -20,7 +20,6 @@ internal class WinzipAesEncryptionData
 
         int keySizeBytes = KeySizeInBytes;
         int totalBytes = (keySizeBytes * 2) + 2; // key + iv + verify
-
 #if NET6_0_OR_GREATER
         // Modern frameworks: derive all bytes in one call
         var derived = Rfc2898DeriveBytes.Pbkdf2(
