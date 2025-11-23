@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using Xunit;
@@ -60,14 +60,28 @@ public class ZipZstdLevel19WriteExtractTests : ArchiveTests
     {
         var sizes = new int[]
         {
-            0, 1, 3, 7, 15, // very small
-            1023, 1024, 1025, // around 1 KiB boundary
-            2047, 2048, 2049, // around 2 KiB
-            4095, 4096, 4097, // around 4 KiB
-            65535, 65536, 65537, // around 64 KiB boundary
+            0,
+            1,
+            3,
+            7,
+            15, // very small
+            1023,
+            1024,
+            1025, // around 1 KiB boundary
+            2047,
+            2048,
+            2049, // around 2 KiB
+            4095,
+            4096,
+            4097, // around 4 KiB
+            65535,
+            65536,
+            65537, // around 64 KiB boundary
             100000, // arbitrary non-boundary
-            262143, 262144, 262145, // around 256 KiB
-            1048579 // ~1 MiB + 3
+            262143,
+            262144,
+            262145, // around 256 KiB
+            1048579, // ~1 MiB + 3
         };
 
         var files = new Dictionary<string, byte[]>();
@@ -86,7 +100,10 @@ public class ZipZstdLevel19WriteExtractTests : ArchiveTests
         Assert.Equal(files.Count, entries.Count);
 
         // Build expected map for VerifyArchiveContent which validates CRC and content
-        var expectedMap = files.ToDictionary(kvp => kvp.Key, kvp => (kvp.Value, CalculateCrc32(kvp.Value)));
+        var expectedMap = files.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (kvp.Value, CalculateCrc32(kvp.Value))
+        );
 
         // Use existing helper to verify archive contents (lengths, CRCs, and spot-checks)
         VerifyArchiveContent(zipStream, expectedMap);

@@ -536,7 +536,17 @@ public class LzmaStreamAsyncTests
 
         // Use the project's LzmaStream to decompress
         var compressedSize = input.Length - input.Position;
-        using (var lzma = new LzmaStream(properties, input, compressedSize, fileLength, null, false, leaveOpen: true))
+        using (
+            var lzma = new LzmaStream(
+                properties,
+                input,
+                compressedSize,
+                fileLength,
+                null,
+                false,
+                leaveOpen: true
+            )
+        )
         {
             await lzma.CopyToAsync(output).ConfigureAwait(false);
         }
@@ -549,7 +559,12 @@ public class LzmaStreamAsyncTests
     {
         using var inputStream = new MemoryStream(LzmaResultData);
         using MemoryStream outputStream = new();
-        using var lzmaStream = new LzmaStream(LzmaEncoderProperties.Default, false, outputStream, leaveOpen: true);
+        using var lzmaStream = new LzmaStream(
+            LzmaEncoderProperties.Default,
+            false,
+            outputStream,
+            leaveOpen: true
+        );
         await inputStream.CopyToAsync(lzmaStream).ConfigureAwait(false);
         lzmaStream.Close();
         Assert.NotEqual(0, outputStream.Length);
@@ -560,7 +575,12 @@ public class LzmaStreamAsyncTests
     {
         var input = new MemoryStream(LzmaResultData);
         var compressed = new MemoryStream();
-        var lzmaEncodingStream = new LzmaStream(LzmaEncoderProperties.Default, false, compressed, leaveOpen: true);
+        var lzmaEncodingStream = new LzmaStream(
+            LzmaEncoderProperties.Default,
+            false,
+            compressed,
+            leaveOpen: true
+        );
         await input.CopyToAsync(lzmaEncodingStream).ConfigureAwait(false);
         lzmaEncodingStream.Close();
         compressed.Position = 0;

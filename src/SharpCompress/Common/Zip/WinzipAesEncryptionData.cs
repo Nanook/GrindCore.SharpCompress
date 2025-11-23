@@ -1,5 +1,4 @@
 using System;
-using System.Buffers.Binary;
 using System.Security.Cryptography;
 
 namespace SharpCompress.Common.Zip;
@@ -19,24 +18,38 @@ internal class WinzipAesEncryptionData
     {
         _keySize = keySize;
 
-#if NETFRAMEWORK || NETSTANDARD2_0
-        var rfc2898 = new Rfc2898DeriveBytes(password, salt, RFC2898_ITERATIONS);
-#else
-        var rfc2898 = new Rfc2898DeriveBytes(
+        int keySizeBytes = KeySizeInBytes;
+        int totalBytes = (keySizeBytes * 2) + 2; // key + iv + verify
+
+#if NET6_0_OR_GREATER
+        // Modern frameworks: derive all bytes in one call
+        var derived = Rfc2898DeriveBytes.Pbkdf2(
             password,
             salt,
             RFC2898_ITERATIONS,
-            HashAlgorithmName.SHA1
+            HashAlgorithmName.SHA1,
+            totalBytes
         );
+#else
+        // Older frameworks: fall back to instance-based derivation
+#pragma warning disable SYSLIB0060
+        using var rfc2898 = new Rfc2898DeriveBytes(password, salt, RFC2898_ITERATIONS);
+        var derived = rfc2898.GetBytes(totalBytes);
+#pragma warning restore SYSLIB0060
 #endif
 
-        KeyBytes = rfc2898.GetBytes(KeySizeInBytes); // 16 or 24 or 32 ???
-        IvBytes = rfc2898.GetBytes(KeySizeInBytes);
-        var generatedVerifyValue = rfc2898.GetBytes(2);
+        KeyBytes = new byte[keySizeBytes];
+        IvBytes = new byte[keySizeBytes];
+        var verifyBytes = new byte[2];
 
-        var verify = BinaryPrimitives.ReadInt16LittleEndian(passwordVerifyValue);
-        var generated = BinaryPrimitives.ReadInt16LittleEndian(generatedVerifyValue);
-        if (verify != generated)
+        Array.Copy(derived, 0, KeyBytes, 0, keySizeBytes);
+        Array.Copy(derived, keySizeBytes, IvBytes, 0, keySizeBytes);
+        Array.Copy(derived, keySizeBytes * 2, verifyBytes, 0, 2);
+
+        short expected = ReadInt16LittleEndian(passwordVerifyValue);
+        short actual = ReadInt16LittleEndian(verifyBytes);
+
+        if (expected != actual)
         {
             throw new InvalidFormatException("bad password");
         }
@@ -56,4 +69,13 @@ internal class WinzipAesEncryptionData
             WinzipAesKeySize.KeySize256 => 32,
             _ => throw new InvalidOperationException(),
         };
+
+    private static short ReadInt16LittleEndian(byte[] data)
+    {
+        if (data == null || data.Length < 2)
+        {
+            throw new ArgumentException("Data must be at least 2 bytes long", nameof(data));
+        }
+        return (short)(data[0] | (data[1] << 8));
+    }
 }

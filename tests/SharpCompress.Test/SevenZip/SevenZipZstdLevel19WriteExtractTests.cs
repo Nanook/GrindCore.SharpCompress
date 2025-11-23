@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using SharpCompress.Archives.SevenZip;
 using SharpCompress.Common;
-using SharpCompress.Writers;
 using SharpCompress.Test.Zip;
+using SharpCompress.Writers;
 using Xunit;
 
 namespace SharpCompress.Test.SevenZip;

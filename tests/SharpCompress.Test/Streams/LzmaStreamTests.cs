@@ -533,7 +533,17 @@ public class LzmaStreamTests
 
         // Use the project's LzmaStream to decompress
         var compressedSize = input.Length - input.Position;
-        using (var lzma = new LzmaStream(properties, input, compressedSize, fileLength, null, false, leaveOpen: true))
+        using (
+            var lzma = new LzmaStream(
+                properties,
+                input,
+                compressedSize,
+                fileLength,
+                null,
+                false,
+                leaveOpen: true
+            )
+        )
         {
             lzma.CopyTo(output);
         }

@@ -9,19 +9,19 @@ namespace SharpCompress;
 internal static class NotNullExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IEnumerable<T> Empty<T>(this IEnumerable<T>? source) => source ?? [];
+    public static IEnumerable<T> Empty<T>(this IEnumerable<T>? source) => source ?? Array.Empty<T>();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IEnumerable<T> Empty<T>(this T? source)
     {
         if (source is null)
         {
-            return [];
+            return Array.Empty<T>();
         }
         return source.AsEnumerable();
     }
 
-#if NETFRAMEWORK || NETSTANDARD
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T NotNull<T>(this T? obj, string? message = null)
         where T : class
