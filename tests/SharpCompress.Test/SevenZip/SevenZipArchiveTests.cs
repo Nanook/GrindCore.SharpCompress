@@ -23,6 +23,8 @@ public class SevenZipArchiveTests : ArchiveTests
 
     [Fact]
     public void SevenZipArchive_LZMA_PathRead() => ArchiveFileRead("7Zip.LZMA.7z");
+    [Fact]
+    public void NANOOKSevenZipArchive_LZMA_PathRead() => ArchiveFileRead("D:\\Temp\\Ps3_Terraria_Japan.7z");
 
     [Fact]
     public void SevenZipArchive_LZMAAES_StreamRead() =>
