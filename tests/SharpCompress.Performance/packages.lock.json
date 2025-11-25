@@ -36,14 +36,14 @@
       "GrindCore.SharpCompress": {
         "type": "Project",
         "dependencies": {
-          "GrindCore": "[0.6.0, )"
+          "GrindCore": "[0.6.2, )"
         }
       },
       "GrindCore": {
         "type": "CentralTransitive",
-        "requested": "[0.6.0, )",
-        "resolved": "0.6.0",
-        "contentHash": "9kAdXgNClMbzrkCLy9N9TT4J3nph7nju+eEcawAQFk3WqW5D56/Scf3Q6yKmO81S8Kn9ZqJpn+24leSPNmac+w=="
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "YeRF96/dug1KltAXV7zjqXZR4Atq/Z/37/Ac4QrDeQw+koQ8iKB4WmoDfSBO87NnfMlHBeIsHEJFSjmogxB0Xw=="
       }
     }
   }

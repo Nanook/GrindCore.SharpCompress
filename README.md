@@ -1,7 +1,5 @@
 # GrindCore.SharpCompress
 
-For more in-depth information, see [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nanook/GrindCore.SharpCompress).
-
 GrindCore.SharpCompress is an enhanced version of the popular **SharpCompress** library that integrates **GrindCore** native compression technology. This project delivers extensive native compression support built using the **System.IO.Compression** pattern, utilizing compression algorithms directly from their original C implementations.
 
 This enhanced fork replaces GZip, LZMA, Deflate, ZStandard, LZ4, and Brotli implementations with **native C streams** from [GrindCore](https://github.com/Nanook/GrindCore.net), providing significant performance improvements while maintaining full API compatibility.
@@ -76,6 +74,7 @@ The following stream classes use GrindCore native implementations:
 - **Shrink, Implode, Reduce (1-4)**: Full decompression support
 - **PPMd, Explode**: Advanced legacy algorithm handling
 - **Multi-volume archives**: RAR and ZIP support
+- **ARJ**: Read-only support (extraction only)
 
 ## 🌟 GrindCore: Standalone Library
 
@@ -87,8 +86,6 @@ The following stream classes use GrindCore native implementations:
 - **Original Authors' C Code**: Direct integration of compression algorithms from their creators
 - **No Dependencies**: Pure native C implementations without third-party dependencies
 - **Algorithm Updates**: C code can be updated with the latest algorithm versions
-
-The standalone [GrindCore NuGet package](https://www.nuget.org/packages/GrindCore) provides comprehensive support across all .NET frameworks and platforms.
 
 **Project dependency structure:**
 GrindCore.SharpCompress.dll → GrindCore.net.dll (.NET streams wrapper) → GrindCore.dll (Native C library)
@@ -230,7 +227,7 @@ Contributions are always welcome! Areas of particular interest for this fork inc
 - Documentation improvements
 - Real-world usage feedback and testing
 
-## TODOs (Enhanced Edition)
+## TODOS (Enhanced Edition)
 
 * More native algorithms: BZip2, PPMd, Rar decoding etc
 * Dictionary support
@@ -238,7 +235,7 @@ Contributions are always welcome! Areas of particular interest for this fork inc
 
 ## Version Log
 
-### GrindCore.SharpCompress - Current (First Release)
+### GrindCore.SharpCompress
 * **New**: **Revolutionary first-of-its-kind** native compression integration
 * **New**: **10x Native Performance** via GrindCore for all supported algorithms
 * **New**: Native GZip/Deflate performance via GrindCore ZLib-NG v2.2.1 (levels 1-9)
