@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyTitle>GrindCore.SharpCompress - Native Decompression/Compression</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionPrefix>0.41.1</VersionPrefix>
+    <VersionPrefix>0.41.2</VersionPrefix>
     <!--<VersionSuffix>alpha</VersionSuffix>-->
-    <AssemblyVersion>0.41.1</AssemblyVersion>
-    <FileVersion>0.41.1</FileVersion>
+    <AssemblyVersion>0.41.2</AssemblyVersion>
+    <FileVersion>0.41.2</FileVersion>
     <Authors>Adam Hathcock, Nanook</Authors>
     <TargetFrameworks>net48;net481;netstandard2.0;netstandard2.1;net6.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <AssemblyName>GrindCore.SharpCompress</AssemblyName>

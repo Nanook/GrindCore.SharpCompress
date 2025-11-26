@@ -15,6 +15,14 @@ namespace SharpCompress.Test.Tar;
 
 public class TarArchiveTests : ArchiveTests
 {
+    static TarArchiveTests()
+    {
+#if !NETFRAMEWORK
+        //fix issue where these tests could not be ran in isolation
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+#endif
+    }
+
     public TarArchiveTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Fact]
