@@ -459,6 +459,13 @@ public class ZipWriter : AbstractWriter
                     counting.WriteByte(5);
                     counting.WriteByte(0);
 
+#if !GRINDCORE
+                    var lzmaStream = new LzmaStream(
+                        new LzmaEncoderProperties(!originalStream.CanSeek),
+                        false,
+                        counting
+                    );
+#else
                     var lzmaStream = new LzmaStream(
                         new LzmaEncoderProperties(!originalStream.CanSeek),
                         false,
@@ -466,6 +473,7 @@ public class ZipWriter : AbstractWriter
                         false,
                         writer.WriterOptions
                     );
+#endif
                     counting.Write(lzmaStream.Properties, 0, lzmaStream.Properties.Length);
                     return lzmaStream;
                 }

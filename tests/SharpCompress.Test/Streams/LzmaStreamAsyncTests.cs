@@ -543,8 +543,11 @@ public class LzmaStreamAsyncTests
                 compressedSize,
                 fileLength,
                 null,
-                false,
+                false
+#if GRINDCORE
+                ,
                 leaveOpen: true
+#endif
             )
         )
         {
@@ -562,8 +565,11 @@ public class LzmaStreamAsyncTests
         using var lzmaStream = new LzmaStream(
             LzmaEncoderProperties.Default,
             false,
-            outputStream,
+            outputStream
+#if GRINDCORE
+            ,
             leaveOpen: true
+#endif
         );
         await inputStream.CopyToAsync(lzmaStream).ConfigureAwait(false);
         lzmaStream.Close();
@@ -578,8 +584,11 @@ public class LzmaStreamAsyncTests
         var lzmaEncodingStream = new LzmaStream(
             LzmaEncoderProperties.Default,
             false,
-            compressed,
+            compressed
+#if GRINDCORE
+            ,
             leaveOpen: true
+#endif
         );
         await input.CopyToAsync(lzmaEncodingStream).ConfigureAwait(false);
         lzmaEncodingStream.Close();

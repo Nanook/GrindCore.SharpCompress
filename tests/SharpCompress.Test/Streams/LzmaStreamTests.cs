@@ -540,8 +540,11 @@ public class LzmaStreamTests
                 compressedSize,
                 fileLength,
                 null,
-                false,
+                false
+#if GRINDCORE
+                ,
                 leaveOpen: true
+#endif
             )
         )
         {
@@ -558,8 +561,11 @@ public class LzmaStreamTests
         using var lzmaStream = new LzmaStream(
             LzmaEncoderProperties.Default,
             false,
-            outputStream,
+            outputStream
+#if GRINDCORE
+            ,
             leaveOpen: true
+#endif
         );
         inputStream.CopyTo(lzmaStream);
         lzmaStream.Close();
@@ -574,8 +580,11 @@ public class LzmaStreamTests
         var lzmaEncodingStream = new LzmaStream(
             LzmaEncoderProperties.Default,
             false,
-            compressed,
+            compressed
+#if GRINDCORE
+            ,
             leaveOpen: true
+#endif
         );
         input.CopyTo(lzmaEncodingStream);
         lzmaEncodingStream.Close();

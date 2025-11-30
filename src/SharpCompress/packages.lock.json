@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.8": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -106,9 +106,9 @@
     ".NETFramework,Version=v4.8.1": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -208,9 +208,9 @@
     ".NETStandard,Version=v2.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -304,9 +304,9 @@
     ".NETStandard,Version=v2.1": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Direct",
@@ -358,9 +358,9 @@
     "net10.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -386,9 +386,9 @@
     "net6.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -414,9 +414,9 @@
     "net8.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
@@ -448,9 +448,9 @@
     "net9.0": {
       "GrindCore": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "at/1I2pfeJi////2yyb8DJzUh/EZezqc7jQTG3Y+swH07Z4r5EMI7e2IupkPdLfxdQwBh7ATGTJ42kMPkR9OYg=="
+        "requested": "[0.6.4, )",
+        "resolved": "0.6.4",
+        "contentHash": "vD2Dj++qmtHqVQn9NF0a9pUUIHOfjNxZ0c7PqLwm4s2weNUflueHWnnSZLE2cQcfg7TLhf2dJOB6QW4CDIyFcA=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",

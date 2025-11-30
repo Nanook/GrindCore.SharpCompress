@@ -1,11 +1,9 @@
 using System;
 using System.IO;
+using Nanook.GrindCore;
 using SharpCompress.Compressors;
 using SharpCompress.IO;
-#if GRINDCORE
-using Nanook.GrindCore;
 using GrindCoreZStdStream = Nanook.GrindCore.ZStd.ZStdStream;
-#endif
 
 namespace SharpCompress.Compressors.ZStandard;
 
@@ -14,7 +12,6 @@ namespace SharpCompress.Compressors.ZStandard;
 /// </summary>
 public sealed class ZStandardStream : Stream, IStreamStack
 {
-#if GRINDCORE
     private readonly GrindCoreZStdStream _grindCoreStream;
     private readonly bool _leaveOpen;
     private bool _disposed;
@@ -93,42 +90,12 @@ public sealed class ZStandardStream : Stream, IStreamStack
         _grindCoreStream = new GrindCoreZStdStream(baseStream, options);
         _leaveOpen = leaveOpen;
     }
-#else
-    /// <summary>
-    /// Initializes a new instance of the ZStandardStream class (fallback when GrindCore is not available)
-    /// </summary>
-    public ZStandardStream(
-        Stream baseStream,
-        CompressionMode mode,
-        int compressionLevel = 3,
-        bool leaveOpen = false
-    )
-    {
-        throw new NotSupportedException("ZStandard compression requires GrindCore library");
-    }
-
-    public ZStandardStream(Stream baseStream, int compressionLevel, bool leaveOpen = false)
-    {
-        throw new NotSupportedException("ZStandard compression requires GrindCore library");
-    }
-
-    public ZStandardStream(Stream baseStream, bool leaveOpen = false)
-    {
-        throw new NotSupportedException("ZStandard compression requires GrindCore library");
-    }
-#endif
-
-    #region IStreamStack Implementation
 
     public int DefaultBufferSize { get; set; } = 0x200000;
 
     public Stream BaseStream()
     {
-#if GRINDCORE
         return _grindCoreStream?.BaseStream ?? Stream.Null;
-#else
-        return Stream.Null;
-#endif
     }
 
     public int BufferSize
@@ -148,111 +115,55 @@ public sealed class ZStandardStream : Stream, IStreamStack
     public long InstanceId { get; set; }
 #endif
 
-    #endregion
+    public override bool CanRead => _grindCoreStream?.CanRead ?? false;
 
-    #region Stream Implementation
+    public override bool CanSeek => _grindCoreStream?.CanSeek ?? false;
 
-    public override bool CanRead =>
-#if GRINDCORE
-        _grindCoreStream?.CanRead ?? false;
-#else
-        false;
-#endif
+    public override bool CanWrite => _grindCoreStream?.CanWrite ?? false;
 
-    public override bool CanSeek =>
-#if GRINDCORE
-        _grindCoreStream?.CanSeek ?? false;
-#else
-        false;
-#endif
-
-    public override bool CanWrite =>
-#if GRINDCORE
-        _grindCoreStream?.CanWrite ?? false;
-#else
-        false;
-#endif
-
-    public override long Length =>
-#if GRINDCORE
-        _grindCoreStream?.Length ?? 0;
-#else
-        throw new NotSupportedException();
-#endif
+    public override long Length => _grindCoreStream?.Length ?? 0;
 
     public override long Position
     {
-        get =>
-#if GRINDCORE
-            _grindCoreStream?.Position ?? 0;
-#else
-            throw new NotSupportedException();
-#endif
-        set =>
-#if GRINDCORE
-            _grindCoreStream.Position = value;
-#else
-            throw new NotSupportedException();
-#endif
+        get => _grindCoreStream?.Position ?? 0;
+        set => _grindCoreStream.Position = value;
     }
 
     public override void Flush()
     {
-#if GRINDCORE
         _grindCoreStream?.Flush();
-#endif
     }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-#if GRINDCORE
         return _grindCoreStream?.Read(buffer, offset, count) ?? 0;
-#else
-        throw new NotSupportedException("ZStandard compression requires GrindCore library");
-#endif
     }
 
     public override long Seek(long offset, SeekOrigin origin)
     {
-#if GRINDCORE
         return _grindCoreStream?.Seek(offset, origin) ?? 0;
-#else
-        throw new NotSupportedException();
-#endif
     }
 
     public override void SetLength(long value)
     {
-#if GRINDCORE
         _grindCoreStream?.SetLength(value);
-#else
-        throw new NotSupportedException();
-#endif
     }
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-#if GRINDCORE
         _grindCoreStream?.Write(buffer, offset, count);
-#else
-        throw new NotSupportedException("ZStandard compression requires GrindCore library");
-#endif
     }
 
     protected override void Dispose(bool disposing)
     {
         if (!_disposed && disposing)
         {
-#if GRINDCORE
             if (!_leaveOpen)
             {
                 _grindCoreStream?.Dispose();
             }
-#endif
             _disposed = true;
         }
         base.Dispose(disposing);
     }
-
-    #endregion
 }

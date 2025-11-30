@@ -2,15 +2,16 @@ using System;
 using System.IO;
 using System.Linq;
 using SharpCompress.Common.SevenZip;
-using SharpCompress.Compressors.Brotli;
 using SharpCompress.Compressors.BZip2;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Compressors.Filters;
-using SharpCompress.Compressors.LZ4;
 using SharpCompress.Compressors.LZMA.Utilites;
 using SharpCompress.Compressors.PPMd;
 #if !GRINDCORE
 using ZstdSharp;
+#else
+using SharpCompress.Compressors.Brotli;
+using SharpCompress.Compressors.LZ4;
 #endif
 
 namespace SharpCompress.Compressors.LZMA;
@@ -96,9 +97,7 @@ internal static class DecoderRegistry
                         BufferSize = 0x10000,
                     }
                 );
-#endif
             case K_BROTLI:
-#if GRINDCORE
                 return new Nanook.GrindCore.Brotli.BrotliStream(
                     inStreams.Single(),
                     new Nanook.GrindCore.CompressionOptions()
@@ -107,11 +106,7 @@ internal static class DecoderRegistry
                         BufferSize = 0x10000,
                     }
                 );
-#else
-                return new BrotliStream(inStreams.Single(), leaveOpen: true);
-#endif
             case K_LZ4:
-#if GRINDCORE
                 return new Nanook.GrindCore.Lz4.Lz4Stream(
                     inStreams.Single(),
                     new Nanook.GrindCore.CompressionOptions()
@@ -120,8 +115,6 @@ internal static class DecoderRegistry
                         BufferSize = 0x10000,
                     }
                 );
-#else
-                return new LZ4Stream(inStreams.Single(), leaveOpen: true);
 #endif
             default:
                 throw new NotSupportedException();

@@ -2,10 +2,10 @@
   <PropertyGroup>
     <AssemblyTitle>GrindCore.SharpCompress - Native Decompression/Compression</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionPrefix>0.41.2</VersionPrefix>
+    <VersionPrefix>0.41.3</VersionPrefix>
     <!--<VersionSuffix>alpha</VersionSuffix>-->
-    <AssemblyVersion>0.41.2</AssemblyVersion>
-    <FileVersion>0.41.2</FileVersion>
+    <AssemblyVersion>0.41.3</AssemblyVersion>
+    <FileVersion>0.41.3</FileVersion>
     <Authors>Adam Hathcock, Nanook</Authors>
     <TargetFrameworks>net48;net481;netstandard2.0;netstandard2.1;net6.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <AssemblyName>GrindCore.SharpCompress</AssemblyName>
@@ -30,16 +30,12 @@
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0' or '$(TargetFramework)' == 'net8.0' ">
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
-    <DefineConstants>$(DefineConstants);DEBUG_STREAMS</DefineConstants>
-  </PropertyGroup>
-  <!-- GrindCore build configuration - Default to enabled -->
+  <!-- Enable GrindCore by default for Debug configuration; allow override via MSBuild property -->
   <PropertyGroup>
-    <UseGrindCore Condition="'$(UseGrindCore)' == ''">true</UseGrindCore>
-  </PropertyGroup>
-  <!-- Define GRINDCORE  -->
-  <PropertyGroup Condition="'$(UseGrindCore)' == 'true'">
-    <DefineConstants>$(DefineConstants);GRINDCORE</DefineConstants>
+    <UseGrindCore Condition=" '$(UseGrindCore)' == ''">true</UseGrindCore>
+    <DefineConstants Condition=" '$(UseGrindCore)' != 'false'"
+      >$(DefineConstants);GRINDCORE</DefineConstants
+    >
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
@@ -55,12 +51,24 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' ">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
   </ItemGroup>
-  <!-- GrindCore: Remove unused files -->
+
+  <!-- When GrindCore is disabled, remove the managed implementations that would conflict -->
+  <ItemGroup Condition="'$(UseGrindCore)' != 'true'">
+    <Compile Remove="Compressors\Brotli\BrotliStream_GC.cs" />
+    <Compile Remove="Compressors\Deflate\DeflateStream_GC.cs" />
+    <Compile Remove="Compressors\Deflate\GZipStream_GC.cs" />
+    <Compile Remove="Compressors\Deflate\ZlibStream_GC.cs" />
+    <Compile Remove="Compressors\LZMA\LzmaStream_GC.cs" />
+    <Compile Remove="Compressors\ZStandard\ZStandardStream_GC.cs" />
+    <Compile Remove="Compressors\LZ4\LZ4Stream_GC.cs" />
+    <Compile Remove="Common\GrindCoreBufferHelper.cs" />
+  </ItemGroup>
+
+  <!-- When GrindCore is enabled, remove the legacy managed sources that duplicate functionality -->
   <ItemGroup Condition="'$(UseGrindCore)' == 'true'">
     <Compile Remove="Compressors\Deflate\DeflateStream.cs" />
     <Compile Remove="Compressors\Deflate\GZipStream.cs" />
     <Compile Remove="Compressors\Deflate\ZlibStream.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaStream.cs" />
     <Compile Remove="Compressors\Deflate\ZlibBaseStream.cs" />
     <Compile Remove="Compressors\Deflate\ZlibCodec.cs" />
     <Compile Remove="Compressors\Deflate\ZlibConstants.cs" />
@@ -84,16 +92,13 @@
     <Compile Remove="Compressors\LZMA\LzmaStream.cs" />
     <Compile Remove="Compressors\ZStandard\ZStandardStream.cs" />
   </ItemGroup>
-  <!-- NOT GrindCore -->
-  <ItemGroup Condition="'$(UseGrindCore)' != 'true'">
-    <Compile Remove="Compressors\Deflate\DeflateStream_GC.cs" />
-    <Compile Remove="Compressors\Deflate\GZipStream_GC.cs" />
-    <Compile Remove="Compressors\Deflate\ZlibStream_GC.cs" />
-    <Compile Remove="Compressors\LZMA\LzmaStream_GC.cs" />
-  </ItemGroup>
-  <!-- GrindCore project reference - only when GrindCore is enabled -->
+
+  <!-- GrindCore package reference only when GrindCore is enabled -->
   <ItemGroup Condition="'$(UseGrindCore)' == 'true'">
     <PackageReference Include="GrindCore" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseGrindCore)' != 'true'">
+    <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
