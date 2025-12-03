@@ -1,5 +1,7 @@
 using System;
+using System.Buffers.Binary;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace SharpCompress.Common.Zip;
 
@@ -18,37 +20,39 @@ internal class WinzipAesEncryptionData
     {
         _keySize = keySize;
 
-        int keySizeBytes = KeySizeInBytes;
-        int totalBytes = (keySizeBytes * 2) + 2; // key + iv + verify
-#if NET6_0_OR_GREATER
-        // Modern frameworks: derive all bytes in one call
-        var derived = Rfc2898DeriveBytes.Pbkdf2(
-            password,
+#if NETFRAMEWORK || NETSTANDARD
+        var rfc2898 = new Rfc2898DeriveBytes(password, salt, RFC2898_ITERATIONS);
+        KeyBytes = rfc2898.GetBytes(KeySizeInBytes);
+        IvBytes = rfc2898.GetBytes(KeySizeInBytes);
+        var generatedVerifyValue = rfc2898.GetBytes(2);
+#elif NET10_0_OR_GREATER
+        var derivedKeySize = (KeySizeInBytes * 2) + 2;
+        var passwordBytes = Encoding.UTF8.GetBytes(password);
+        var derivedKey = Rfc2898DeriveBytes.Pbkdf2(
+            passwordBytes,
             salt,
             RFC2898_ITERATIONS,
             HashAlgorithmName.SHA1,
-            totalBytes
+            derivedKeySize
         );
+        KeyBytes = derivedKey.AsSpan(0, KeySizeInBytes).ToArray();
+        IvBytes = derivedKey.AsSpan(KeySizeInBytes, KeySizeInBytes).ToArray();
+        var generatedVerifyValue = derivedKey.AsSpan((KeySizeInBytes * 2), 2).ToArray();
 #else
-        // Older frameworks: fall back to instance-based derivation
-#pragma warning disable SYSLIB0060
-        using var rfc2898 = new Rfc2898DeriveBytes(password, salt, RFC2898_ITERATIONS);
-        var derived = rfc2898.GetBytes(totalBytes);
-#pragma warning restore SYSLIB0060
+        var rfc2898 = new Rfc2898DeriveBytes(
+            password,
+            salt,
+            RFC2898_ITERATIONS,
+            HashAlgorithmName.SHA1
+        );
+        KeyBytes = rfc2898.GetBytes(KeySizeInBytes);
+        IvBytes = rfc2898.GetBytes(KeySizeInBytes);
+        var generatedVerifyValue = rfc2898.GetBytes(2);
 #endif
 
-        KeyBytes = new byte[keySizeBytes];
-        IvBytes = new byte[keySizeBytes];
-        var verifyBytes = new byte[2];
-
-        Array.Copy(derived, 0, KeyBytes, 0, keySizeBytes);
-        Array.Copy(derived, keySizeBytes, IvBytes, 0, keySizeBytes);
-        Array.Copy(derived, keySizeBytes * 2, verifyBytes, 0, 2);
-
-        short expected = ReadInt16LittleEndian(passwordVerifyValue);
-        short actual = ReadInt16LittleEndian(verifyBytes);
-
-        if (expected != actual)
+        var verify = BinaryPrimitives.ReadInt16LittleEndian(passwordVerifyValue);
+        var generated = BinaryPrimitives.ReadInt16LittleEndian(generatedVerifyValue);
+        if (verify != generated)
         {
             throw new InvalidFormatException("bad password");
         }
@@ -68,13 +72,4 @@ internal class WinzipAesEncryptionData
             WinzipAesKeySize.KeySize256 => 32,
             _ => throw new InvalidOperationException(),
         };
-
-    private static short ReadInt16LittleEndian(byte[] data)
-    {
-        if (data == null || data.Length < 2)
-        {
-            throw new ArgumentException("Data must be at least 2 bytes long", nameof(data));
-        }
-        return (short)(data[0] | (data[1] << 8));
-    }
 }
