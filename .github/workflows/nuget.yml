@@ -44,7 +44,7 @@ jobs:
           core.setOutput('run_id', runs.data.workflow_runs[0].id);
 
     - name: Download CI artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: ubuntu-latest-sharpcompress.nupkg
         path: ./artifacts
