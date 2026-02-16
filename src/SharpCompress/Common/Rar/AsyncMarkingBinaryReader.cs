@@ -192,6 +192,7 @@ internal class AsyncMarkingBinaryReader : IDisposable
     }
 
     public virtual void Dispose() => _reader.Dispose();
+
 #if NET8_0_OR_GREATER
     public virtual ValueTask DisposeAsync() => _reader.DisposeAsync();
 #endif
