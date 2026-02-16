@@ -32,5 +32,6 @@ public class DosDateTime
         }
     }
 
-    public override string ToString() => DateTime.ToString("yyyy-MM-dd HH:mm:ss", Constants.DefaultCultureInfo);
+    public override string ToString() =>
+        DateTime.ToString("yyyy-MM-dd HH:mm:ss", Constants.DefaultCultureInfo);
 }
