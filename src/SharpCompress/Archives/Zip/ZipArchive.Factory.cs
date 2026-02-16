@@ -170,7 +170,7 @@ public partial class ZipArchive
             {
                 return false;
             }
-            return Enum.IsDefined(header.ZipHeaderType);
+            return IsDefined(header.ZipHeaderType);
         }
         catch (CryptographicException)
         {
@@ -203,7 +203,7 @@ public partial class ZipArchive
                     return false;
                 }
             }
-            return Enum.IsDefined(header.ZipHeaderType);
+            return IsDefined(header.ZipHeaderType);
         }
         catch (CryptographicException)
         {
@@ -234,7 +234,7 @@ public partial class ZipArchive
             {
                 return false;
             }
-            return Enum.IsDefined(header.ZipHeaderType);
+            return IsDefined(header.ZipHeaderType);
         }
         catch (CryptographicException)
         {
@@ -286,7 +286,7 @@ public partial class ZipArchive
                     return false;
                 }
             }
-            return Enum.IsDefined(header.ZipHeaderType);
+            return IsDefined(header.ZipHeaderType);
         }
         catch (CryptographicException)
         {
@@ -296,5 +296,14 @@ public partial class ZipArchive
         {
             return false;
         }
+    }
+
+    private static bool IsDefined(ZipHeaderType value)
+    {
+#if LEGACY_DOTNET
+        return Enum.IsDefined(typeof(ZipHeaderType), value);
+#else
+        return Enum.IsDefined(value);
+#endif
     }
 }
