@@ -75,7 +75,9 @@ internal partial class WinzipAesCryptoStream : Stream
                 var ten = ArrayPool<byte>.Shared.Rent(10);
                 try
                 {
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
                     _stream.ReadFullyAsync(ten, 0, 10).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
                 }
                 finally
                 {

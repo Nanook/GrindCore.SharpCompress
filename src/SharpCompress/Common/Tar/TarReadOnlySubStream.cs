@@ -38,7 +38,9 @@ internal class TarReadOnlySubStream : Stream
             {
                 if (Utility.UseSyncOverAsyncDispose())
                 {
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
                     _stream.SkipAsync(512 - bytesInLastBlock).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
                 }
                 else
                 {
