@@ -304,11 +304,11 @@ dotnet_diagnostic.CA1835.severity = suggestion
 dotnet_diagnostic.CA1510.severity = suggestion
 dotnet_diagnostic.CA1512.severity = suggestion
 dotnet_diagnostic.CA1844.severity = suggestion
-dotnet_diagnostic.CA1825.severity = suggestion
+dotnet_diagnostic.CA1825.severity = error
 dotnet_diagnostic.CA1712.severity = suggestion
 dotnet_diagnostic.CA2022.severity = suggestion
 dotnet_diagnostic.CA1850.severity = suggestion
-dotnet_diagnostic.CA2263.severity = suggestion
+dotnet_diagnostic.CA2263.severity = error
 dotnet_diagnostic.CA2012.severity = suggestion
 dotnet_diagnostic.CA1001.severity = suggestion
 

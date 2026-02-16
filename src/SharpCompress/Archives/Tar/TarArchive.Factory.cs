@@ -226,7 +226,7 @@ public partial class TarArchive
             var isEmptyArchive =
                 tarHeader.Name?.Length == 0
                 && tarHeader.Size == 0
-                && Enum.IsDefined(typeof(EntryType), tarHeader.EntryType);
+                && Enum.IsDefined(tarHeader.EntryType);
             return readSucceeded || isEmptyArchive;
         }
         catch (Exception)
@@ -254,7 +254,7 @@ public partial class TarArchive
             var isEmptyArchive =
                 tarHeader.Name?.Length == 0
                 && tarHeader.Size == 0
-                && Enum.IsDefined(typeof(EntryType), tarHeader.EntryType);
+                && Enum.IsDefined(tarHeader.EntryType);
             return readSucceeded || isEmptyArchive;
         }
         catch (Exception)

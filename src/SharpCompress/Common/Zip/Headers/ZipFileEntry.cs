@@ -95,7 +95,7 @@ internal abstract partial class ZipFileEntry(ZipHeaderType type, IArchiveEncodin
             }
 
             var type = (ExtraDataType)BinaryPrimitives.ReadUInt16LittleEndian(extra.AsSpan(i));
-            if (!Enum.IsDefined(typeof(ExtraDataType), type))
+            if (!Enum.IsDefined(type))
             {
                 type = ExtraDataType.NotImplementedExtraData;
             }

@@ -137,7 +137,7 @@ public abstract partial class ArjHeader
 
     public static FileType FileTypeFromByte(byte value)
     {
-        return Enum.IsDefined(typeof(FileType), value) ? (FileType)value : Headers.FileType.Unknown;
+        return Enum.IsDefined((FileType)value) ? (FileType)value : Headers.FileType.Unknown;
     }
 
     public static bool IsArchive(Stream stream)
