@@ -190,10 +190,7 @@ public abstract partial class AbstractReader<TEntry, TVolume> : IReader, IAsyncR
             throw new ArgumentException("WriteEntryTo or OpenEntryStream can only be called once.");
         }
 
-        if (writableStream is null)
-        {
-            throw new ArgumentNullException(nameof(writableStream));
-        }
+        ThrowHelper.ThrowIfNull(writableStream);
         if (!writableStream.CanWrite)
         {
             throw new ArgumentException(

@@ -883,18 +883,9 @@ internal class ZlibBaseStream : Stream, IStreamStack
 
             return rc;
         }
-        if (buffer is null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
-        if (count < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(count));
-        }
-        if (offset < buffer.GetLowerBound(0))
-        {
-            throw new ArgumentOutOfRangeException(nameof(offset));
-        }
+        ThrowHelper.ThrowIfNull(buffer);
+        ThrowHelper.ThrowIfNegative(count);
+        ThrowHelper.ThrowIfLessThan(offset, buffer.GetLowerBound(0));
         if ((offset + count) > buffer.GetLength(0))
         {
             throw new ArgumentOutOfRangeException(nameof(count));
@@ -1073,18 +1064,9 @@ internal class ZlibBaseStream : Stream, IStreamStack
 
             return rc;
         }
-        if (buffer is null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
-        if (count < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(count));
-        }
-        if (offset < buffer.GetLowerBound(0))
-        {
-            throw new ArgumentOutOfRangeException(nameof(offset));
-        }
+        ThrowHelper.ThrowIfNull(buffer);
+        ThrowHelper.ThrowIfNegative(count);
+        ThrowHelper.ThrowIfLessThan(offset, buffer.GetLowerBound(0));
         if ((offset + count) > buffer.GetLength(0))
         {
             throw new ArgumentOutOfRangeException(nameof(count));

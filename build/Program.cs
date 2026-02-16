@@ -650,7 +650,7 @@ static double ParseTimeValue(string timeStr)
         return 0;
     }
 
-    var value = double.Parse(match.Groups[1].Value);
+    var value = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
     var unit = match.Groups[2].Value.ToLower(CultureInfo.InvariantCulture);
 
     // Convert to microseconds for comparison
@@ -679,7 +679,7 @@ static double ParseMemoryValue(string memStr)
         return 0;
     }
 
-    var value = double.Parse(match.Groups[1].Value);
+    var value = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
     var unit = match.Groups[2].Value.ToUpper(CultureInfo.InvariantCulture);
 
     // Convert to KB for comparison

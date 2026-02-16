@@ -37,10 +37,10 @@ public partial class ArjMainHeader : ArjHeader
             archiveEncoding ?? throw new ArgumentNullException(nameof(archiveEncoding));
     }
 
-    public override ArjHeader? Read(Stream stream)
+    public override ArjHeader? Read(Stream reader)
     {
-        var body = ReadHeader(stream);
-        ReadExtendedHeaders(stream);
+        var body = ReadHeader(reader);
+        ReadExtendedHeaders(reader);
         return LoadFrom(body);
     }
 

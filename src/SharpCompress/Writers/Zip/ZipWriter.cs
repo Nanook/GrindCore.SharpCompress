@@ -78,9 +78,9 @@ public partial class ZipWriter : AbstractWriter
             _ => throw new InvalidFormatException("Invalid compression method: " + compressionType),
         };
 
-    public override void Write(string entryPath, Stream source, DateTime? modificationTime) =>
+    public override void Write(string filename, Stream source, DateTime? modificationTime) =>
         Write(
-            entryPath,
+            filename,
             source,
             new ZipWriterEntryOptions() { ModificationDateTime = modificationTime }
         );

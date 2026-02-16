@@ -123,10 +123,7 @@ public sealed partial class LHDecoderStream : Stream
             throw new ObjectDisposedException(nameof(LHDecoderStream));
         }
 
-        if (buffer == null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ThrowHelper.ThrowIfNull(buffer);
 
         if (offset < 0 || count < 0 || offset + count > buffer.Length)
         {
@@ -179,4 +176,14 @@ public sealed partial class LHDecoderStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count) =>
         throw new NotSupportedException();
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !_disposed)
+        {
+            _disposed = true;
+            _stream.Dispose();
+        }
+        base.Dispose(disposing);
+    }
 }

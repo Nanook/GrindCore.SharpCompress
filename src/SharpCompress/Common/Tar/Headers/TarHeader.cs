@@ -299,7 +299,7 @@ internal sealed partial class TarHeader
         LastModifiedTime = EPOCH.AddSeconds(unixTimeStamp).ToLocalTime();
         Magic = ArchiveEncoding.Decode(buffer, 257, 6).TrimNulls();
 
-        if (!string.IsNullOrEmpty(Magic) && "ustar".Equals(Magic))
+        if (!string.IsNullOrEmpty(Magic) && "ustar".Equals(Magic, StringComparison.Ordinal))
         {
             var namePrefix = ArchiveEncoding.Decode(buffer, 345, 157).TrimNulls();
 

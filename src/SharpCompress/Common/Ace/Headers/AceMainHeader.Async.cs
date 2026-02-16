@@ -15,11 +15,11 @@ public sealed partial class AceMainHeader
     /// Supports both ACE 1.0 and ACE 2.0 formats.
     /// </summary>
     public override async ValueTask<AceHeader?> ReadAsync(
-        Stream stream,
+        Stream reader,
         CancellationToken cancellationToken = default
     )
     {
-        var headerData = await ReadHeaderAsync(stream, cancellationToken).ConfigureAwait(false);
+        var headerData = await ReadHeaderAsync(reader, cancellationToken).ConfigureAwait(false);
         if (headerData.Length == 0)
         {
             return null;

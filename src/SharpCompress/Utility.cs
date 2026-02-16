@@ -253,13 +253,10 @@ internal static partial class Utility
                 throw new ArgumentNullException();
             }
 #else
-            ArgumentNullException.ThrowIfNull(source);
+            ThrowHelper.ThrowIfNull(source);
 #endif
 
-            if (buffer is null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
+            ThrowHelper.ThrowIfNull(buffer);
 
             if (offset < 0 || offset > buffer.Length)
             {

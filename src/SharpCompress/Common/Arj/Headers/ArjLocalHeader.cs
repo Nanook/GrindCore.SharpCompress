@@ -43,14 +43,14 @@ public partial class ArjLocalHeader : ArjHeader
             archiveEncoding ?? throw new ArgumentNullException(nameof(archiveEncoding));
     }
 
-    public override ArjHeader? Read(Stream stream)
+    public override ArjHeader? Read(Stream reader)
     {
-        var body = ReadHeader(stream);
+        var body = ReadHeader(reader);
         if (body.Length > 0)
         {
-            ReadExtendedHeaders(stream);
+            ReadExtendedHeaders(reader);
             var header = LoadFrom(body);
-            header.DataStartPosition = stream.Position;
+            header.DataStartPosition = reader.Position;
             return header;
         }
         return null;

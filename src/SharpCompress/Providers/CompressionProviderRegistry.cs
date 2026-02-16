@@ -275,10 +275,7 @@ public sealed class CompressionProviderRegistry
     /// <exception cref="ArgumentNullException">If provider is null.</exception>
     public CompressionProviderRegistry With(ICompressionProvider provider)
     {
-        if (provider is null)
-        {
-            throw new ArgumentNullException(nameof(provider));
-        }
+        ThrowHelper.ThrowIfNull(provider);
 
         var newProviders = new Dictionary<CompressionType, ICompressionProvider>(_providers)
         {

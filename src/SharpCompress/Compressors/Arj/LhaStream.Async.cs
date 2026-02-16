@@ -15,10 +15,7 @@ public sealed partial class LhaStream<TDecoderConfig>
         CancellationToken cancellationToken
     )
     {
-        if (buffer is null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ThrowHelper.ThrowIfNull(buffer);
         if (offset < 0 || count < 0 || (offset + count) > buffer.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(offset));

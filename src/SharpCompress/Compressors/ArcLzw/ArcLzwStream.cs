@@ -176,7 +176,7 @@ public partial class ArcLzwStream : Stream
         var data = new byte[_compressedSize];
         _stream.Read(data, 0, _compressedSize);
         var decoded = Decompress(data, _useCrunched);
-        var result = decoded.Count();
+        var result = decoded.Count;
         if (_useCrunched)
         {
             var unpacked = RLE.UnpackRLE(decoded.ToArray());

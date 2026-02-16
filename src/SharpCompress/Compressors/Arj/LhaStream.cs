@@ -57,10 +57,7 @@ public sealed partial class LhaStream<TDecoderConfig> : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        if (buffer == null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ThrowHelper.ThrowIfNull(buffer);
         if (offset < 0 || count < 0 || (offset + count) > buffer.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(offset));

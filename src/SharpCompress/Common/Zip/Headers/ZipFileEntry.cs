@@ -44,10 +44,7 @@ internal abstract partial class ZipFileEntry(ZipHeaderType type, IArchiveEncodin
 
     internal PkwareTraditionalEncryptionData ComposeEncryptionData(Stream archiveStream)
     {
-        if (archiveStream is null)
-        {
-            throw new ArgumentNullException(nameof(archiveStream));
-        }
+        ThrowHelper.ThrowIfNull(archiveStream);
 
         var buffer = new byte[12];
         archiveStream.ReadFully(buffer);
