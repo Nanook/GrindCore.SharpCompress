@@ -8,7 +8,7 @@ namespace SharpCompress.Compressors.Arj;
 public sealed partial class LHDecoderStream : Stream
 {
     private readonly BitReader _bitReader;
-    private readonly Stream _stream;
+
 
     // Buffer containing *all* bytes decoded so far.
     private readonly List<byte> _buffer = new();
@@ -22,7 +22,6 @@ public sealed partial class LHDecoderStream : Stream
 
     public LHDecoderStream(Stream compressedStream, int originalSize)
     {
-        _stream = compressedStream ?? throw new ArgumentNullException(nameof(compressedStream));
         if (!compressedStream.CanRead)
         {
             throw new ArgumentException(
@@ -36,8 +35,6 @@ public sealed partial class LHDecoderStream : Stream
         _readPosition = 0;
         _finishedDecoding = (originalSize == 0);
     }
-
-    public Stream BaseStream => _stream;
 
     public override bool CanRead => true;
     public override bool CanSeek => false;
@@ -182,7 +179,6 @@ public sealed partial class LHDecoderStream : Stream
         if (disposing && !_disposed)
         {
             _disposed = true;
-            _stream.Dispose();
         }
         base.Dispose(disposing);
     }
