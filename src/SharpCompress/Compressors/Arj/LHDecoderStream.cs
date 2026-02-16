@@ -9,7 +9,6 @@ public sealed partial class LHDecoderStream : Stream
 {
     private readonly BitReader _bitReader;
 
-
     // Buffer containing *all* bytes decoded so far.
     private readonly List<byte> _buffer = new();
 

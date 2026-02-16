@@ -45,18 +45,13 @@ public class ArjFilePart : FilePart
                         "CompressionMethod: " + Header.CompressionMethod + " with size > 128KB"
                     );
                 }
-                compressedStream = new LhaStream<Lh7DecoderCfg>(
-                    _stream,
-                    (int)Header.OriginalSize
-                );
+                compressedStream = new LhaStream<Lh7DecoderCfg>(_stream, (int)Header.OriginalSize);
                 break;
             case CompressionMethod.CompressedFastest:
                 compressedStream = new LHDecoderStream(_stream, (int)Header.OriginalSize);
                 break;
             default:
-                throw new NotSupportedException(
-                    "CompressionMethod: " + Header.CompressionMethod
-                );
+                throw new NotSupportedException("CompressionMethod: " + Header.CompressionMethod);
         }
         return compressedStream;
     }
