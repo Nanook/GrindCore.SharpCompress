@@ -261,9 +261,11 @@ public partial class ZipArchive
         var headerFactory = new StreamingZipHeaderFactory(password, new ArchiveEncoding(), null);
         try
         {
-            var header = headerFactory
-                .ReadStreamHeader(stream)
-                .FirstOrDefault(x => x.ZipHeaderType != ZipHeaderType.Split);
+            var header = await headerFactory
+                .ReadStreamHeaderAsync(stream)
+                .Where(x => x.ZipHeaderType != ZipHeaderType.Split)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
             if (header is null)
             {
                 if (stream.CanSeek)

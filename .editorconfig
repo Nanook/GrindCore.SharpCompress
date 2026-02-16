@@ -362,31 +362,46 @@ dotnet_diagnostic.IDE0061.severity = suggestion # local expression body
 dotnet_diagnostic.IDE0062.severity = suggestion # local to static
 dotnet_diagnostic.IDE0063.severity = error # simplify using
 
+[src/**/*.cs]
+dotnet_diagnostic.VSTHRD002.severity = suggestion # avoid sync waits on async operations
+dotnet_diagnostic.VSTHRD100.severity = error # avoid async void methods
+dotnet_diagnostic.VSTHRD101.severity = error # avoid unsupported async delegates
+dotnet_diagnostic.VSTHRD102.severity = suggestion # implement internal logic asynchronously
+dotnet_diagnostic.VSTHRD103.severity = error # use async methods from async methods
+dotnet_diagnostic.VSTHRD104.severity = suggestion # offer async alternatives when possible
+dotnet_diagnostic.VSTHRD107.severity = error # await task within using expression
+dotnet_diagnostic.VSTHRD110.severity = error # observe result of async calls
+dotnet_diagnostic.VSTHRD111.severity = error # use ConfigureAwait(bool)
+dotnet_diagnostic.VSTHRD112.severity = suggestion # implement System.IAsyncDisposable
+dotnet_diagnostic.VSTHRD113.severity = suggestion # check for System.IAsyncDisposable
+dotnet_diagnostic.VSTHRD114.severity = error # avoid returning null from Task methods
+dotnet_diagnostic.VSTHRD200.severity = suggestion # use Async suffix naming convention
+
 [build/**/*.cs]
-dotnet_diagnostic.VSTHRD001.severity = none
-dotnet_diagnostic.VSTHRD002.severity = none
-dotnet_diagnostic.VSTHRD003.severity = none
-dotnet_diagnostic.VSTHRD004.severity = none
-dotnet_diagnostic.VSTHRD010.severity = none
-dotnet_diagnostic.VSTHRD011.severity = none
-dotnet_diagnostic.VSTHRD012.severity = none
-dotnet_diagnostic.VSTHRD100.severity = none
-dotnet_diagnostic.VSTHRD101.severity = none
-dotnet_diagnostic.VSTHRD102.severity = none
-dotnet_diagnostic.VSTHRD103.severity = none
-dotnet_diagnostic.VSTHRD104.severity = none
-dotnet_diagnostic.VSTHRD105.severity = none
-dotnet_diagnostic.VSTHRD106.severity = none
-dotnet_diagnostic.VSTHRD107.severity = none
-dotnet_diagnostic.VSTHRD108.severity = none
-dotnet_diagnostic.VSTHRD109.severity = none
-dotnet_diagnostic.VSTHRD110.severity = none
-dotnet_diagnostic.VSTHRD111.severity = none
-dotnet_diagnostic.VSTHRD112.severity = none
-dotnet_diagnostic.VSTHRD113.severity = none
-dotnet_diagnostic.VSTHRD114.severity = none
-dotnet_diagnostic.VSTHRD115.severity = none
-dotnet_diagnostic.VSTHRD200.severity = none
+dotnet_diagnostic.VSTHRD001.severity = none # avoid legacy thread switching methods (disabled for build scripts)
+dotnet_diagnostic.VSTHRD002.severity = none # avoid sync waits on async operations (disabled for build scripts)
+dotnet_diagnostic.VSTHRD003.severity = none # avoid awaiting foreign tasks (disabled for build scripts)
+dotnet_diagnostic.VSTHRD004.severity = none # await SwitchToMainThreadAsync (disabled for build scripts)
+dotnet_diagnostic.VSTHRD010.severity = none # invoke single-threaded types on main thread (disabled for build scripts)
+dotnet_diagnostic.VSTHRD011.severity = none # use AsyncLazy<T> (disabled for build scripts)
+dotnet_diagnostic.VSTHRD012.severity = none # provide JoinableTaskFactory where allowed (disabled for build scripts)
+dotnet_diagnostic.VSTHRD100.severity = none # avoid async void methods (disabled for build scripts)
+dotnet_diagnostic.VSTHRD101.severity = none # avoid unsupported async delegates (disabled for build scripts)
+dotnet_diagnostic.VSTHRD102.severity = none # implement internal logic asynchronously (disabled for build scripts)
+dotnet_diagnostic.VSTHRD103.severity = none # use async methods from async methods (disabled for build scripts)
+dotnet_diagnostic.VSTHRD104.severity = none # offer async alternatives when possible (disabled for build scripts)
+dotnet_diagnostic.VSTHRD105.severity = none # avoid TaskScheduler.Current assumptions (disabled for build scripts)
+dotnet_diagnostic.VSTHRD106.severity = none # use InvokeAsync for async events (disabled for build scripts)
+dotnet_diagnostic.VSTHRD107.severity = none # await task within using expression (disabled for build scripts)
+dotnet_diagnostic.VSTHRD108.severity = none # assert thread affinity unconditionally (disabled for build scripts)
+dotnet_diagnostic.VSTHRD109.severity = none # switch instead of assert in async methods (disabled for build scripts)
+dotnet_diagnostic.VSTHRD110.severity = none # observe result of async calls (disabled for build scripts)
+dotnet_diagnostic.VSTHRD111.severity = none # use ConfigureAwait(bool) (disabled for build scripts)
+dotnet_diagnostic.VSTHRD112.severity = none # implement System.IAsyncDisposable (disabled for build scripts)
+dotnet_diagnostic.VSTHRD113.severity = none # check for System.IAsyncDisposable (disabled for build scripts)
+dotnet_diagnostic.VSTHRD114.severity = none # avoid returning null from Task methods (disabled for build scripts)
+dotnet_diagnostic.VSTHRD115.severity = none # avoid explicit null SynchronizationContext in JTC (disabled for build scripts)
+dotnet_diagnostic.VSTHRD200.severity = none # use Async suffix naming convention (disabled for build scripts)
 
 [tests/**/*.cs]
 dotnet_diagnostic.CA1861.severity = suggestion
@@ -412,8 +427,8 @@ dotnet_diagnostic.NX0001.severity = error
 dotnet_diagnostic.NX0002.severity = silent
 dotnet_diagnostic.NX0003.severity = silent
 
-dotnet_diagnostic.VSTHRD110.severity = error
-dotnet_diagnostic.VSTHRD107.severity = error
+dotnet_diagnostic.VSTHRD110.severity = error # observe result of async calls
+dotnet_diagnostic.VSTHRD107.severity = error # await task within using expression
 
 ##########################################
 # Styles

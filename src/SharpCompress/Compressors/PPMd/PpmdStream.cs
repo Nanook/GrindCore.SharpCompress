@@ -154,7 +154,11 @@ public class PpmdStream : Stream
         }
         catch
         {
+#if LEGACY_DOTNET
             instance.Dispose();
+#else
+            await instance.DisposeAsync().ConfigureAwait(false);
+#endif
             throw;
         }
     }
