@@ -33,6 +33,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SharpCompress.Common;
 using SharpCompress.Common.Tar.Headers;
 using SharpCompress.IO;
 
@@ -276,12 +277,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     if (_z.Message is null)
                     {
                         throw new ZlibException(
-                            String.Format(
-                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
-                                "{0}: (rc = {1})",
-                                verb,
-                                rc
-                            )
+                            String.Format(Constants.DefaultCultureInfo, "{0}: (rc = {1})", verb, rc)
                         );
                     }
                     throw new ZlibException(verb + ": " + _z.Message);
@@ -351,7 +347,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                         {
                             throw new ZlibException(
                                 String.Format(
-                                    global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                    Constants.DefaultCultureInfo,
                                     "Protocol error. AvailableBytesIn={0}, expected 8",
                                     _z.AvailableBytesIn + bytesRead
                                 )
@@ -372,7 +368,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     {
                         throw new ZlibException(
                             String.Format(
-                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                Constants.DefaultCultureInfo,
                                 "Bad CRC32 in GZIP stream. (actual({0:X8})!=expected({1:X8}))",
                                 crc32_actual,
                                 crc32_expected
@@ -384,7 +380,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     {
                         throw new ZlibException(
                             String.Format(
-                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                Constants.DefaultCultureInfo,
                                 "Bad size in GZIP stream. (actual({0})!=expected({1}))",
                                 isize_actual,
                                 isize_expected
@@ -424,12 +420,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     if (_z.Message is null)
                     {
                         throw new ZlibException(
-                            String.Format(
-                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
-                                "{0}: (rc = {1})",
-                                verb,
-                                rc
-                            )
+                            String.Format(Constants.DefaultCultureInfo, "{0}: (rc = {1})", verb, rc)
                         );
                     }
                     throw new ZlibException(verb + ": " + _z.Message);
@@ -887,7 +878,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     String.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "Deflating:  rc={0}  msg={1}",
                         rc,
                         _z.Message
@@ -944,7 +935,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     String.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "{0}flating:  rc={1}  msg={2}",
                         (_wantCompress ? "de" : "in"),
                         rc,
@@ -985,7 +976,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     {
                         throw new ZlibException(
                             String.Format(
-                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                Constants.DefaultCultureInfo,
                                 "Deflating:  rc={0}  msg={1}",
                                 rc,
                                 _z.Message
@@ -1079,7 +1070,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     String.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "Deflating:  rc={0}  msg={1}",
                         rc,
                         _z.Message
@@ -1138,7 +1129,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     String.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "{0}flating:  rc={1}  msg={2}",
                         (_wantCompress ? "de" : "in"),
                         rc,
@@ -1179,7 +1170,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     {
                         throw new ZlibException(
                             String.Format(
-                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                Constants.DefaultCultureInfo,
                                 "Deflating:  rc={0}  msg={1}",
                                 rc,
                                 _z.Message

@@ -20,7 +20,7 @@ internal partial class MarkHeader
         {
             return buffer[0];
         }
-        throw new EndOfStreamException();
+        throw new IncompleteArchiveException("Unexpected end of stream.");
     }
 
     public static async ValueTask<MarkHeader> ReadAsync(

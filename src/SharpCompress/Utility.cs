@@ -273,7 +273,7 @@ internal static partial class Utility
                 var fetched = source.Read(buffer, offset, length);
                 if (fetched <= 0)
                 {
-                    throw new EndOfStreamException();
+                    throw new IncompleteArchiveException("Unexpected end of stream.");
                 }
 
                 offset += fetched;

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using SharpCompress.Common;
 
 namespace SharpCompress.Archives.Rar;
 
@@ -20,7 +21,7 @@ internal static class RarArchiveVolumeFactory
                     String.Concat(
                         m.Groups[1].Value,
                         (index + 1)
-                            .ToString(global::SharpCompress.Common.Constants.DefaultCultureInfo)
+                            .ToString(Constants.DefaultCultureInfo)
                             .PadLeft(m.Groups[2].Value.Length, '0'),
                         m.Groups[3].Value
                     )

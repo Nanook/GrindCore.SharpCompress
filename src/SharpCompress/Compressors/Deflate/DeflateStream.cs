@@ -29,6 +29,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SharpCompress.Common;
 using SharpCompress.IO;
 
 namespace SharpCompress.Compressors.Deflate;
@@ -120,7 +121,7 @@ public partial class DeflateStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     string.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "Don't be silly. {0} bytes?? Use a bigger buffer, at least {1}.",
                         value,
                         ZlibConstants.WorkingBufferSizeMin

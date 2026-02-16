@@ -127,7 +127,7 @@ internal partial class WinzipAesCryptoStream : Stream
     {
         if (_isFinalBlock)
         {
-            throw new InvalidOperationException();
+            throw new ArchiveOperationException();
         }
 
         var bytesRemaining = last - offset;

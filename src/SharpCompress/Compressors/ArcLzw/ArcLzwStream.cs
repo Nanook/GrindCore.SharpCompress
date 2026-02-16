@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SharpCompress.Common;
 using SharpCompress.Compressors.RLE90;
 
 namespace SharpCompress.Compressors.ArcLzw;
@@ -74,7 +75,7 @@ public partial class ArcLzwStream : Stream
         {
             if (input[0] != BITS)
             {
-                throw new InvalidDataException($"File packed with {input[0]}, expected {BITS}.");
+                throw new InvalidFormatException($"File packed with {input[0]}, expected {BITS}.");
             }
 
             input = input.Skip(1).ToArray();

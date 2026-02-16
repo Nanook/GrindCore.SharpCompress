@@ -62,7 +62,7 @@ public static partial class ArchiveFactory
         var filesArray = fileInfos.ToArray();
         if (filesArray.Length == 0)
         {
-            throw new InvalidOperationException("No files to open");
+            throw new ArchiveOperationException("No files to open");
         }
 
         var fileInfo = filesArray[0];
@@ -91,7 +91,7 @@ public static partial class ArchiveFactory
         var streamsArray = streams.ToArray();
         if (streamsArray.Length == 0)
         {
-            throw new InvalidOperationException("No streams");
+            throw new ArchiveOperationException("No streams");
         }
 
         var firstStream = streamsArray[0];
@@ -164,7 +164,7 @@ public static partial class ArchiveFactory
 
         var extensions = string.Join(", ", factories.Select(item => item.Name));
 
-        throw new InvalidOperationException(
+        throw new ArchiveOperationException(
             $"Cannot determine compressed stream type. Supported Archive Formats: {extensions}"
         );
     }

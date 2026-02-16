@@ -460,7 +460,7 @@ public partial class ZipWriter : AbstractWriter
                     );
                     if (compressingProvider is null)
                     {
-                        throw new InvalidOperationException("LZMA compression provider not found.");
+                        throw new ArchiveOperationException("LZMA compression provider not found.");
                     }
 
                     var context = new CompressionContext { CanSeek = originalStream.CanSeek };
@@ -498,7 +498,7 @@ public partial class ZipWriter : AbstractWriter
                     );
                     if (compressingProvider is null)
                     {
-                        throw new InvalidOperationException("PPMd compression provider not found.");
+                        throw new ArchiveOperationException("PPMd compression provider not found.");
                     }
 
                     var context = new CompressionContext

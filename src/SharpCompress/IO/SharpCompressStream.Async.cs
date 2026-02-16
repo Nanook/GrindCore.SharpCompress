@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using SharpCompress.Common;
 
 namespace SharpCompress.IO;
 
@@ -71,7 +72,7 @@ public partial class SharpCompressStream
             // Verify data is available in ring buffer
             if (!_ringBuffer!.CanReadFromEnd(bytesFromEnd))
             {
-                throw new InvalidOperationException(
+                throw new ArchiveOperationException(
                     $"Ring buffer underflow: trying to read {bytesFromEnd} bytes back, "
                         + $"but buffer only holds {_ringBuffer.Length} bytes."
                 );
@@ -161,7 +162,7 @@ public partial class SharpCompressStream
             // Verify data is available in ring buffer
             if (!_ringBuffer!.CanReadFromEnd(bytesFromEnd))
             {
-                throw new InvalidOperationException(
+                throw new ArchiveOperationException(
                     $"Ring buffer underflow: trying to read {bytesFromEnd} bytes back, "
                         + $"but buffer only holds {_ringBuffer.Length} bytes."
                 );
@@ -263,7 +264,7 @@ public partial class SharpCompressStream
         {
             if (ThrowOnDispose)
             {
-                throw new InvalidOperationException(
+                throw new ArchiveOperationException(
                     $"Attempt to dispose of a {nameof(SharpCompressStream)} when {nameof(ThrowOnDispose)} is true"
                 );
             }

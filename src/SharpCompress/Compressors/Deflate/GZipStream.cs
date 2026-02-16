@@ -116,7 +116,7 @@ public partial class GZipStream : Stream
             {
                 throw new ZlibException(
                     string.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "Don't be silly. {0} bytes?? Use a bigger buffer, at least {1}.",
                         value,
                         ZlibConstants.WorkingBufferSizeMin
@@ -354,7 +354,7 @@ public partial class GZipStream : Stream
             }
             else
             {
-                throw new InvalidOperationException();
+                throw new ArchiveOperationException();
             }
         }
 
@@ -413,7 +413,7 @@ public partial class GZipStream : Stream
             }
             if (_fileName.EndsWith('\\'))
             {
-                throw new InvalidOperationException("Illegal filename");
+                throw new ArchiveOperationException("Illegal filename");
             }
 
 #if LEGACY_DOTNET

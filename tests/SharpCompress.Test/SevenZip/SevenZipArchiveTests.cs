@@ -83,7 +83,7 @@ public class SevenZipArchiveTests : ArchiveTests
 
     [Fact]
     public void SevenZipArchive_BZip2_Split() =>
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<ArchiveOperationException>(() =>
             ArchiveStreamRead(
                 ".001",
                 null,
@@ -100,7 +100,7 @@ public class SevenZipArchiveTests : ArchiveTests
     //Same as archive as Original.7z.001 ... 007 files without the root directory 'Original\' in the archive - this caused the verify to fail
     [Fact]
     public void SevenZipArchive_BZip2_Split_Working() =>
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<ArchiveOperationException>(() =>
             ArchiveStreamRead(
                 ".001",
                 null,

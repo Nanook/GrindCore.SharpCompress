@@ -114,7 +114,7 @@ public abstract partial class RarReader : AbstractReader<RarReaderEntry, RarVolu
     {
         if (Entry.IsRedir)
         {
-            throw new InvalidOperationException("no stream for redirect entry");
+            throw new ArchiveOperationException("no stream for redirect entry");
         }
 
         var stream = new MultiVolumeReadOnlyStream(
