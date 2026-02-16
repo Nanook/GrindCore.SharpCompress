@@ -76,7 +76,9 @@ internal partial class WinzipAesCryptoStream : Stream
                 try
                 {
 #pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
+#pragma warning disable CA2012
                     _stream.ReadFullyAsync(ten, 0, 10).GetAwaiter().GetResult();
+#pragma warning restore CA2012
 #pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
                 }
                 finally
