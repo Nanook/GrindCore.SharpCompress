@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using SharpCompress.Common;
 
 namespace SharpCompress.Compressors.Arj;
 
@@ -61,10 +62,7 @@ public sealed partial class HuffTree
 
     public void BuildTree(byte[] lengths, int count)
     {
-        if (lengths == null)
-        {
-            throw new ArgumentNullException(nameof(lengths));
-        }
+        ThrowHelper.ThrowIfNull(lengths);
 
         if (count < 0 || count > lengths.Length)
         {
@@ -85,10 +83,7 @@ public sealed partial class HuffTree
 
     public void BuildTree(byte[] valueLengths)
     {
-        if (valueLengths == null)
-        {
-            throw new ArgumentNullException(nameof(valueLengths));
-        }
+        ThrowHelper.ThrowIfNull(valueLengths);
 
         if (valueLengths.Length > TreeEntry.MAX_INDEX / 2)
         {
@@ -195,7 +190,11 @@ public sealed partial class HuffTree
             var node = _tree[index];
             if (node.Type == NodeType.Leaf)
             {
-                result.AppendLine($"{prefix} -> {node.LeafValue}");
+                result
+                    .Append(prefix)
+                    .Append(" -> ")
+                    .Append(node.LeafValue.ToString(Constants.DefaultCultureInfo))
+                    .AppendLine();
             }
             else
             {

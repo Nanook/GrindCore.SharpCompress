@@ -101,7 +101,7 @@ public class UtilityTests
     {
         var data = new byte[] { 1, 2, 3 };
         using var stream = new MemoryStream(data);
-        var buffer = new byte[0];
+        var buffer = Array.Empty<byte>();
 
         var result = stream.ReadFully(buffer);
 
@@ -149,7 +149,7 @@ public class UtilityTests
     {
         var data = new byte[] { 1, 2, 3 };
         using var stream = new MemoryStream(data);
-        Span<byte> buffer = new byte[0];
+        Span<byte> buffer = Array.Empty<byte>();
 
         var result = stream.ReadFully(buffer);
 

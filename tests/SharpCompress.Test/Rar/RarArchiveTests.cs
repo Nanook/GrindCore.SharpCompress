@@ -4,7 +4,7 @@ using System.Linq;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Rar;
 using SharpCompress.Common;
-using SharpCompress.Compressors.LZMA.Utilites;
+using SharpCompress.Compressors.LZMA.Utilities;
 using SharpCompress.Readers;
 using SharpCompress.Test.Mocks;
 using Xunit;
@@ -19,9 +19,8 @@ public class RarArchiveTests : ArchiveTests
 
     [Fact]
     public void Rar_EncryptedFileAndHeader_NoPasswordExceptionTest() =>
-        Assert.Throws(
-            typeof(CryptographicException),
-            () => ReadRarPassword("Rar.encrypted_filesAndHeader.rar", null)
+        Assert.Throws<CryptographicException>(() =>
+            ReadRarPassword("Rar.encrypted_filesAndHeader.rar", null)
         );
 
     [Fact]
@@ -30,16 +29,14 @@ public class RarArchiveTests : ArchiveTests
 
     [Fact]
     public void Rar5_EncryptedFileAndHeader_Archive_Err() =>
-        Assert.Throws(
-            typeof(CryptographicException),
-            () => ReadRarPassword("Rar5.encrypted_filesAndHeader.rar", "failed")
+        Assert.Throws<CryptographicException>(() =>
+            ReadRarPassword("Rar5.encrypted_filesAndHeader.rar", "failed")
         );
 
     [Fact]
     public void Rar5_EncryptedFileAndHeader_NoPasswordExceptionTest() =>
-        Assert.Throws(
-            typeof(CryptographicException),
-            () => ReadRarPassword("Rar5.encrypted_filesAndHeader.rar", null)
+        Assert.Throws<CryptographicException>(() =>
+            ReadRarPassword("Rar5.encrypted_filesAndHeader.rar", null)
         );
 
     [Fact]
@@ -48,9 +45,8 @@ public class RarArchiveTests : ArchiveTests
 
     [Fact]
     public void Rar_EncryptedFileOnly_Archive_Err() =>
-        Assert.Throws(
-            typeof(CryptographicException),
-            () => ReadRarPassword("Rar5.encrypted_filesOnly.rar", "failed")
+        Assert.Throws<CryptographicException>(() =>
+            ReadRarPassword("Rar5.encrypted_filesOnly.rar", "failed")
         );
 
     [Fact]

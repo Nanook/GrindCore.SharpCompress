@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -12,13 +11,13 @@ namespace SharpCompress.Compressors.Deflate64;
 public sealed partial class Deflate64Stream
 {
     public override async Task<int> ReadAsync(
-        byte[] array,
+        byte[] buffer,
         int offset,
         int count,
         CancellationToken cancellationToken
     )
     {
-        ValidateParameters(array, offset, count);
+        ValidateParameters(buffer, offset, count);
         EnsureNotDisposed();
 
         int bytesRead;
@@ -27,7 +26,7 @@ public sealed partial class Deflate64Stream
 
         while (true)
         {
-            bytesRead = _inflater.Inflate(array, currentOffset, remainingCount);
+            bytesRead = _inflater.Inflate(buffer, currentOffset, remainingCount);
             currentOffset += bytesRead;
             remainingCount -= bytesRead;
 
@@ -39,10 +38,6 @@ public sealed partial class Deflate64Stream
             if (_inflater.Finished())
             {
                 // if we finished decompressing, we can't have anything left in the outputwindow.
-                Debug.Assert(
-                    _inflater.AvailableOutput == 0,
-                    "We should have copied all stuff out!"
-                );
                 break;
             }
 

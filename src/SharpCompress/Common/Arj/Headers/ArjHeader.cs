@@ -18,7 +18,6 @@ public enum ArjHeaderType
 
 public abstract partial class ArjHeader
 {
-    private const int FIRST_HDR_SIZE = 34;
     private const ushort ARJ_MAGIC = 0xEA60;
 
     public ArjHeader(ArjHeaderType type)
@@ -138,7 +137,11 @@ public abstract partial class ArjHeader
 
     public static FileType FileTypeFromByte(byte value)
     {
+#if LEGACY_DOTNET
         return Enum.IsDefined(typeof(FileType), value) ? (FileType)value : Headers.FileType.Unknown;
+#else
+        return Enum.IsDefined((FileType)value) ? (FileType)value : Headers.FileType.Unknown;
+#endif
     }
 
     public static bool IsArchive(Stream stream)

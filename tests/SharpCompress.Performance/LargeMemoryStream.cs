@@ -85,14 +85,11 @@ public class LargeMemoryStream : Stream
     public override int Read(byte[] buffer, int offset, int count)
     {
         ThrowIfDisposed();
-        if (buffer == null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ArgumentNullException.ThrowIfNull(buffer);
 
         if (offset < 0 || count < 0 || offset + count > buffer.Length)
         {
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException(nameof(offset));
         }
 
         long length = Length;
@@ -130,14 +127,11 @@ public class LargeMemoryStream : Stream
     public override void Write(byte[] buffer, int offset, int count)
     {
         ThrowIfDisposed();
-        if (buffer == null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ArgumentNullException.ThrowIfNull(buffer);
 
         if (offset < 0 || count < 0 || offset + count > buffer.Length)
         {
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException(nameof(offset));
         }
 
         int bytesWritten = 0;
@@ -292,10 +286,7 @@ public class LargeMemoryStream : Stream
 
     private void ThrowIfDisposed()
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(GetType().Name);
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
     }
 
     protected override void Dispose(bool disposing)

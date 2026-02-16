@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
@@ -37,20 +37,14 @@ public partial class DecompressionStream : Stream
         bool leaveOpen = true
     )
     {
-        if (stream == null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
+        SharpCompress.ThrowHelper.ThrowIfNull(stream);
 
         if (!stream.CanRead)
         {
             throw new ArgumentException("Stream is not readable", nameof(stream));
         }
 
-        if (bufferSize < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(bufferSize));
-        }
+        SharpCompress.ThrowHelper.ThrowIfNegative(bufferSize);
 
         innerStream = stream;
         this.decompressor = decompressor;
@@ -90,6 +84,7 @@ public partial class DecompressionStream : Stream
     {
         if (decompressor == null)
         {
+            base.Dispose(disposing);
             return;
         }
 
@@ -108,6 +103,7 @@ public partial class DecompressionStream : Stream
         {
             innerStream.Dispose();
         }
+        base.Dispose(disposing);
     }
 
     public override int Read(byte[] buffer, int offset, int count) =>

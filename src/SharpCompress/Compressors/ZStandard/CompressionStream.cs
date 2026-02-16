@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
@@ -32,20 +32,14 @@ public partial class CompressionStream : Stream
         bool leaveOpen = true
     )
     {
-        if (stream == null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
+        SharpCompress.ThrowHelper.ThrowIfNull(stream);
 
         if (!stream.CanWrite)
         {
             throw new ArgumentException("Stream is not writable", nameof(stream));
         }
 
-        if (bufferSize < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(bufferSize));
-        }
+        SharpCompress.ThrowHelper.ThrowIfNegative(bufferSize);
 
         innerStream = stream;
         this.compressor = compressor;
@@ -84,6 +78,7 @@ public partial class CompressionStream : Stream
     {
         if (compressor == null)
         {
+            base.Dispose(disposing);
             return;
         }
 
@@ -98,6 +93,7 @@ public partial class CompressionStream : Stream
         {
             ReleaseUnmanagedResources();
         }
+        base.Dispose(disposing);
     }
 
     private void ReleaseUnmanagedResources()
@@ -121,7 +117,8 @@ public partial class CompressionStream : Stream
 
     public override void Flush() => FlushInternal(ZSTD_EndDirective.ZSTD_e_flush);
 
-    private void FlushInternal(ZSTD_EndDirective directive) => WriteInternal(null, directive);
+    private void FlushInternal(ZSTD_EndDirective directive) =>
+        WriteInternal(ReadOnlySpan<byte>.Empty, directive);
 
     public override void Write(byte[] buffer, int offset, int count) =>
         Write(new ReadOnlySpan<byte>(buffer, offset, count));
@@ -138,11 +135,7 @@ public partial class CompressionStream : Stream
     {
         EnsureNotDisposed();
 
-        var input = new ZSTD_inBuffer_s
-        {
-            pos = 0,
-            size = buffer != null ? (nuint)buffer.Length : 0,
-        };
+        var input = new ZSTD_inBuffer_s { pos = 0, size = (nuint)buffer.Length };
         nuint remaining;
         do
         {

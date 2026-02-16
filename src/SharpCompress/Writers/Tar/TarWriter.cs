@@ -65,7 +65,11 @@ public partial class TarWriter : AbstractWriter
     {
         filename = filename.Replace('\\', '/');
 
+#if LEGACY_DOTNET
         var pos = filename.IndexOf(':');
+#else
+        var pos = filename.IndexOf(':', StringComparison.Ordinal);
+#endif
         if (pos >= 0)
         {
             filename = filename.Remove(0, pos + 1);
@@ -98,7 +102,7 @@ public partial class TarWriter : AbstractWriter
         header.Name = normalizedName;
         header.Size = 0;
         header.EntryType = EntryType.Directory;
-        header.Write(OutputStream);
+        header.Write(OutputStream.NotNull());
     }
 
     public void Write(string filename, Stream source, DateTime? modificationTime, long? size)
@@ -115,9 +119,9 @@ public partial class TarWriter : AbstractWriter
         header.LastModifiedTime = modificationTime ?? TarHeader.EPOCH;
         header.Name = NormalizeFilename(filename);
         header.Size = realSize;
-        header.Write(OutputStream);
+        header.Write(OutputStream.NotNull());
         var progressStream = WrapWithProgress(source, filename);
-        size = progressStream.TransferTo(OutputStream, realSize);
+        size = progressStream.TransferTo(OutputStream.NotNull(), realSize);
         PadTo512(size.Value);
     }
 
@@ -125,7 +129,7 @@ public partial class TarWriter : AbstractWriter
     {
         var zeros = unchecked((int)(((size + 511L) & ~511L) - size));
 
-        OutputStream.Write(stackalloc byte[zeros]);
+        OutputStream.NotNull().Write(stackalloc byte[zeros]);
     }
 
     protected override void Dispose(bool isDisposing)
@@ -134,7 +138,7 @@ public partial class TarWriter : AbstractWriter
         {
             if (finalizeArchiveOnClose)
             {
-                OutputStream.Write(stackalloc byte[1024]);
+                OutputStream.NotNull().Write(stackalloc byte[1024]);
             }
             // Use IFinishable interface for generic finalization
             if (OutputStream is IFinishable finishable)

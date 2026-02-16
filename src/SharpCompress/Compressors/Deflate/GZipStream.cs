@@ -116,6 +116,7 @@ public partial class GZipStream : Stream
             {
                 throw new ZlibException(
                     string.Format(
+                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
                         "Don't be silly. {0} bytes?? Use a bigger buffer, at least {1}.",
                         value,
                         ZlibConstants.WorkingBufferSizeMin
@@ -402,7 +403,11 @@ public partial class GZipStream : Stream
             {
                 return;
             }
+#if LEGACY_DOTNET
             if (_fileName.Contains('/'))
+#else
+            if (_fileName.Contains('/', StringComparison.Ordinal))
+#endif
             {
                 _fileName = _fileName.Replace('/', '\\');
             }
@@ -411,7 +416,11 @@ public partial class GZipStream : Stream
                 throw new InvalidOperationException("Illegal filename");
             }
 
+#if LEGACY_DOTNET
             if (_fileName.Contains('\\'))
+#else
+            if (_fileName.Contains('\\', StringComparison.Ordinal))
+#endif
             {
                 // trim any leading path
                 _fileName = Path.GetFileName(_fileName);

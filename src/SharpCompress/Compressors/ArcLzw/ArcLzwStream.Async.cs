@@ -1,9 +1,10 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SharpCompress.Compressors.RLE90;
+
+namespace SharpCompress.Compressors.ArcLzw;
 
 public partial class ArcLzwStream
 {
@@ -33,7 +34,7 @@ public partial class ArcLzwStream
             totalRead += read;
         }
         var decoded = Decompress(data, _useCrunched);
-        var result = decoded.Count();
+        var result = decoded.Count;
         if (_useCrunched)
         {
             var unpacked = RLE.UnpackRLE(decoded.ToArray());

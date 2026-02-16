@@ -247,15 +247,16 @@ internal static partial class Utility
         /// </summary>
         public void ReadExact(byte[] buffer, int offset, int length)
         {
+#if LEGACY_DOTNET
             if (source is null)
             {
-                throw new ArgumentNullException(nameof(source));
+                throw new ArgumentNullException();
             }
+#else
+            ThrowHelper.ThrowIfNull(source);
+#endif
 
-            if (buffer is null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
+            ThrowHelper.ThrowIfNull(buffer);
 
             if (offset < 0 || offset > buffer.Length)
             {

@@ -19,7 +19,9 @@ internal abstract class ArchiveVolumeFactory
                     part1.DirectoryName!,
                     String.Concat(
                         m.Groups[1].Value,
-                        (index + 1).ToString().PadLeft(m.Groups[2].Value.Length, '0')
+                        (index + 1)
+                            .ToString(global::SharpCompress.Common.Constants.DefaultCultureInfo)
+                            .PadLeft(m.Groups[2].Value.Length, '0')
                     )
                 )
             );

@@ -53,14 +53,11 @@ public partial class RunLength90Stream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        if (buffer == null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ThrowHelper.ThrowIfNull(buffer);
 
         if (offset < 0 || count < 0 || offset + count > buffer.Length)
         {
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException(nameof(offset));
         }
 
         int bytesWritten = 0;

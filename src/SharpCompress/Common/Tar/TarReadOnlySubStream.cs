@@ -6,7 +6,6 @@ namespace SharpCompress.Common.Tar;
 internal class TarReadOnlySubStream : Stream
 {
     private readonly Stream _stream;
-    private readonly bool _useSyncOverAsyncDispose;
 
     private bool _isDisposed;
     private long _amountRead;
@@ -14,7 +13,6 @@ internal class TarReadOnlySubStream : Stream
     public TarReadOnlySubStream(Stream stream, long bytesToRead, bool useSyncOverAsyncDispose)
     {
         _stream = stream;
-        _useSyncOverAsyncDispose = useSyncOverAsyncDispose;
         BytesLeftToRead = bytesToRead;
     }
 
@@ -22,6 +20,7 @@ internal class TarReadOnlySubStream : Stream
     {
         if (_isDisposed)
         {
+            base.Dispose(disposing);
             return;
         }
 
@@ -39,7 +38,11 @@ internal class TarReadOnlySubStream : Stream
             {
                 if (Utility.UseSyncOverAsyncDispose())
                 {
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
+#pragma warning disable CA2012
                     _stream.SkipAsync(512 - bytesInLastBlock).GetAwaiter().GetResult();
+#pragma warning restore CA2012
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
                 }
                 else
                 {
@@ -47,6 +50,7 @@ internal class TarReadOnlySubStream : Stream
                 }
             }
         }
+        base.Dispose(disposing);
     }
 
 #if !LEGACY_DOTNET
@@ -54,6 +58,7 @@ internal class TarReadOnlySubStream : Stream
     {
         if (_isDisposed)
         {
+            await base.DisposeAsync().ConfigureAwait(false);
             return;
         }
 
@@ -71,6 +76,7 @@ internal class TarReadOnlySubStream : Stream
         }
 
         GC.SuppressFinalize(this);
+        await base.DisposeAsync().ConfigureAwait(false);
     }
 #endif
 
