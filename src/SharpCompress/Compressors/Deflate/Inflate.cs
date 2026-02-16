@@ -1746,6 +1746,7 @@ internal sealed class InflateManager
                     {
                         mode = InflateManagerMode.BAD;
                         _codec.Message = string.Format(
+                            global::SharpCompress.Common.Constants.DefaultCultureInfo,
                             "unknown compression method (0x{0:X2})",
                             method
                         );
@@ -1756,6 +1757,7 @@ internal sealed class InflateManager
                     {
                         mode = InflateManagerMode.BAD;
                         _codec.Message = string.Format(
+                            global::SharpCompress.Common.Constants.DefaultCultureInfo,
                             "invalid window size ({0})",
                             (method >> 4) + 8
                         );
@@ -1945,7 +1947,13 @@ internal sealed class InflateManager
                     return ZlibConstants.Z_STREAM_END;
 
                 case InflateManagerMode.BAD:
-                    throw new ZlibException(string.Format("Bad state ({0})", _codec.Message));
+                    throw new ZlibException(
+                        string.Format(
+                            global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                            "Bad state ({0})",
+                            _codec.Message
+                        )
+                    );
 
                 default:
                     throw new ZlibException("Stream error.");

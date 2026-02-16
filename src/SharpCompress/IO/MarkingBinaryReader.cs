@@ -46,6 +46,7 @@ internal class MarkingBinaryReader(Stream stream)
         {
             throw new InvalidFormatException(
                 string.Format(
+                    global::SharpCompress.Common.Constants.DefaultCultureInfo,
                     "Could not read the requested amount of bytes.  End of stream reached. Requested: {0} Read: {1}",
                     count,
                     bytes.Length

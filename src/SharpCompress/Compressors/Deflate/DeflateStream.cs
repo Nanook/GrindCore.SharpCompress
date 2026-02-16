@@ -120,6 +120,7 @@ public partial class DeflateStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     string.Format(
+                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
                         "Don't be silly. {0} bytes?? Use a bigger buffer, at least {1}.",
                         value,
                         ZlibConstants.WorkingBufferSizeMin

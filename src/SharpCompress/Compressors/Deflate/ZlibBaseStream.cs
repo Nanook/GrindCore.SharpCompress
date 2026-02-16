@@ -275,7 +275,14 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     var verb = (_wantCompress ? "de" : "in") + "flating";
                     if (_z.Message is null)
                     {
-                        throw new ZlibException(String.Format("{0}: (rc = {1})", verb, rc));
+                        throw new ZlibException(
+                            String.Format(
+                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                "{0}: (rc = {1})",
+                                verb,
+                                rc
+                            )
+                        );
                     }
                     throw new ZlibException(verb + ": " + _z.Message);
                 }
@@ -344,6 +351,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                         {
                             throw new ZlibException(
                                 String.Format(
+                                    global::SharpCompress.Common.Constants.DefaultCultureInfo,
                                     "Protocol error. AvailableBytesIn={0}, expected 8",
                                     _z.AvailableBytesIn + bytesRead
                                 )
@@ -364,6 +372,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     {
                         throw new ZlibException(
                             String.Format(
+                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
                                 "Bad CRC32 in GZIP stream. (actual({0:X8})!=expected({1:X8}))",
                                 crc32_actual,
                                 crc32_expected
@@ -375,6 +384,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     {
                         throw new ZlibException(
                             String.Format(
+                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
                                 "Bad size in GZIP stream. (actual({0})!=expected({1}))",
                                 isize_actual,
                                 isize_expected
@@ -413,7 +423,14 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     var verb = (_wantCompress ? "de" : "in") + "flating";
                     if (_z.Message is null)
                     {
-                        throw new ZlibException(String.Format("{0}: (rc = {1})", verb, rc));
+                        throw new ZlibException(
+                            String.Format(
+                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                "{0}: (rc = {1})",
+                                verb,
+                                rc
+                            )
+                        );
                     }
                     throw new ZlibException(verb + ": " + _z.Message);
                 }
@@ -869,7 +886,12 @@ internal class ZlibBaseStream : Stream, IStreamStack
             if (rc != ZlibConstants.Z_OK && rc != ZlibConstants.Z_STREAM_END)
             {
                 throw new ZlibException(
-                    String.Format("Deflating:  rc={0}  msg={1}", rc, _z.Message)
+                    String.Format(
+                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        "Deflating:  rc={0}  msg={1}",
+                        rc,
+                        _z.Message
+                    )
                 );
             }
 
@@ -922,6 +944,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     String.Format(
+                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
                         "{0}flating:  rc={1}  msg={2}",
                         (_wantCompress ? "de" : "in"),
                         rc,
@@ -961,7 +984,12 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     if (rc != ZlibConstants.Z_OK && rc != ZlibConstants.Z_STREAM_END)
                     {
                         throw new ZlibException(
-                            String.Format("Deflating:  rc={0}  msg={1}", rc, _z.Message)
+                            String.Format(
+                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                "Deflating:  rc={0}  msg={1}",
+                                rc,
+                                _z.Message
+                            )
                         );
                     }
                 }
@@ -1050,7 +1078,12 @@ internal class ZlibBaseStream : Stream, IStreamStack
             if (rc != ZlibConstants.Z_OK && rc != ZlibConstants.Z_STREAM_END)
             {
                 throw new ZlibException(
-                    String.Format("Deflating:  rc={0}  msg={1}", rc, _z.Message)
+                    String.Format(
+                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        "Deflating:  rc={0}  msg={1}",
+                        rc,
+                        _z.Message
+                    )
                 );
             }
 
@@ -1105,6 +1138,7 @@ internal class ZlibBaseStream : Stream, IStreamStack
             {
                 throw new ZlibException(
                     String.Format(
+                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
                         "{0}flating:  rc={1}  msg={2}",
                         (_wantCompress ? "de" : "in"),
                         rc,
@@ -1144,7 +1178,12 @@ internal class ZlibBaseStream : Stream, IStreamStack
                     if (rc != ZlibConstants.Z_OK && rc != ZlibConstants.Z_STREAM_END)
                     {
                         throw new ZlibException(
-                            String.Format("Deflating:  rc={0}  msg={1}", rc, _z.Message)
+                            String.Format(
+                                global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                                "Deflating:  rc={0}  msg={1}",
+                                rc,
+                                _z.Message
+                            )
                         );
                     }
                 }

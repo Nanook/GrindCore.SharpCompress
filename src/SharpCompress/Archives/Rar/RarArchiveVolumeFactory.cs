@@ -19,7 +19,9 @@ internal static class RarArchiveVolumeFactory
                     part1.DirectoryName!,
                     String.Concat(
                         m.Groups[1].Value,
-                        (index + 1).ToString().PadLeft(m.Groups[2].Value.Length, '0'),
+                        (index + 1)
+                            .ToString(global::SharpCompress.Common.Constants.DefaultCultureInfo)
+                            .PadLeft(m.Groups[2].Value.Length, '0'),
                         m.Groups[3].Value
                     )
                 )
@@ -39,7 +41,15 @@ internal static class RarArchiveVolumeFactory
                             index == 0
                                 ? m.Groups[2].Value + m.Groups[3].Value
                                 : (char)(m.Groups[2].Value[0] + ((index - 1) / 100))
-                                    + (index - 1).ToString("D4").Substring(2)
+                                    + (index - 1)
+                                        .ToString(
+                                            "D4",
+                                            global::SharpCompress
+                                                .Common
+                                                .Constants
+                                                .DefaultCultureInfo
+                                        )
+                                        .Substring(2)
                         )
                     )
                 );

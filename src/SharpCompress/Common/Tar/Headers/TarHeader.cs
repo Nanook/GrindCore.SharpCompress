@@ -457,7 +457,7 @@ internal sealed partial class TarHeader
         {
             return 0;
         }
-        return Convert.ToInt64(s);
+        return Convert.ToInt64(s, Constants.DefaultCultureInfo);
     }
 
     private static readonly byte[] eightSpaces =

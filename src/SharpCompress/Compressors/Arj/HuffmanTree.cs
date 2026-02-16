@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using SharpCompress.Common;
 
 namespace SharpCompress.Compressors.Arj;
 
@@ -189,7 +190,11 @@ public sealed partial class HuffTree
             var node = _tree[index];
             if (node.Type == NodeType.Leaf)
             {
-                result.AppendLine($"{prefix} -> {node.LeafValue}");
+                result
+                    .Append(prefix)
+                    .Append(" -> ")
+                    .Append(node.LeafValue.ToString(Constants.DefaultCultureInfo))
+                    .AppendLine();
             }
             else
             {

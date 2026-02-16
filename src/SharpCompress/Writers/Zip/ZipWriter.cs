@@ -133,7 +133,11 @@ public partial class ZipWriter : AbstractWriter
     {
         filename = filename.Replace('\\', '/');
 
+#if LEGACY_DOTNET
         var pos = filename.IndexOf(':');
+#else
+        var pos = filename.IndexOf(':', StringComparison.Ordinal);
+#endif
         if (pos >= 0)
         {
             filename = filename.Remove(0, pos + 1);

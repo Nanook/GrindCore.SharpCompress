@@ -696,6 +696,7 @@ internal sealed class ZlibCodec
         {
             throw new ZlibException(
                 string.Format(
+                    global::SharpCompress.Common.Constants.DefaultCultureInfo,
                     "Invalid State. (pending.Length={0}, pendingCount={1})",
                     dstate.pending.Length,
                     dstate.pendingCount

@@ -21,7 +21,9 @@ internal static class ZipArchiveVolumeFactory
                     String.Concat(
                         m.Groups[1].Value,
                         Regex.Replace(m.Groups[2].Value, @"[^xz]", ""),
-                        index.ToString().PadLeft(2, '0')
+                        index
+                            .ToString(global::SharpCompress.Common.Constants.DefaultCultureInfo)
+                            .PadLeft(2, '0')
                     )
                 )
             );

@@ -265,12 +265,12 @@ dotnet_diagnostic.CA1051.severity = suggestion # do not declare visible instance
 dotnet_diagnostic.CA1068.severity = error # cancellation token parameters must come last
 dotnet_diagnostic.CA1069.severity = error # enums should not have duplicate values
 dotnet_diagnostic.CA1304.severity = error # specify CultureInfo for culture-sensitive operations
-dotnet_diagnostic.CA1305.severity = suggestion # specify IFormatProvider
-dotnet_diagnostic.CA1307.severity = suggestion # specify StringComparison for clarity
+dotnet_diagnostic.CA1305.severity = error # specify IFormatProvider
+dotnet_diagnostic.CA1307.severity = error # specify StringComparison for clarity
 dotnet_diagnostic.CA1309.severity = error # use ordinal StringComparison
 dotnet_diagnostic.CA1310.severity = error # specify StringComparison for correctness
 dotnet_diagnostic.CA1507.severity = error # use nameof in place of string literals
-dotnet_diagnostic.CA1513.severity = suggestion # use ObjectDisposedException throw helper
+dotnet_diagnostic.CA1513.severity = error # use ObjectDisposedException throw helper
 dotnet_diagnostic.CA1707.severity = suggestion # identifiers should not contain underscores
 dotnet_diagnostic.CA1708.severity = suggestion # identifiers should differ by more than case
 dotnet_diagnostic.CA1711.severity = suggestion # identifiers should not have incorrect suffixes
@@ -405,6 +405,8 @@ dotnet_diagnostic.VSTHRD200.severity = none # use Async suffix naming convention
 
 [tests/**/*.cs]
 dotnet_diagnostic.CA1861.severity = suggestion # avoid constant arrays as arguments
+dotnet_diagnostic.CA1305.severity = suggestion # specify IFormatProvider
+dotnet_diagnostic.CA1307.severity = suggestion # specify StringComparison for clarity
 dotnet_diagnostic.IDE0042.severity = suggestion
 dotnet_diagnostic.IDE0051.severity = suggestion
 dotnet_diagnostic.IDE0063.severity = suggestion

@@ -593,7 +593,7 @@ static Dictionary<string, BenchmarkMetric> ParseBenchmarkResults(string markdown
             var parts = line.Split('|', StringSplitOptions.TrimEntries);
             if (parts.Length >= 5)
             {
-                var method = parts[1].Replace("&#39;", "'");
+                var method = parts[1].Replace("&#39;", "'", StringComparison.Ordinal);
                 var meanStr = parts[2];
 
                 // Find Allocated column - it's usually the last column or labeled "Allocated"
@@ -604,7 +604,7 @@ static Dictionary<string, BenchmarkMetric> ParseBenchmarkResults(string markdown
                         parts[j].Contains("KB", StringComparison.Ordinal)
                         || parts[j].Contains("MB", StringComparison.Ordinal)
                         || parts[j].Contains("GB", StringComparison.Ordinal)
-                        || parts[j].Contains('B')
+                        || parts[j].Contains('B', StringComparison.Ordinal)
                     )
                     {
                         memoryStr = parts[j];
@@ -642,7 +642,7 @@ static double ParseTimeValue(string timeStr)
     }
 
     // Remove thousands separators and parse
-    timeStr = timeStr.Replace(",", "").Trim();
+    timeStr = timeStr.Replace(",", "", StringComparison.Ordinal).Trim();
 
     var match = Regex.Match(timeStr, @"([\d.]+)\s*(\w+)");
     if (!match.Success)
@@ -671,7 +671,7 @@ static double ParseMemoryValue(string memStr)
         return 0;
     }
 
-    memStr = memStr.Replace(",", "").Trim();
+    memStr = memStr.Replace(",", "", StringComparison.Ordinal).Trim();
 
     var match = Regex.Match(memStr, @"([\d.]+)\s*(\w+)");
     if (!match.Success)
