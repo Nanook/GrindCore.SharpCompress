@@ -124,7 +124,7 @@ internal class AsyncMarkingBinaryReader : IDisposable
             shift += 7;
         } while (shift <= maxShift);
 
-        throw new FormatException("malformed vint");
+        throw new InvalidFormatException("malformed vint");
     }
 
     public async ValueTask<uint> ReadRarVIntUInt32Async(
@@ -188,7 +188,7 @@ internal class AsyncMarkingBinaryReader : IDisposable
             shift += 7;
         } while (shift <= maxShift);
 
-        throw new FormatException("malformed vint");
+        throw new InvalidFormatException("malformed vint");
     }
 
     public virtual void Dispose() => _reader.Dispose();

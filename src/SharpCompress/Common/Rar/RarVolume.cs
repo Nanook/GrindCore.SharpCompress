@@ -134,7 +134,7 @@ public abstract class RarVolume : Volume
         {
             if (Mode == StreamingMode.Streaming)
             {
-                throw new InvalidOperationException(
+                throw new ArchiveOperationException(
                     "ArchiveHeader should never been null in a streaming read."
                 );
             }
@@ -243,7 +243,7 @@ public abstract class RarVolume : Volume
         {
             if (Mode == StreamingMode.Streaming)
             {
-                throw new InvalidOperationException(
+                throw new ArchiveOperationException(
                     "ArchiveHeader should never been null in a streaming read."
                 );
             }

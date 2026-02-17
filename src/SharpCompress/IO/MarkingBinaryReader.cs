@@ -46,7 +46,7 @@ internal class MarkingBinaryReader(Stream stream)
         {
             throw new InvalidFormatException(
                 string.Format(
-                    global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                    Constants.DefaultCultureInfo,
                     "Could not read the requested amount of bytes.  End of stream reached. Requested: {0} Read: {1}",
                     count,
                     bytes.Length
@@ -115,7 +115,7 @@ internal class MarkingBinaryReader(Stream stream)
             shift += 7;
         } while (shift <= maxShift);
 
-        throw new FormatException("malformed vint");
+        throw new InvalidFormatException("malformed vint");
     }
 
     public uint ReadRarVIntUInt32(int maxBytes = 5) =>
@@ -153,6 +153,6 @@ internal class MarkingBinaryReader(Stream stream)
             shift += 7;
         } while (shift <= maxShift);
 
-        throw new FormatException("malformed vint");
+        throw new InvalidFormatException("malformed vint");
     }
 }

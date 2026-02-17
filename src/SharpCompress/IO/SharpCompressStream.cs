@@ -92,7 +92,7 @@ public partial class SharpCompressStream : Stream, IStreamStack
         }
         if (ThrowOnDispose)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 $"Attempt to dispose of a {nameof(SharpCompressStream)} when {nameof(ThrowOnDispose)} is true"
             );
         }
@@ -115,14 +115,14 @@ public partial class SharpCompressStream : Stream, IStreamStack
     {
         if (_isPassthrough)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 "Rewind cannot be called on a passthrough stream. Use Create() first."
             );
         }
 
         if (_recordingStartPosition is null)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 "Rewind can only be called after StartRecording() has been called."
             );
         }
@@ -131,7 +131,7 @@ public partial class SharpCompressStream : Stream, IStreamStack
         long anchorAge = streamPosition - _recordingStartPosition.Value;
         if (anchorAge > _ringBuffer!.Length)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 $"Cannot rewind: recording anchor is {anchorAge} bytes behind current position, "
                     + $"but ring buffer only holds {_ringBuffer.Length} bytes. "
                     + $"Recording buffer overflow - increase DefaultRollingBufferSize or reduce format detection reads."
@@ -154,13 +154,13 @@ public partial class SharpCompressStream : Stream, IStreamStack
     {
         if (_isPassthrough)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 "StopRecording cannot be called on a passthrough stream. Use Create() first."
             );
         }
         if (!IsRecording)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 "StopRecording can only be called when recording is active."
             );
         }
@@ -179,13 +179,13 @@ public partial class SharpCompressStream : Stream, IStreamStack
     {
         if (_isPassthrough)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 "StartRecording cannot be called on a passthrough stream. Use Create() first."
             );
         }
         if (IsRecording)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 "StartRecording can only be called when not already recording."
             );
         }
@@ -337,7 +337,7 @@ public partial class SharpCompressStream : Stream, IStreamStack
             // Verify data is available in ring buffer
             if (!_ringBuffer!.CanReadFromEnd(bytesFromEnd))
             {
-                throw new InvalidOperationException(
+                throw new ArchiveOperationException(
                     $"Ring buffer underflow: trying to read {bytesFromEnd} bytes back, "
                         + $"but buffer only holds {_ringBuffer.Length} bytes."
                 );

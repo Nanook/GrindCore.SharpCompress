@@ -66,7 +66,7 @@ public partial class ArjLocalHeader : ArjHeader
         {
             if (offset + 1 >= headerBytes.Length)
             {
-                throw new EndOfStreamException();
+                throw new IncompleteArchiveException("Unexpected end of stream.");
             }
             var v = headerBytes[offset] & 0xFF | (headerBytes[offset + 1] & 0xFF) << 8;
             offset += 2;
@@ -76,7 +76,7 @@ public partial class ArjLocalHeader : ArjHeader
         {
             if (offset + 3 >= headerBytes.Length)
             {
-                throw new EndOfStreamException();
+                throw new IncompleteArchiveException("Unexpected end of stream.");
             }
             long v =
                 headerBytes[offset] & 0xFF

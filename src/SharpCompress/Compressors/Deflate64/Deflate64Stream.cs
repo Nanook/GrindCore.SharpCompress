@@ -141,7 +141,7 @@ public sealed partial class Deflate64Stream : Stream
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowCannotWriteToDeflateManagedStreamException() =>
-        throw new InvalidOperationException("Deflate64: cannot write to this stream");
+        throw new ArchiveOperationException("Deflate64: cannot write to this stream");
 
     public override void Write(byte[] buffer, int offset, int count) =>
         ThrowCannotWriteToDeflateManagedStreamException();

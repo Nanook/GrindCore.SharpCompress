@@ -87,7 +87,7 @@ public sealed partial class HuffTree
 
         if (valueLengths.Length > TreeEntry.MAX_INDEX / 2)
         {
-            throw new InvalidOperationException("Too many code lengths");
+            throw new ArchiveOperationException("Too many code lengths");
         }
 
         _tree.Clear();
@@ -109,7 +109,7 @@ public sealed partial class HuffTree
                 catch (ArgumentOutOfRangeException e)
                 {
                     _tree.Clear();
-                    throw new InvalidOperationException("Branch index exceeds limit", e);
+                    throw new ArchiveOperationException("Branch index exceeds limit", e);
                 }
 
                 // each branch node allocates two children
@@ -135,7 +135,7 @@ public sealed partial class HuffTree
             // sanity check (too many leaves)
             if (_tree.Count > maxAllocated)
             {
-                throw new InvalidOperationException("Too many leaves");
+                throw new ArchiveOperationException("Too many leaves");
             }
 
             // stop when no longer finding longer codes
@@ -148,7 +148,7 @@ public sealed partial class HuffTree
         // ensure tree is complete
         if (_tree.Count != maxAllocated)
         {
-            throw new InvalidOperationException(
+            throw new ArchiveOperationException(
                 $"Missing some leaves: tree count = {_tree.Count}, expected = {maxAllocated}"
             );
         }
@@ -158,7 +158,7 @@ public sealed partial class HuffTree
     {
         if (_tree.Count == 0)
         {
-            throw new InvalidOperationException("Tree not initialized");
+            throw new ArchiveOperationException("Tree not initialized");
         }
 
         TreeEntry node = _tree[0];
@@ -174,7 +174,7 @@ public sealed partial class HuffTree
 
             if (index >= _tree.Count)
             {
-                throw new InvalidOperationException("Invalid branch index during read");
+                throw new ArchiveOperationException("Invalid branch index during read");
             }
 
             node = _tree[index];

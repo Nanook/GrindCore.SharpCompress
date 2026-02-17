@@ -54,7 +54,7 @@ public sealed partial class AceMainHeader : AceHeader
         // Skip signature "**ACE**" (7 bytes)
         if (!CheckMagicBytes(headerData, offset))
         {
-            throw new InvalidDataException("Invalid ACE archive signature.");
+            throw new InvalidFormatException("Invalid ACE archive signature.");
         }
         offset += 7;
 

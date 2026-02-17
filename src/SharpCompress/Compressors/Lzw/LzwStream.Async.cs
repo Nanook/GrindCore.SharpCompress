@@ -38,7 +38,7 @@ public partial class LzwStream
             {
                 throw new IncompleteArchiveException(
                     String.Format(
-                        global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                        Constants.DefaultCultureInfo,
                         "Wrong LZW header. Magic bytes don't match. 0x{0:x2} 0x{1:x2}",
                         hdr[0],
                         hdr[1]
@@ -326,7 +326,7 @@ public partial class LzwStream
         {
             throw new IncompleteArchiveException(
                 String.Format(
-                    global::SharpCompress.Common.Constants.DefaultCultureInfo,
+                    Constants.DefaultCultureInfo,
                     "Wrong LZW header. Magic bytes don't match. 0x{0:x2} 0x{1:x2}",
                     hdr[0],
                     hdr[1]
