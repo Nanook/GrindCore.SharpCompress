@@ -38,6 +38,16 @@ public class WriterOptions : OptionsBase
     public int CompressionLevel { get; set; }
 
     /// <summary>
+    /// The compression buffer size for algorithms that can benefit from larger working buffers.
+    /// This property allows setting larger buffer sizes specifically for compression operations
+    /// and can also serve as the block size for block-based compression algorithms like LZMA2.
+    /// Larger values can improve compression ratios and performance for large data streams
+    /// at the cost of increased memory usage. Set to 0 to use the default buffer size.
+    /// Default is 0 (uses algorithm-specific defaults).
+    /// </summary>
+    public int CompressionBufferSize { get; set; } //Nanook
+
+    /// <summary>
     /// An optional progress reporter for tracking compression operations.
     /// When set, progress updates will be reported as entries are written.
     /// </summary>

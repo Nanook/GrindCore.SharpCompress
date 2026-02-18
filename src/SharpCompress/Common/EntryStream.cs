@@ -39,14 +39,8 @@ public partial class EntryStream : Stream
         _isDisposed = true;
         if (!(_completed || _reader.Cancelled))
         {
-            if (Utility.UseSyncOverAsyncDispose())
-            {
-                SkipEntryAsync().GetAwaiter().GetResult();
-            }
-            else
-            {
-                SkipEntry();
-            }
+            // Always use synchronous skip in synchronous Dispose
+            SkipEntry();
         }
 
         //Need a safe standard approach to this - it's okay for compression to overreads. Handling needs to be standardised

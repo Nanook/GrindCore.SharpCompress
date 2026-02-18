@@ -7,7 +7,12 @@ using SharpCompress.Compressors.Deflate;
 using SharpCompress.Compressors.Filters;
 using SharpCompress.Compressors.LZMA.Utilites;
 using SharpCompress.Compressors.PPMd;
+#if !GRINDCORE
 using SharpCompress.Compressors.ZStandard;
+#else
+using SharpCompress.Compressors.Brotli;
+using SharpCompress.Compressors.LZ4;
+#endif
 
 namespace SharpCompress.Compressors.LZMA;
 
@@ -30,6 +35,8 @@ internal static partial class DecoderRegistry
     private const uint K_DEFLATE = 0x040108;
     private const uint K_B_ZIP2 = 0x040202;
     private const uint K_ZSTD = 0x4F71101;
+    private const uint K_BROTLI = 0x4F71102;
+    private const uint K_LZ4 = 0x4F71104;
 
     internal static Stream CreateDecoderStream(
         CMethodId id,
@@ -79,7 +86,36 @@ internal static partial class DecoderRegistry
             case K_DEFLATE:
                 return new DeflateStream(inStreams.Single(), CompressionMode.Decompress);
             case K_ZSTD:
+#if !GRINDCORE
                 return new DecompressionStream(inStreams.Single());
+#else
+                return new Nanook.GrindCore.ZStd.ZStdStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+            case K_BROTLI:
+                return new Nanook.GrindCore.Brotli.BrotliStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+            case K_LZ4:
+                return new Nanook.GrindCore.Lz4.Lz4Stream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#endif
             default:
                 throw new NotSupportedException();
         }

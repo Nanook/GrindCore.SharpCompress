@@ -284,7 +284,11 @@ public partial class SevenZipArchive : AbstractArchive<SevenZipArchiveEntry, Sev
         {
             cancellationToken.ThrowIfCancellationRequested();
             _baseStream.Write(buffer.Span);
+#if NETSTANDARD2_1
+            return default; //Nanook
+#else
             return ValueTask.CompletedTask;
+#endif
         }
 #endif
 

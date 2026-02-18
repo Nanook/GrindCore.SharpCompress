@@ -15,7 +15,9 @@ using SharpCompress.Compressors.PPMd;
 using SharpCompress.Compressors.Reduce;
 using SharpCompress.Compressors.Shrink;
 using SharpCompress.Compressors.Xz;
+#if !GRINDCORE
 using SharpCompress.Compressors.ZStandard;
+#endif
 using SharpCompress.IO;
 
 namespace SharpCompress.Common.Zip;
@@ -243,7 +245,48 @@ internal abstract partial class ZipFilePart
             }
             case ZipCompressionMethod.ZStandard:
             {
+#if !GRINDCORE
                 return new DecompressionStream(stream);
+#else
+                return new Nanook.GrindCore.ZStd.ZStdStream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#endif
+            }
+            case ZipCompressionMethod.LZ4:
+            {
+#if GRINDCORE
+                return new Nanook.GrindCore.Lz4.Lz4Stream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                throw new NotSupportedException("LZ4 decompression requires GrindCore library");
+#endif
+            }
+            case ZipCompressionMethod.Brotli:
+            {
+#if GRINDCORE
+                return new Nanook.GrindCore.Brotli.BrotliStream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                throw new NotSupportedException("LZ4 decompression requires GrindCore library");
+#endif
             }
             case ZipCompressionMethod.PPMd:
             {
