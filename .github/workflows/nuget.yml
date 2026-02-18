@@ -30,14 +30,15 @@ jobs:
           const runs = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'dotnetcore.yml',
+            // Look for the nuget-release workflow that uploads the artifacts
+            workflow_id: 'nuget-release.yml',
             status: 'completed',
             conclusion: 'success',
             per_page: 1
           });
           
           if (runs.data.workflow_runs.length === 0) {
-            core.setFailed('No successful CI runs found');
+            core.setFailed('No successful CI runs found for nuget-release.yml');
             return;
           }
           
@@ -46,10 +47,14 @@ jobs:
     - name: Download CI artifacts
       uses: actions/download-artifact@v7
       with:
-        name: ubuntu-latest-sharpcompress.nupkg
+        # The release workflow uploads artifacts named like 'ubuntu-latest-nuget-package'
+        name: ubuntu-latest-nuget-package
         path: ./artifacts
         run-id: ${{ inputs.run_id || steps.get-run-id.outputs.run_id }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: List downloaded artifacts
+      run: ls -la ./artifacts || dir ./artifacts
 
     - name: Publish NuGet package
       run: |
