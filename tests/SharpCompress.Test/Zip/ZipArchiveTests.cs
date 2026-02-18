@@ -15,6 +15,14 @@ namespace SharpCompress.Test.Zip;
 
 public class ZipArchiveTests : ArchiveTests
 {
+    static ZipArchiveTests()
+    {
+#if !NETFRAMEWORK
+        //fix issue where these tests could not be ran in isolation
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+#endif
+    }
+
     public ZipArchiveTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Fact]

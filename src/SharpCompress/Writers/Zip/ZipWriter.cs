@@ -74,6 +74,8 @@ public partial class ZipWriter : AbstractWriter
             CompressionType.LZMA => ZipCompressionMethod.LZMA,
             CompressionType.PPMd => ZipCompressionMethod.PPMd,
             CompressionType.ZStandard => ZipCompressionMethod.ZStandard,
+            CompressionType.LZ4 => ZipCompressionMethod.LZ4,
+            CompressionType.Brotli => ZipCompressionMethod.Brotli,
             _ => throw new InvalidFormatException("Invalid compression method: " + compressionType),
         };
 
@@ -419,6 +421,13 @@ public partial class ZipWriter : AbstractWriter
         {
             counting = new CountingStream(SharpCompressStream.CreateNonDisposing(writeStream));
             Stream output = counting;
+
+            // Get buffer size from WriterOptions, fallback to default if not set
+            var bufferSize =
+                writer.WriterOptions.CompressionBufferSize > 0
+                    ? writer.WriterOptions.CompressionBufferSize
+                    : 0x10000; // 64KB default
+
             switch (zipCompressionMethod)
             {
                 case ZipCompressionMethod.None:
@@ -444,11 +453,21 @@ public partial class ZipWriter : AbstractWriter
                     counting.WriteByte(5);
                     counting.WriteByte(0);
 
+#if !GRINDCORE
                     var lzmaStream = LzmaStream.Create(
                         new LzmaEncoderProperties(!originalStream.CanSeek),
                         false,
                         counting
                     );
+#else
+                    var lzmaStream = new LzmaStream(
+                        new LzmaEncoderProperties(!originalStream.CanSeek),
+                        false,
+                        counting,
+                        false,
+                        writer.WriterOptions
+                    );
+#endif
                     counting.Write(lzmaStream.Properties, 0, lzmaStream.Properties.Length);
                     return lzmaStream;
                 }
@@ -459,7 +478,50 @@ public partial class ZipWriter : AbstractWriter
                 }
                 case ZipCompressionMethod.ZStandard:
                 {
+#if !GRINDCORE
                     return new CompressionStream(counting, compressionLevel);
+#else
+                    return new Nanook.GrindCore.ZStd.ZStdStream(
+                        counting,
+                        new Nanook.GrindCore.CompressionOptions()
+                        {
+                            Type = (Nanook.GrindCore.CompressionType)compressionLevel,
+                            BufferSize = bufferSize,
+                        }
+                    );
+#endif
+                }
+                case ZipCompressionMethod.LZ4:
+                {
+#if GRINDCORE
+                    return new Nanook.GrindCore.Lz4.Lz4Stream(
+                        counting,
+                        new Nanook.GrindCore.CompressionOptions()
+                        {
+                            Type = (Nanook.GrindCore.CompressionType)compressionLevel,
+                            BufferSize = bufferSize,
+                        }
+                    );
+#else
+                    throw new NotSupportedException("LZ4 compression requires GrindCore library");
+#endif
+                }
+                case ZipCompressionMethod.Brotli:
+                {
+#if GRINDCORE
+                    return new Nanook.GrindCore.Brotli.BrotliStream(
+                        counting,
+                        new Nanook.GrindCore.CompressionOptions()
+                        {
+                            Type = (Nanook.GrindCore.CompressionType)compressionLevel,
+                            BufferSize = bufferSize,
+                        }
+                    );
+#else
+                    throw new NotSupportedException(
+                        "Brotli compression requires GrindCore library"
+                    );
+#endif
                 }
                 default:
                 {

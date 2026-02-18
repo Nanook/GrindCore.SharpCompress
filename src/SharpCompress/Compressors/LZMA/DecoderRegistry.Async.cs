@@ -9,7 +9,9 @@ using SharpCompress.Compressors.Deflate;
 using SharpCompress.Compressors.Filters;
 using SharpCompress.Compressors.LZMA.Utilites;
 using SharpCompress.Compressors.PPMd;
+#if !GRINDCORE
 using SharpCompress.Compressors.ZStandard;
+#endif
 
 namespace SharpCompress.Compressors.LZMA;
 
@@ -78,7 +80,44 @@ internal static partial class DecoderRegistry
             case K_DEFLATE:
                 return new DeflateStream(inStreams.Single(), CompressionMode.Decompress);
             case K_ZSTD:
+#if !GRINDCORE
                 return new DecompressionStream(inStreams.Single());
+#else
+                return new Nanook.GrindCore.ZStd.ZStdStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#endif
+            case K_LZ4:
+#if GRINDCORE
+                return new Nanook.GrindCore.Lz4.Lz4Stream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                throw new NotSupportedException("LZ4 decompression requires GrindCore library");
+#endif
+            case K_BROTLI:
+#if GRINDCORE
+                return new Nanook.GrindCore.Brotli.BrotliStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+                throw new NotSupportedException("Brotli decompression requires GrindCore library");
+#endif
             default:
                 throw new NotSupportedException();
         }

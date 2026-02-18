@@ -33,17 +33,67 @@ public partial class EntryStream
         //Need a safe standard approach to this - it's okay for compression to overreads. Handling needs to be standardised
         if (_stream is IStreamStack ss)
         {
-            if (ss.BaseStream() is SharpCompress.Compressors.Deflate.DeflateStream deflateStream)
+            if (
+                ss.GetStream<SharpCompress.Compressors.Deflate.DeflateStream>()
+                is SharpCompress.Compressors.Deflate.DeflateStream deflateStream
+            )
             {
                 await deflateStream.FlushAsync().ConfigureAwait(false);
             }
-            else if (ss.BaseStream() is SharpCompress.Compressors.LZMA.LzmaStream lzmaStream)
+            else if (
+                ss.GetStream<SharpCompress.Compressors.LZMA.LzmaStream>()
+                is SharpCompress.Compressors.LZMA.LzmaStream lzmaStream
+            )
             {
                 await lzmaStream.FlushAsync().ConfigureAwait(false);
             }
         }
         await base.DisposeAsync().ConfigureAwait(false);
         await _stream.DisposeAsync().ConfigureAwait(false);
+    }
+#else
+    // On LEGACY_DOTNET, Stream doesn't have DisposeAsync, so implement IAsyncDisposable explicitly
+    public async ValueTask DisposeAsync()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+        if (!(_completed || _reader.Cancelled))
+        {
+            await SkipEntryAsync().ConfigureAwait(false);
+        }
+
+        //Need a safe standard approach to this - it's okay for compression to overreads. Handling needs to be standardised
+        if (_stream is IStreamStack ss)
+        {
+            if (
+                ss.GetStream<SharpCompress.Compressors.Deflate.DeflateStream>()
+                is SharpCompress.Compressors.Deflate.DeflateStream deflateStream
+            )
+            {
+                await deflateStream.FlushAsync().ConfigureAwait(false);
+            }
+            else if (
+                ss.GetStream<SharpCompress.Compressors.LZMA.LzmaStream>()
+                is SharpCompress.Compressors.LZMA.LzmaStream lzmaStream
+            )
+            {
+                await lzmaStream.FlushAsync().ConfigureAwait(false);
+            }
+        }
+
+        // On LEGACY_DOTNET, check if the stream supports async disposal
+        if (_stream is IAsyncDisposable asyncDisposableStream)
+        {
+            await asyncDisposableStream.DisposeAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            _stream.Dispose();
+        }
+        GC.SuppressFinalize(this);
     }
 #endif
 

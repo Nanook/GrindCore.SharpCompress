@@ -110,7 +110,11 @@ internal partial class SharpCompressStream
     {
         if (buffer.Length == 0)
         {
-            return ValueTask.FromResult(0);
+#if NET5_0_OR_GREATER
+            return ValueTask.FromResult(0); //Nanook
+#else
+            return new ValueTask<int>(0);
+#endif
         }
 
         // In passthrough mode, delegate directly to underlying stream

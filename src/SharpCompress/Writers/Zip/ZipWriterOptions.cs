@@ -19,6 +19,7 @@ public class ZipWriterOptions : WriterOptions
         LeaveStreamOpen = options.LeaveStreamOpen;
         ArchiveEncoding = options.ArchiveEncoding;
         CompressionLevel = options.CompressionLevel;
+        CompressionBufferSize = options.CompressionBufferSize; //Nanook
 
         if (options is ZipWriterOptions writerOptions)
         {

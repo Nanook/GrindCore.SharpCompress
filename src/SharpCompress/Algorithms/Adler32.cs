@@ -1,7 +1,7 @@
 // Copyright (c) Six Labors.
 // Licensed under the Apache License, Version 2.0.
 
-#if !LEGACY_DOTNET
+#if !LEGACY_DOTNET && !NETSTANDARD2_1
 #define SUPPORTS_RUNTIME_INTRINSICS
 #define SUPPORTS_HOTPATH
 #endif

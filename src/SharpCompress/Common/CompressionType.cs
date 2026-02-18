@@ -9,6 +9,7 @@ public enum CompressionType
     Deflate,
     Rar,
     LZMA,
+    LZMA2,
     BCJ,
     BCJ2,
     LZip,
@@ -29,6 +30,8 @@ public enum CompressionType
     Crushed,
     Distilled,
     ZStandard,
+    LZ4,
+    Brotli,
     ArjLZ77,
     AceLZ77,
 }

@@ -43,6 +43,28 @@ internal static class NotNullExtensions
         }
         return obj.Value;
     }
+#elif NETSTANDARD2_1 //Nanook
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NotNull<T>(this T? obj, string? paramName = null)
+        where T : class
+    {
+        if (obj is null)
+        {
+            throw new ArgumentNullException(paramName ?? nameof(obj));
+        }
+        return obj;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NotNull<T>(this T? obj, string? paramName = null)
+        where T : struct
+    {
+        if (obj is null)
+        {
+            throw new ArgumentNullException(paramName ?? nameof(obj));
+        }
+        return obj.Value;
+    }
 #else
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -23,6 +23,22 @@ const string DisplayBenchmarkResults = "display-benchmark-results";
 const string CompareBenchmarkResults = "compare-benchmark-results";
 const string GenerateBaseline = "generate-baseline";
 
+// Get runtime identifier from environment or detect automatically
+var runtimeIdentifier =
+    Environment.GetEnvironmentVariable("RUNTIME_IDENTIFIER") ?? GetDefaultRuntimeIdentifier();
+
+static string GetDefaultRuntimeIdentifier()
+{
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        return "win-x64";
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        return "linux-x64";
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        return "osx-x64";
+
+    throw new PlatformNotSupportedException("Unsupported platform");
+}
+
 Target(
     Clean,
     ["**/bin", "**/obj"],
@@ -65,14 +81,17 @@ Target(
         Run("dotnet", "csharpier check .");
     }
 );
-Target(Restore, [CheckFormat], () => Run("dotnet", "restore"));
+Target(Restore, [CheckFormat], () => Run("dotnet", $"restore -r {runtimeIdentifier}"));
 
 Target(
     Build,
     [Restore],
     () =>
     {
-        Run("dotnet", "build src/SharpCompress/SharpCompress.csproj -c Release --no-restore");
+        Run(
+            "dotnet",
+            $"build src/SharpCompress/SharpCompress.csproj -c Release --no-restore -r {runtimeIdentifier}"
+        );
     }
 );
 
@@ -94,7 +113,10 @@ Target(
 
         foreach (var file in GetFiles("**/*.Test.csproj"))
         {
-            Run("dotnet", $"test {file} -c Release -f {framework} --no-restore --verbosity=normal");
+            Run(
+                "dotnet",
+                $"test {file} -c Release -f {framework} --no-restore --verbosity=normal -r {runtimeIdentifier}"
+            );
         }
     }
 );
@@ -104,7 +126,7 @@ Target(
     [Test],
     () =>
     {
-        Run("dotnet", "pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/");
+        Run("dotnet", $"pack src/SharpCompress/SharpCompress.csproj -c Release -o artifacts/");
     }
 );
 
