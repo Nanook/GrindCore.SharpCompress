@@ -3,13 +3,13 @@ name: NuGet Release
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
       - 'release'
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
-      - 'master'
+      - 'main'
       - 'release'
 
 permissions:
