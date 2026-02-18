@@ -4,10 +4,14 @@ using System;
 
 namespace System.Diagnostics.CodeAnalysis
 {
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor, AllowMultiple = true)]
+    [AttributeUsage(
+        AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor,
+        AllowMultiple = true
+    )]
     internal sealed class MemberNotNullAttribute : Attribute
     {
         public MemberNotNullAttribute(string member) { }
+
         public MemberNotNullAttribute(params string[] members) { }
     }
 }

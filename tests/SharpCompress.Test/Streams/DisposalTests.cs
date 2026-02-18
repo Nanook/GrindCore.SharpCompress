@@ -192,7 +192,7 @@ public class DisposalTests
                     {
                         Type = Nanook.GrindCore.CompressionType.Decompress,
                         BufferSize = 0,
-                        LeaveOpen = leaveOpen
+                        LeaveOpen = leaveOpen,
                     }
                 )
 #endif
@@ -218,7 +218,7 @@ public class DisposalTests
                     {
                         Type = Nanook.GrindCore.CompressionType.Decompress,
                         BufferSize = 0,
-                        LeaveOpen = leaveOpen
+                        LeaveOpen = leaveOpen,
                     }
                 )
 #endif

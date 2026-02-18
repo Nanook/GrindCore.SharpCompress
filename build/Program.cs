@@ -88,7 +88,10 @@ Target(
     [Restore],
     () =>
     {
-        Run("dotnet", $"build src/SharpCompress/SharpCompress.csproj -c Release --no-restore -r {runtimeIdentifier}");
+        Run(
+            "dotnet",
+            $"build src/SharpCompress/SharpCompress.csproj -c Release --no-restore -r {runtimeIdentifier}"
+        );
     }
 );
 

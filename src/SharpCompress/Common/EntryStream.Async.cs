@@ -83,7 +83,7 @@ public partial class EntryStream
                 await lzmaStream.FlushAsync().ConfigureAwait(false);
             }
         }
-        
+
         // On LEGACY_DOTNET, check if the stream supports async disposal
         if (_stream is IAsyncDisposable asyncDisposableStream)
         {
