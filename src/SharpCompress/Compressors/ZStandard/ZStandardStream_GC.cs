@@ -16,7 +16,6 @@ internal partial class ZStandardStream : Stream, IStreamStack
     private readonly bool _leaveOpen;
     private bool _disposed;
 
-
     internal static bool IsZStandard(Stream stream)
     {
         var br = new BinaryReader(stream);

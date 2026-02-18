@@ -531,7 +531,17 @@ public class LzmaStreamTests
 
 #else
         var compressedSize = input.Length - input.Position;
-        using (var lzma = new LzmaStream(properties, input, compressedSize, fileLength, null, false, true))
+        using (
+            var lzma = new LzmaStream(
+                properties,
+                input,
+                compressedSize,
+                fileLength,
+                null,
+                false,
+                true
+            )
+        )
         {
             lzma.CopyTo(output);
         }

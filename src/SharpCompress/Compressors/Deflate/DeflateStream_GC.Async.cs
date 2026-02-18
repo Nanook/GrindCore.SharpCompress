@@ -97,7 +97,12 @@ public partial class DeflateStream
         {
             // Memory<byte> overload for read-compressed - use temporary array
             byte[] tempBuffer = new byte[buffer.Length];
-            int bytesRead = await ReadCompressedAsync(tempBuffer, 0, tempBuffer.Length, cancellationToken)
+            int bytesRead = await ReadCompressedAsync(
+                    tempBuffer,
+                    0,
+                    tempBuffer.Length,
+                    cancellationToken
+                )
                 .ConfigureAwait(false);
             tempBuffer.AsSpan(0, bytesRead).CopyTo(buffer.Span);
             return bytesRead;

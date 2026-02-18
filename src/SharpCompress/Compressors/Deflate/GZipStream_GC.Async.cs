@@ -66,32 +66,32 @@ public partial class GZipStream
     }
 
 #if !LEGACY_DOTNET
-public override async ValueTask<int> ReadAsync(
-    Memory<byte> buffer,
-    CancellationToken cancellationToken = default
-)
-{
-    if (_isDisposed)
+    public override async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default
+    )
     {
-        throw new ObjectDisposedException(nameof(GZipStream));
+        if (_isDisposed)
+        {
+            throw new ObjectDisposedException(nameof(GZipStream));
+        }
+
+        if (_isEncoder || _grindCoreStream == null)
+        {
+            return 0;
+        }
+
+        var n = await _grindCoreStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+
+        // Extract GZip metadata on first read for decompression
+        if (!_firstReadDone && n > 0)
+        {
+            _firstReadDone = true;
+            // TODO: Extract FileName, Comment, and LastModified from GrindCore stream
+        }
+
+        return n;
     }
-
-    if (_isEncoder || _grindCoreStream == null)
-    {
-        return 0;
-    }
-
-    var n = await _grindCoreStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-
-    // Extract GZip metadata on first read for decompression
-    if (!_firstReadDone && n > 0)
-    {
-        _firstReadDone = true;
-        // TODO: Extract FileName, Comment, and LastModified from GrindCore stream
-    }
-
-    return n;
-}
 
     public override ValueTask WriteAsync(
         ReadOnlyMemory<byte> buffer,

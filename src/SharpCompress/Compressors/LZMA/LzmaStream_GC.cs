@@ -96,10 +96,10 @@ public partial class LzmaStream : Stream, IStreamStack
     }
 
     public static LzmaStream Create(
-    LzmaEncoderProperties properties,
-    bool isLzma2,
-    Stream outputStream
-) => Create(properties, isLzma2, null, outputStream);
+        LzmaEncoderProperties properties,
+        bool isLzma2,
+        Stream outputStream
+    ) => Create(properties, isLzma2, null, outputStream);
 
     public static LzmaStream Create(
         LzmaEncoderProperties properties,
@@ -120,21 +120,21 @@ public partial class LzmaStream : Stream, IStreamStack
     }
 
     public static ValueTask<LzmaStream> CreateAsync(
-    byte[] properties,
-    Stream inputStream,
-    long inputSize,
-    long outputSize,
-    bool leaveOpen = false
-) =>
-    CreateAsync(
-        properties,
-        inputStream,
-        inputSize,
-        outputSize,
-        null,
-        properties.Length < 5,
-        leaveOpen
-    );
+        byte[] properties,
+        Stream inputStream,
+        long inputSize,
+        long outputSize,
+        bool leaveOpen = false
+    ) =>
+        CreateAsync(
+            properties,
+            inputStream,
+            inputSize,
+            outputSize,
+            null,
+            properties.Length < 5,
+            leaveOpen
+        );
 
     public static async ValueTask<LzmaStream> CreateAsync(
         byte[] properties,

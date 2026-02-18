@@ -15,10 +15,10 @@ using SharpCompress.Compressors.PPMd;
 using SharpCompress.Compressors.Reduce;
 using SharpCompress.Compressors.Shrink;
 using SharpCompress.Compressors.Xz;
+using SharpCompress.IO;
 #if !GRINDCORE
 using SharpCompress.Compressors.ZStandard;
 #endif
-using SharpCompress.IO;
 
 namespace SharpCompress.Common.Zip;
 
