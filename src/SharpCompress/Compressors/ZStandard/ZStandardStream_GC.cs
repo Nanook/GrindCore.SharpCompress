@@ -9,8 +9,6 @@ using GrindCoreZStdStream = Nanook.GrindCore.ZStd.ZStdStream;
 
 namespace SharpCompress.Compressors.ZStandard;
 
-
-
 /// <summary>
 /// Public thin wrapper that exposes a compression-specific constructor.
 /// Inherits the internal ZStandardStream implementation.
@@ -18,9 +16,7 @@ namespace SharpCompress.Compressors.ZStandard;
 public sealed class CompressionStream : ZStandardStream
 {
     public CompressionStream(Stream destination, int compressionLevel, bool leaveOpen = false)
-        : base(destination, compressionLevel, leaveOpen)
-    {
-    }
+        : base(destination, compressionLevel, leaveOpen) { }
 }
 
 /// <summary>
@@ -30,9 +26,7 @@ public sealed class CompressionStream : ZStandardStream
 public sealed class DecompressionStream : ZStandardStream
 {
     public DecompressionStream(Stream source, bool leaveOpen = false)
-        : base(source, leaveOpen)
-    {
-    }
+        : base(source, leaveOpen) { }
 }
 
 /// <summary>
@@ -232,7 +226,9 @@ public class ZStandardStream : Stream, IStreamStack
             {
                 try
                 {
-                    var diff = (int)((_grindCoreStream?.BasePosition ?? 0) - (_grindCoreStream?.Position ?? 0));
+                    var diff = (int)(
+                        (_grindCoreStream?.BasePosition ?? 0) - (_grindCoreStream?.Position ?? 0)
+                    );
                     if (diff > 0)
                     {
                         ((IStreamStack)this).Rewind(diff);

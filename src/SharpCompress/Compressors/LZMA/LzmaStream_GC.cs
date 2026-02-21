@@ -240,11 +240,7 @@ public class LzmaStream : Stream, IStreamStack
             length = _inputStream.Length;
         }
         catch { }
-        if (
-            inputSize == -1
-            && _inputStream is IO.BufferedSubStream
-            && length != 0
-        )
+        if (inputSize == -1 && _inputStream is IO.BufferedSubStream && length != 0)
         {
             options.PositionLimit = length;
         }

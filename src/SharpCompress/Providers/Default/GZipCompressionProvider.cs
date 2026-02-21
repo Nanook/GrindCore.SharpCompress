@@ -44,7 +44,12 @@ public sealed class GZipCompressionProvider : CompressionProviderBase
         }
 
         var encoding = context?.ReaderOptions?.ArchiveEncoding?.GetEncoding() ?? Encoding.UTF8;
-        return new GZipStream(source, CompressionMode.Decompress, CompressionLevel.Default, encoding);
+        return new GZipStream(
+            source,
+            CompressionMode.Decompress,
+            CompressionLevel.Default,
+            encoding
+        );
     }
 
     public override ValueTask<Stream> CreateDecompressStreamAsync(

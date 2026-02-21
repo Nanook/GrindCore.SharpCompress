@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Nanook.GrindCore;
 using SharpCompress.Compressors;
 using SharpCompress.IO;
-using Nanook.GrindCore;
 using GrindCoreBrotliStream = Nanook.GrindCore.Brotli.BrotliStream;
 
 namespace SharpCompress.Compressors.Brotli;

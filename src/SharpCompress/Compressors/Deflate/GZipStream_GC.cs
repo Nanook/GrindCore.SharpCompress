@@ -67,8 +67,8 @@ public class GZipStream : Stream, IStreamStack
             false,
             null,
             readerOptions as ReaderOptions
-        )
-    { }
+        ) { }
+
     public GZipStream(
         Stream stream,
         CompressionMode mode,
@@ -116,7 +116,10 @@ public class GZipStream : Stream, IStreamStack
             {
                 if (stream.CanSeek)
                 {
-                    var (name, comment, mtime) = GZipHeaderHelper.ParseGzipHeader(stream, _encoding);
+                    var (name, comment, mtime) = GZipHeaderHelper.ParseGzipHeader(
+                        stream,
+                        _encoding
+                    );
                     if (name != null)
                     {
                         _fileName = name;
@@ -278,7 +281,9 @@ public class GZipStream : Stream, IStreamStack
                 return !_isDisposed;
             }
 
-            return _customHeaderMode ? _rawDeflateStream?.CanWrite == true : _grindCoreStream?.CanWrite == true;
+            return _customHeaderMode
+                ? _rawDeflateStream?.CanWrite == true
+                : _grindCoreStream?.CanWrite == true;
         }
     }
 
@@ -477,7 +482,7 @@ public class GZipStream : Stream, IStreamStack
         BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(i), timet);
         i += 4;
 
-        header[i++] = 0;    // xflg
+        header[i++] = 0; // xflg
         header[i++] = 0xFF; // OS = unspecified
 
         if (fnLength != 0)
@@ -518,10 +523,18 @@ public class GZipStream : Stream, IStreamStack
                 Type = (NGC.CompressionType)_compressionLevel,
                 BufferSize = 0x10000,
                 LeaveOpen = true,
-                Version = _isNg ? NGC.CompressionVersion.ZLibNgLatest() : NGC.CompressionVersion.ZLibLatest(),
+                Version = _isNg
+                    ? NGC.CompressionVersion.ZLibNgLatest()
+                    : NGC.CompressionVersion.ZLibLatest(),
             }.WithDeflate(9);
 
-            GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, _storedWriterOptions, null);
+            GrindCoreBufferHelper.ApplyBufferSizeOptions(
+                options,
+                this,
+                true,
+                _storedWriterOptions,
+                null
+            );
             GrindCoreBufferHelper.ConfigureAsyncOnlyIfNeeded(options, _inputStream);
 
             _rawDeflateStream = new NGC.DeflateZLib.DeflateStream(_inputStream, options);
@@ -535,10 +548,18 @@ public class GZipStream : Stream, IStreamStack
                 Type = (NGC.CompressionType)_compressionLevel,
                 BufferSize = 0x10000,
                 LeaveOpen = true,
-                Version = _isNg ? NGC.CompressionVersion.ZLibNgLatest() : NGC.CompressionVersion.ZLibLatest(),
+                Version = _isNg
+                    ? NGC.CompressionVersion.ZLibNgLatest()
+                    : NGC.CompressionVersion.ZLibLatest(),
             };
 
-            GrindCoreBufferHelper.ApplyBufferSizeOptions(options, this, true, _storedWriterOptions, null);
+            GrindCoreBufferHelper.ApplyBufferSizeOptions(
+                options,
+                this,
+                true,
+                _storedWriterOptions,
+                null
+            );
             GrindCoreBufferHelper.ConfigureAsyncOnlyIfNeeded(options, _inputStream);
 
             _grindCoreStream = new NGC.GZip.GZipStream(_inputStream, options);
@@ -721,7 +742,10 @@ public class GZipStream : Stream, IStreamStack
 static class GZipHeaderHelper
 {
     // Returns (filename, comment, mtime)
-    public static (string name, string comment, DateTime? mtime) ParseGzipHeader(Stream stream, Encoding encoding)
+    public static (string name, string comment, DateTime? mtime) ParseGzipHeader(
+        Stream stream,
+        Encoding encoding
+    )
     {
         if (stream == null || !stream.CanSeek)
         {
