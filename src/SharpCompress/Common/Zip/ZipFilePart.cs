@@ -224,7 +224,7 @@ internal abstract partial class ZipFilePart : FilePart
             (
                 Header.CompressedSize == 0
                 && FlagUtility.HasFlag(Header.Flags, HeaderFlags.UsePostDataDescriptor)
-            ) || Header.IsZip64
+            ) // || Header.IsZip64 //Nanook: Fixes zstd 8GiB extract
         )
         {
             plainStream = SharpCompressStream.CreateNonDisposing(plainStream); //make sure AES doesn't close
