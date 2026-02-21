@@ -110,7 +110,7 @@ public partial class DecompressionStream : Stream
     public override int Read(byte[] buffer, int offset, int count) =>
         Read(new Span<byte>(buffer, offset, count));
 
-#if !LEGACY_DOTNET
+#if !LEGACY_DOTNET || NETSTANDARD2_1
     public override int Read(Span<byte> buffer)
 #else
     public int Read(Span<byte> buffer)
@@ -203,7 +203,7 @@ public partial class DecompressionStream : Stream
         }
     }
 
-#if LEGACY_DOTNET
+#if LEGACY_DOTNET && !NETSTANDARD2_1
     public virtual Task DisposeAsync()
     {
         try

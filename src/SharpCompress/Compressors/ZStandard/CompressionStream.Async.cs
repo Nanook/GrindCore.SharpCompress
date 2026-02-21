@@ -8,7 +8,7 @@ namespace SharpCompress.Compressors.ZStandard;
 
 public partial class CompressionStream : Stream
 {
-#if !LEGACY_DOTNET
+#if !LEGACY_DOTNET || NETSTANDARD2_1
     public override async ValueTask DisposeAsync()
 #else
     public async ValueTask DisposeAsync()
@@ -95,7 +95,7 @@ public partial class CompressionStream : Stream
         );
     }
 
-#if !LEGACY_DOTNET
+#if !LEGACY_DOTNET || NETSTANDARD2_1
 
     public override Task WriteAsync(
         byte[] buffer,

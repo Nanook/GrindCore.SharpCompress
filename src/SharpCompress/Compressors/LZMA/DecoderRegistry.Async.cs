@@ -89,6 +89,31 @@ internal static partial class DecoderRegistry
                 return new DeflateStream(inStreams.Single(), CompressionMode.Decompress);
             case K_ZSTD:
                 return new DecompressionStream(inStreams.Single());
+#if GRINDCORE
+            case K_LZ4:
+                return new Nanook.GrindCore.Lz4.Lz4Stream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+            case K_BROTLI:
+                return new Nanook.GrindCore.Brotli.BrotliStream(
+                    inStreams.Single(),
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0x10000,
+                    }
+                );
+#else
+            case K_LZ4:
+                throw new NotSupportedException("LZ4 decompression requires GrindCore library");
+            case K_BROTLI:
+                throw new NotSupportedException("Brotli decompression requires GrindCore library");
+#endif
             default:
                 throw new NotSupportedException();
         }

@@ -524,10 +524,28 @@ public class LzmaStreamTests
         input.Read(fileLengthBytes, 0, 8);
         var fileLength = BitConverter.ToInt64(fileLengthBytes, 0);
 
+#if !GRINDCORE
         var coder = new Decoder();
         coder.SetDecoderProperties(properties);
         coder.Code(input, output, input.Length, fileLength, null);
 
+#else
+        var compressedSize = input.Length - input.Position;
+        using (
+            var lzma = new LzmaStream(
+                properties,
+                input,
+                compressedSize,
+                fileLength,
+                null,
+                false,
+                true
+            )
+        )
+        {
+            lzma.CopyTo(output);
+        }
+#endif
         Assert.Equal(output.ToArray(), LzmaResultData);
     }
 

@@ -75,6 +75,8 @@ public partial class ZipWriter : AbstractWriter
             CompressionType.LZMA => ZipCompressionMethod.LZMA,
             CompressionType.PPMd => ZipCompressionMethod.PPMd,
             CompressionType.ZStandard => ZipCompressionMethod.ZStandard,
+            CompressionType.LZ4 => ZipCompressionMethod.LZ4,
+            CompressionType.Brotli => ZipCompressionMethod.Brotli,
             _ => throw new InvalidFormatException("Invalid compression method: " + compressionType),
         };
 

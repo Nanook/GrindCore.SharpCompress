@@ -30,12 +30,21 @@ public sealed class GZipCompressionProvider : CompressionProviderBase
 
     public override Stream CreateDecompressStream(Stream source, CompressionContext context)
     {
-        return new GZipStream(
-            source,
-            CompressionMode.Decompress,
-            CompressionLevel.Default,
-            context.ResolveArchiveEncoding()
-        );
+        if (context?.ReaderOptions != null)
+        {
+            // Prefer the overload that accepts ReaderOptions so the stream
+            // construction path can use ReaderOptions for buffer/encoding
+            // related behavior consistently.
+            return new GZipStream(
+                source,
+                CompressionMode.Decompress,
+                CompressionLevel.Default,
+                context.ReaderOptions
+            );
+        }
+
+        var encoding = context?.ReaderOptions?.ArchiveEncoding?.GetEncoding() ?? Encoding.UTF8;
+        return new GZipStream(source, CompressionMode.Decompress, CompressionLevel.Default, encoding);
     }
 
     public override ValueTask<Stream> CreateDecompressStreamAsync(

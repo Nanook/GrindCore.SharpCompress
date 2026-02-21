@@ -97,6 +97,8 @@ internal abstract partial class ZipFilePart : FilePart
             ZipCompressionMethod.Reduce3 => CompressionType.Reduce3,
             ZipCompressionMethod.Reduce4 => CompressionType.Reduce4,
             ZipCompressionMethod.Explode => CompressionType.Explode,
+            ZipCompressionMethod.Brotli => CompressionType.Brotli,
+            ZipCompressionMethod.LZ4 => CompressionType.LZ4,
             _ => throw new NotSupportedException($"Unsupported compression method: {method}"),
         };
 

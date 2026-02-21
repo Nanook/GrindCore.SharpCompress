@@ -101,6 +101,14 @@ internal partial class BufferedSubStream : Stream, IStreamStack
             }
 
             count = Math.Min(count, _cacheLength - _cacheOffset);
+
+            // Nanook: Ensure we don't exceed destination buffer bounds
+            int availableInBuffer = buffer.Length - offset;
+            if (count > availableInBuffer)
+            {
+                count = availableInBuffer;
+            }
+
             Buffer.BlockCopy(_cache!, _cacheOffset, buffer, offset, count);
             _cacheOffset += count;
         }

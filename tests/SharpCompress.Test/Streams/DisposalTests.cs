@@ -182,7 +182,19 @@ public class DisposalTests
     {
         VerifyStreamDisposal(
             (stream, leaveOpen) =>
+#if !GRINDCORE
                 new CompressionStream(stream, level: 0, bufferSize: 0, leaveOpen: leaveOpen)
+#else
+                new Nanook.GrindCore.ZStd.ZStdStream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0,
+                        LeaveOpen = leaveOpen,
+                    }
+                )
+#endif
         );
     }
 
@@ -191,12 +203,24 @@ public class DisposalTests
     {
         VerifyStreamDisposal(
             (stream, leaveOpen) =>
+#if !GRINDCORE
                 new DecompressionStream(
                     stream,
                     bufferSize: 0,
                     checkEndOfStream: false,
                     leaveOpen: leaveOpen
                 )
+#else
+                new Nanook.GrindCore.ZStd.ZStdStream(
+                    stream,
+                    new Nanook.GrindCore.CompressionOptions()
+                    {
+                        Type = Nanook.GrindCore.CompressionType.Decompress,
+                        BufferSize = 0,
+                        LeaveOpen = leaveOpen,
+                    }
+                )
+#endif
         );
     }
 }

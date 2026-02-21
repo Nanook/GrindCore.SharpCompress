@@ -10,7 +10,7 @@ namespace SharpCompress.Compressors.ZStandard;
 
 public partial class DecompressionStream
 {
-#if !LEGACY_DOTNET
+#if !LEGACY_DOTNET || NETSTANDARD2_1
     public override Task<int> ReadAsync(
         byte[] buffer,
         int offset,

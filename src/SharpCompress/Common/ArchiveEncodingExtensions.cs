@@ -85,3 +85,4 @@ public static class ArchiveEncodingExtensions
         ) => encoding.GetDecoder()(bytes, start, length, type);
     }
 }
+

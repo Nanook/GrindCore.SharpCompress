@@ -89,13 +89,13 @@ public class ExceptionHierarchyTests
     {
         // Use reflection to verify internal exception types
         var dataErrorExceptionType = Type.GetType(
-            "SharpCompress.Compressors.LZMA.DataErrorException, SharpCompress"
+            "SharpCompress.Compressors.LZMA.DataErrorException, GrindCore.SharpCompress"
         );
         Assert.NotNull(dataErrorExceptionType);
         Assert.True(typeof(SharpCompressException).IsAssignableFrom(dataErrorExceptionType));
 
         var invalidParamExceptionType = Type.GetType(
-            "SharpCompress.Compressors.LZMA.InvalidParamException, SharpCompress"
+            "SharpCompress.Compressors.LZMA.InvalidParamException, GrindCore.SharpCompress"
         );
         Assert.NotNull(invalidParamExceptionType);
         Assert.True(typeof(SharpCompressException).IsAssignableFrom(invalidParamExceptionType));

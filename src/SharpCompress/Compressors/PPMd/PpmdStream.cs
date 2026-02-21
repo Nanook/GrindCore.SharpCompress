@@ -151,7 +151,7 @@ public class PpmdStream : Stream
         }
         catch
         {
-#if LEGACY_DOTNET
+#if LEGACY_DOTNET && !NETSTANDARD2_1
             instance.Dispose();
 #else
             await instance.DisposeAsync().ConfigureAwait(false);
