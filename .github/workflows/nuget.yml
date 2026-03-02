@@ -45,7 +45,7 @@ jobs:
           core.setOutput('run_id', runs.data.workflow_runs[0].id);
 
     - name: Download CI artifacts
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         # The release workflow uploads artifacts named like 'ubuntu-latest-nuget-package'
         name: ubuntu-latest-nuget-package
