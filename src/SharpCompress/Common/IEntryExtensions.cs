@@ -123,7 +123,6 @@ internal static partial class IEntryExtensions
             }
         }
 
-
         internal void PreserveExtractionOptions(
             string destinationFileName,
             ExtractionOptions options
