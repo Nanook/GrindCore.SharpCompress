@@ -25,7 +25,7 @@ public class TarFactory
         IMultiArchiveFactory,
         IReaderFactory,
         IWriterFactory,
-        IWriteableArchiveFactory<TarWriterOptions>
+        IWritableArchiveFactory<TarWriterOptions>
 {
     #region IFactory
 
@@ -48,9 +48,9 @@ public class TarFactory
     }
 
     /// <inheritdoc/>
-    public override bool IsArchive(Stream stream, string? password = null)
+    public override bool IsArchive(Stream stream, ReaderOptions readerOptions)
     {
-        var providers = CompressionProviderRegistry.Default;
+        var providers = readerOptions.Providers;
         var sharpCompressStream = new SharpCompressStream(stream);
         sharpCompressStream.StartRecording(TarWrapper.MaximumRewindBufferSize);
         foreach (var wrapper in TarWrapper.Wrappers)
@@ -78,11 +78,11 @@ public class TarFactory
     /// <inheritdoc/>
     public override async ValueTask<bool> IsArchiveAsync(
         Stream stream,
-        string? password = null,
+        ReaderOptions readerOptions,
         CancellationToken cancellationToken = default
     )
     {
-        var providers = CompressionProviderRegistry.Default;
+        var providers = readerOptions.Providers;
         var sharpCompressStream = new SharpCompressStream(stream);
         sharpCompressStream.StartRecording(TarWrapper.MaximumRewindBufferSize);
         foreach (var wrapper in TarWrapper.Wrappers)
@@ -317,7 +317,7 @@ public class TarFactory
     /// <inheritdoc/>
     public IReader OpenReader(Stream stream, ReaderOptions? options)
     {
-        options ??= new ReaderOptions();
+        options ??= ReaderOptions.ForExternalStream;
         var sharpCompressStream = new SharpCompressStream(stream);
         sharpCompressStream.StartRecording(TarWrapper.MaximumRewindBufferSize);
         foreach (var wrapper in TarWrapper.Wrappers)
@@ -350,7 +350,7 @@ public class TarFactory
     )
     {
         cancellationToken.ThrowIfCancellationRequested();
-        options ??= new ReaderOptions();
+        options ??= ReaderOptions.ForExternalStream;
         var sharpCompressStream = new SharpCompressStream(stream);
         sharpCompressStream.StartRecording(TarWrapper.MaximumRewindBufferSize);
         foreach (var wrapper in TarWrapper.Wrappers)
@@ -421,7 +421,7 @@ public class TarFactory
 
     #endregion
 
-    #region IWriteableArchiveFactory
+    #region IWritableArchiveFactory
 
     /// <inheritdoc/>
     public IWritableArchive<TarWriterOptions> CreateArchive() => TarArchive.CreateArchive();
