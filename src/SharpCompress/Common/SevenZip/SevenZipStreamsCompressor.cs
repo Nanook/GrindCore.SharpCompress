@@ -4,10 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Compressors.LZMA;
+using SharpCompress.Crypto;
 #if GRINDCORE
 using SharpCompress.Compressors.ZStandard;
 #endif
-using SharpCompress.Crypto;
 
 namespace SharpCompress.Common.SevenZip;
 

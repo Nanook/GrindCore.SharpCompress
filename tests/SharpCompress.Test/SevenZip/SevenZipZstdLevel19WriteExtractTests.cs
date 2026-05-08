@@ -11,7 +11,9 @@ namespace SharpCompress.Test.SevenZip;
 
 public class SevenZipZstdLevel19WriteExtractTests : ArchiveTests
 {
-    [Theory(Skip = "ZStandard 7zip write support requires further integration with upstream SevenZipWriter")]
+    [Theory(
+        Skip = "ZStandard 7zip write support requires further integration with upstream SevenZipWriter"
+    )]
     [InlineData(0)]
     [InlineData(5)]
     [InlineData(999)]
