@@ -1,5 +1,12 @@
-# Set the default behavior, in case people don't have core.autocrlf set.
+ # Set the default behavior, in case people don't have core.autocrlf set.
 * text=auto
 
 # need original files to be windows
 *.txt text eol=crlf
+*.cs text eol=lf
+*.json text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.md text eol=lf
+*.config text eol=lf
+*.props text eol=lf

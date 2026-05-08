@@ -22,6 +22,19 @@ public sealed record SevenZipWriterOptions : IWriterOptions
         get => _compressionType;
         init
         {
+#if GRINDCORE
+            if (
+                value != CompressionType.LZMA
+                && value != CompressionType.LZMA2
+                && value != CompressionType.ZStandard
+            )
+            {
+                throw new ArgumentException(
+                    $"SevenZipWriter only supports CompressionType.LZMA, CompressionType.LZMA2, and CompressionType.ZStandard. Got: {value}",
+                    nameof(value)
+                );
+            }
+#else
             if (value != CompressionType.LZMA && value != CompressionType.LZMA2)
             {
                 throw new ArgumentException(
@@ -29,6 +42,7 @@ public sealed record SevenZipWriterOptions : IWriterOptions
                     nameof(value)
                 );
             }
+#endif
             _compressionType = value;
         }
     }

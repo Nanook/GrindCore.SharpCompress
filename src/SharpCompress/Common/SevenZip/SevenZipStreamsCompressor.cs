@@ -4,6 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Compressors.LZMA;
+#if GRINDCORE
+using SharpCompress.Compressors.ZStandard;
+#endif
 using SharpCompress.Crypto;
 
 namespace SharpCompress.Common.SevenZip;
@@ -38,6 +41,13 @@ internal sealed class SevenZipStreamsCompressor(Stream outputStream)
         LzmaEncoderProperties? encoderProperties = null
     )
     {
+#if GRINDCORE
+        if (compressionType == CompressionType.ZStandard)
+        {
+            return CompressZStandard(inputStream);
+        }
+#endif
+
         var isLzma2 = compressionType == CompressionType.LZMA2;
         encoderProperties ??= new LzmaEncoderProperties(eos: !isLzma2);
 
@@ -105,6 +115,14 @@ internal sealed class SevenZipStreamsCompressor(Stream outputStream)
     )
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+#if GRINDCORE
+        if (compressionType == CompressionType.ZStandard)
+        {
+            return await CompressZStandardAsync(inputStream, cancellationToken)
+                .ConfigureAwait(false);
+        }
+#endif
 
         var isLzma2 = compressionType == CompressionType.LZMA2;
         encoderProperties ??= new LzmaEncoderProperties(eos: !isLzma2);
@@ -242,6 +260,100 @@ internal sealed class SevenZipStreamsCompressor(Stream outputStream)
 
         return (~seed, totalRead);
     }
+
+#if GRINDCORE
+    private PackedStream CompressZStandard(Stream inputStream)
+    {
+        var outStartOffset = outputStream.Position;
+
+        uint inputCrc;
+        long inputSize;
+        uint? outCrc;
+
+        {
+            using var outCrcStream = new Crc32Stream(outputStream);
+
+            {
+                using var zstdStream = new CompressionStream(outCrcStream, 19, leaveOpen: true);
+                CopyWithCrc(inputStream, zstdStream, out inputCrc, out inputSize);
+            }
+            // ZStd stream is now disposed/flushed, all compressed bytes written to outCrcStream
+
+            outCrc = outCrcStream.Crc;
+        }
+
+        return BuildPackedStreamZStd(
+            (ulong)(outputStream.Position - outStartOffset),
+            (ulong)inputSize,
+            inputCrc,
+            outCrc
+        );
+    }
+
+    private async ValueTask<PackedStream> CompressZStandardAsync(
+        Stream inputStream,
+        CancellationToken cancellationToken
+    )
+    {
+        var outStartOffset = outputStream.Position;
+
+        uint inputCrc;
+        long inputSize;
+        uint? outCrc;
+
+        {
+            using var outCrcStream = new Crc32Stream(outputStream);
+
+            {
+                using var zstdStream = new CompressionStream(outCrcStream, 19, leaveOpen: true);
+                (inputCrc, inputSize) = await CopyWithCrcAsync(
+                        inputStream,
+                        zstdStream,
+                        cancellationToken
+                    )
+                    .ConfigureAwait(false);
+            }
+
+            outCrc = outCrcStream.Crc;
+        }
+
+        return BuildPackedStreamZStd(
+            (ulong)(outputStream.Position - outStartOffset),
+            (ulong)inputSize,
+            inputCrc,
+            outCrc
+        );
+    }
+
+    private static PackedStream BuildPackedStreamZStd(
+        ulong compressedSize,
+        ulong uncompressedSize,
+        uint inputCrc,
+        uint? outputCrc
+    )
+    {
+        var folder = new CFolder();
+        folder._coders.Add(
+            new CCoderInfo
+            {
+                _methodId = CMethodId.K_ZSTD,
+                _numInStreams = 1,
+                _numOutStreams = 1,
+                _props = [], // ZStandard has no properties
+            }
+        );
+        folder._packStreams.Add(0);
+        folder._unpackSizes.Add((long)uncompressedSize);
+        folder._unpackCrc = inputCrc;
+
+        return new PackedStream
+        {
+            Folder = folder,
+            Sizes = [compressedSize],
+            CRCs = [outputCrc],
+        };
+    }
+#endif
 
     private static PackedStream BuildPackedStream(
         bool isLzma2,

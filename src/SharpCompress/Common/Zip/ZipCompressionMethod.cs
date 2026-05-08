@@ -16,5 +16,7 @@ internal enum ZipCompressionMethod
     ZStandard = 93,
     Xz = 95,
     PPMd = 98,
-    WinzipAes = 0x63, //http://www.winzip.com/aes_info.htm
+    WinzipAes = 99, //http://www.winzip.com/aes_info.htm
+    Brotli = 129, // not common, used in Pale Moon browser Zips.
+    LZ4 = 130, // Experimental, can't find a reference for a used ID
 }

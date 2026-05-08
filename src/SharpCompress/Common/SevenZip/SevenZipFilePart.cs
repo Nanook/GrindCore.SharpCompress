@@ -100,6 +100,7 @@ internal class SevenZipFilePart : FilePart
     private const uint K_LZMA = 0x030101;
     private const uint K_PPMD = 0x030401;
     private const uint K_B_ZIP2 = 0x040202;
+    private const uint K_ZSTD = 0x4F71101;
 
     private CompressionType GetCompression()
     {
@@ -108,13 +109,20 @@ internal class SevenZipFilePart : FilePart
             return CompressionType.None;
         }
 
-        var coder = Folder.NotNull()._coders.First();
+        if (Folder is null)
+        {
+            // Empty files have no folder/coder — no compression applies
+            return CompressionType.None;
+        }
+
+        var coder = Folder._coders.First();
         return coder._methodId._id switch
         {
             K_COPY => CompressionType.None,
             K_LZMA or K_LZMA2 => CompressionType.LZMA,
             K_PPMD => CompressionType.PPMd,
             K_B_ZIP2 => CompressionType.BZip2,
+            K_ZSTD => CompressionType.ZStandard,
             _ => throw new InvalidFormatException(),
         };
     }

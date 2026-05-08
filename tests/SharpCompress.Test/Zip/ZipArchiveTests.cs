@@ -18,6 +18,14 @@ public class ZipArchiveTests : ArchiveTests
 {
     private const long GeneratedZip64EntrySize = (long)uint.MaxValue + 1;
 
+    static ZipArchiveTests()
+    {
+#if !NETFRAMEWORK
+        //fix issue where these tests could not be ran in isolation
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+#endif
+    }
+
     public ZipArchiveTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Fact]

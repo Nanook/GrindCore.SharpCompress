@@ -3,14 +3,18 @@ name: NuGet Release
 on:
   push:
     branches:
-      - 'master'
       - 'release'
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
-      - 'master'
       - 'release'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Optional version to set (e.g., 0.44.5). If provided, this will be used instead of tag-detection.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -33,6 +37,7 @@ jobs:
     
     # Determine version using C# build target
     - name: Determine Version
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.version == '' }}
       id: version
       run: dotnet run --project build/build.csproj -- determine-version
     
@@ -40,7 +45,7 @@ jobs:
     - name: Update Version in Project
       run: dotnet run --project build/build.csproj -- update-version
       env:
-        VERSION: ${{ steps.version.outputs.version }}
+        VERSION: ${{ github.event.inputs.version || steps.version.outputs.version }}
     
     # Build and test
     - name: Build and Test

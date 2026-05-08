@@ -17,7 +17,7 @@ public partial class EntryStream
         _completed = true;
     }
 
-#if !LEGACY_DOTNET
+#if !LEGACY_DOTNET || NETSTANDARD2_1
     public override async ValueTask DisposeAsync()
     {
         if (_isDisposed)

@@ -97,6 +97,8 @@ internal abstract partial class ZipFilePart : FilePart
             ZipCompressionMethod.Reduce3 => CompressionType.Reduce3,
             ZipCompressionMethod.Reduce4 => CompressionType.Reduce4,
             ZipCompressionMethod.Explode => CompressionType.Explode,
+            ZipCompressionMethod.Brotli => CompressionType.Brotli,
+            ZipCompressionMethod.LZ4 => CompressionType.LZ4,
             _ => throw new NotSupportedException($"Unsupported compression method: {method}"),
         };
 
@@ -234,8 +236,10 @@ internal abstract partial class ZipFilePart : FilePart
         }
 
         if (
-            Header.CompressedSize == 0
-            && FlagUtility.HasFlag(Header.Flags, HeaderFlags.UsePostDataDescriptor)
+            (
+                Header.CompressedSize == 0
+                && FlagUtility.HasFlag(Header.Flags, HeaderFlags.UsePostDataDescriptor)
+            ) // || Header.IsZip64 //Nanook: Fixes zstd 8GiB extract
         )
         {
             plainStream = SharpCompressStream.CreateNonDisposing(plainStream); //make sure AES doesn't close

@@ -9,6 +9,16 @@ internal static class CompressionLevelValidation
     {
         switch (compressionType)
         {
+#if GRINDCORE
+            case CompressionType.Brotli:
+                EnsureRange(compressionLevel, 0, 11, compressionType);
+                break;
+            case CompressionType.LZ4:
+                EnsureRange(compressionLevel, 0, 12, compressionType);
+                break;
+            case CompressionType.LZMA:
+            case CompressionType.LZMA2:
+#endif
             case CompressionType.Deflate:
             case CompressionType.Deflate64:
             case CompressionType.GZip:
