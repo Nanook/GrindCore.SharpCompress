@@ -554,13 +554,21 @@ public class LzmaStreamAsyncTests : TestBase
     {
         using var inputStream = new MemoryStream(LzmaResultData);
         using MemoryStream outputStream = new();
+#if LEGACY_DOTNET
+        using var lzmaStream = LzmaStream.Create(
+#else
         await using var lzmaStream = LzmaStream.Create(
+#endif
             LzmaEncoderProperties.Default,
             false,
             new AsyncOnlyStream(outputStream, disposeStream: false)
         );
         await inputStream.CopyToAsync(lzmaStream).ConfigureAwait(false);
+#if !LEGACY_DOTNET
         await lzmaStream.DisposeAsync().ConfigureAwait(false);
+#else
+        lzmaStream.Dispose();
+#endif
         Assert.NotEqual(0, outputStream.Length);
     }
 
@@ -575,7 +583,11 @@ public class LzmaStreamAsyncTests : TestBase
             new AsyncOnlyStream(compressed, disposeStream: false)
         );
         await input.CopyToAsync(lzmaEncodingStream).ConfigureAwait(false);
+#if !LEGACY_DOTNET
         await lzmaEncodingStream.DisposeAsync().ConfigureAwait(false);
+#else
+        lzmaEncodingStream.Dispose();
+#endif
         compressed.Position = 0;
 
         var output = new MemoryStream();

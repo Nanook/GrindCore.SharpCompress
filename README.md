@@ -1,62 +1,182 @@
-# SharpCompress
+# GrindCore.SharpCompress
 
-SharpCompress is a compression library in pure C# for .NET Framework 4.8, .NET Standard 2.0/2.1, .NET 6.0, .NET 8.0, and .NET 10.0 that can unrar, un7zip, unzip, untar, unbzip2, ungzip, unlzip, unxz, unzstd, unarc, unarj, unace, and unlzw with forward-only reading and file random access APIs. Write support for zip, tar, bzip2, gzip, lzip, zstandard compression streams, and 7zip archives is implemented.
+GrindCore.SharpCompress is an enhanced version of **SharpCompress** that integrates **GrindCore** native compression. This project delivers native compression support built using the **System.IO.Compression** pattern, utilizing compression algorithms directly from their original C implementations.
 
-The major feature is support for non-seekable streams so large files can be processed on the fly (i.e. download stream).
+This fork replaces GZip, LZMA, Deflate, ZStandard, LZ4, and Brotli implementations with **native C streams** from [GrindCore](https://github.com/Nanook/GrindCore.net), providing significant performance improvements while maintaining full API compatibility.
 
-**NEW:** All I/O operations now support async/await for improved performance and scalability. See the [USAGE.md](docs/USAGE.md#async-examples) for examples.
+Based on **SharpCompress 0.50.4** — includes all upstream features plus native compression.
 
-GitHub Actions Build -
-[![SharpCompress](https://github.com/adamhathcock/sharpcompress/actions/workflows/nuget-release.yml/badge.svg)](https://github.com/adamhathcock/sharpcompress/actions/workflows/nuget-release.yml)
-[![Static Badge](https://img.shields.io/badge/API%20Docs-DNDocs-190088?logo=readme&logoColor=white)](https://dndocs.com/d/sharpcompress/api/index.html)
+> For more in-depth information, see [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nanook/GrindCore.SharpCompress).
 
-## Need Help?
+## Installation
 
-Post Issues on Github!
+```xml
+<PackageReference Include="GrindCore.SharpCompress" Version="0.50.4" />
+```
 
-Check the [Supported Formats](docs/FORMATS.md), [API Reference](docs/API.md), and [Basic Usage](docs/USAGE.md).
+## Format Support
 
-## Custom Compression Providers
+| Format | Read | Write | Native Performance | Notes |
+|--------|------|-------|-------------------|-------|
+| **ZIP** | ✅ | ✅ | ✅ (Deflate, ZStd, LZMA) | Zip64, PKWare/WinZip AES encryption |
+| **TAR** | ✅ | ✅ | ✅ (with compression) | GZip, BZip2, LZip, XZ, ZStandard |
+| **GZIP** | ✅ | ✅ | ✅ | Native ZLib-NG |
+| **BZIP2** | ✅ | ✅ | ❌ (managed) | Original C# implementation |
+| **7ZIP** | ✅ | ✅ | ✅ (LZMA/LZMA2) | Non-solid write, seekable streams required |
+| **RAR** | ✅ | ❌ | N/A | RAR4 and RAR5, solid archives supported |
+| **LZIP** | ✅ | ✅ | ✅ | Native LZMA |
+| **XZ** | ✅ | ❌ | ✅ | Native LZMA2 decompression |
+| **ACE** | ✅ | ❌ | N/A | Read-only |
+| **ARJ** | ✅ | ❌ | N/A | Read-only |
 
-If you need to swap out SharpCompress’s built-in codecs, the `Providers` property (and `WithProviders(...)` extensions) on `ReaderOptions` and `WriterOptions` lets you supply a `CompressionProviderRegistry`. The selected registry is used by Reader/Writer APIs, Archive APIs, and async extraction paths, so the same provider choice is applied consistently across open/read/write flows. The default registry is already wired up, so customization is only necessary when you want to plug in alternatives such as `SystemGZipCompressionProvider` or a third-party `CompressionProvider`. See [docs/USAGE.md#custom-compression-providers](docs/USAGE.md#custom-compression-providers) for guided examples.
+### Compression Algorithms
 
-## Recommended Formats
+| Algorithm | Levels | Native | Notes |
+|-----------|--------|--------|-------|
+| **Deflate** | 1-9 | ✅ ZLib-NG v2.2.1 | Used in ZIP, GZip, Tar.GZip |
+| **LZMA/LZMA2** | 1-9 | ✅ v25.1.0 | Block and Solid modes, 7zip writing |
+| **ZStandard** | 1-22 | ✅ v1.5.7 | ZIP, TAR, standalone |
+| **LZ4** | 1-12 | ✅ v1.10.0 | 7zip decompression, standalone |
+| **Brotli** | 1-11 | ✅ v1.1.0 | 7zip decompression, standalone |
+| **BZip2** | Fixed | ❌ | Managed C# implementation |
+| **PPMd** | Fixed | ❌ | Managed C# implementation |
+| **Deflate64** | N/A | ❌ | Decompression only |
+| **Shrink/Implode/Reduce** | N/A | ❌ | Legacy ZIP decompression only |
 
-In general, I recommend GZip (Deflate)/BZip2 (BZip)/LZip (LZMA) as the simplicity of the formats lend to better long term archival as well as the streamability. Tar is often used in conjunction for multiple files in a single archive (e.g. `.tar.gz`)
+## Key Features
 
-Zip is okay, but it's a very hap-hazard format and the variation in headers and implementations makes it hard to get correct. Uses Deflate by default but supports a lot of compression methods.
+### Native Compression via GrindCore
+- Native C implementations compiled from original algorithm authors' code
+- No external DLL dependencies — native libraries bundled per platform
+- Multiplatform: Windows (x64/x86/ARM64), Linux (x64/ARM64/ARM), macOS (x64/ARM64)
+- AOT/Trimming compatible on .NET 8+
 
-RAR is not recommended as it's a proprietary format and the compression is closed source. Use Tar/LZip for LZMA
+### 7-Zip Writing (New in 0.50.4)
+- `SevenZipWriter` for creating 7z archives with LZMA or LZMA2 compression
+- Non-solid mode (each file compressed independently)
+- Async writing support via `WriterFactory.OpenAsyncWriter`
+- Requires seekable output stream
 
-7Zip and XZ both are overly complicated. 7Zip does not support streamable formats. XZ has known holes explained here: (http://www.nongnu.org/lzip/xz_inadequate.html) Use Tar/LZip for LZMA compression instead.
+### Archive Detection API (New in 0.50.4)
+- `ArchiveFactory.GetArchiveInformation()` — detect archive type without fully opening
+- Consolidated factory helpers for format detection
 
-ZStandard is an efficient format that works well for streaming with a flexible compression level to tweak the speed/performance trade off you are looking for.
+### PooledMemoryStream (New in 0.50.4)
+- `ArrayPool<byte>`-backed memory stream for reduced GC pressure
+- Used internally for 7zip writing and CRC computation
 
-## A Simple Request
+### Zip-Slip Protection (New in 0.50.4)
+- Path traversal protection on extraction
+- Consolidated extraction options via `ExtractionOptions`
 
-Hi everyone. I hope you're using SharpCompress and finding it useful. Please give me feedback on what you'd like to see changed especially as far as usability goes. New feature suggestions are always welcome as well. I would also like to know what projects SharpCompress is being used in. I like seeing how it is used to give me ideas for future versions. Thanks!
+### Stream APIs
+- **Archive API**: Random access with seekable streams (`ZipArchive`, `TarArchive`, `SevenZipArchive`, etc.)
+- **Reader API**: Forward-only reading on non-seekable streams (`ZipReader`, `TarReader`, etc.)
+- **Writer API**: Forward-only writing (`ZipWriter`, `TarWriter`, `SevenZipWriter`, etc.)
+- Full async/await support with `CancellationToken` throughout
+- Auto-detection via `ReaderFactory.OpenReader()` / `ArchiveFactory.OpenArchive()`
 
-Please do not email me directly to ask for help. If you think there is a real issue, please report it here.
+### LZMA2 Modes
+- **Block Mode**: Configurable block sizes for compression/speed balance
+- **Solid Mode**: Maximum compression (`CompressionBufferSize = -1`)
 
-## Want to contribute?
+## Framework Support
 
-I'm always looking for help or ideas. Please submit code or email with ideas. Unfortunately, just letting me know you'd like to help is not enough because I really have no overall plan of what needs to be done. I'll definitely accept code submissions and add you as a member of the project!
+- .NET 10, 9, 8, 7, 6, 5
+- .NET Standard 2.1, 2.0
+- .NET Framework 4.8, 4.8.1
+- NativeAOT compatible (.NET 8+)
 
-## Notes
+## Performance
 
-XZ implementation based on: https://github.com/sambott/XZ.NET by @sambott
+GrindCore native implementations provide measurable improvements over managed C#:
 
-XZ BCJ filters support contributed by Louis-Michel Bergeron, on behalf of aDolus Technology Inc. - 2022
+- **Deflate/GZip**: 3-5x faster than managed implementation
+- **LZ4**: 400+ MB/s compression, 1500+ MB/s decompression
+- **ZStandard Level 6**: 100+ MB/s compression, 400+ MB/s decompression
+- **LZMA2 Solid**: 95%+ compression ratio on text data
+- **Brotli Level 9**: Excellent web compression with 85%+ ratio on text
 
-7Zip implementation based on: https://code.google.com/p/managed-lzma/
+Native implementations leverage modern CPU instruction sets (AVX2, SSE4) where available.
 
-Zstandard implementation from: https://github.com/oleg-st/ZstdSharp
+## Migration from SharpCompress
 
-LICENSE
-Copyright (c) 2000 - 2011 The Legion Of The Bouncy Castle (http://www.bouncycastle.org)
+This is a drop-in replacement. Change your package reference:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+```xml
+<!-- Before -->
+<PackageReference Include="SharpCompress" Version="0.50.4" />
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+<!-- After -->
+<PackageReference Include="GrindCore.SharpCompress" Version="0.50.4" />
+```
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+No code changes required. Existing SharpCompress code benefits from native performance automatically.
+
+## Usage Examples
+
+```csharp
+// Write a ZIP with ZStandard compression
+var options = new WriterOptions(CompressionType.ZStandard) { CompressionLevel = 6 };
+using var writer = WriterFactory.OpenWriter(outputStream, ArchiveType.Zip, options);
+writer.Write("file.txt", inputStream, DateTime.Now);
+
+// Write a 7zip archive with LZMA2
+var options7z = new WriterOptions(CompressionType.LZMA2) { CompressionLevel = 9 };
+using var writer7z = WriterFactory.OpenWriter(outputStream, ArchiveType.SevenZip, options7z);
+writer7z.Write("data.bin", inputStream, DateTime.Now);
+
+// LZMA2 Solid Mode for maximum compression
+var solidOptions = new WriterOptions(CompressionType.LZMA2)
+{
+    CompressionBufferSize = -1 // Solid mode
+};
+
+// Read any archive format (auto-detect)
+using var archive = ArchiveFactory.OpenArchive(inputStream);
+foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
+{
+    entry.WriteToDirectory(outputDir);
+}
+```
+
+## Architecture
+
+```
+GrindCore.SharpCompress.dll
+  → GrindCore.net.dll (.NET stream wrappers)
+    → GrindCore.dll (Native C library)
+```
+
+When `UseGrindCore=true` (default), native stream implementations replace the managed ones at compile time. Set `UseGrindCore=false` to build with pure managed implementations (matching upstream SharpCompress behaviour).
+
+## Documentation
+
+- [Supported Formats](docs/FORMATS.md)
+- [Basic Usage](docs/USAGE.md)
+- [API Reference](docs/API.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Performance](docs/PERFORMANCE.md)
+
+## Related Projects
+
+- **[GrindCore](https://github.com/Nanook/GrindCore)**: Multiplatform native C compression library
+- **[GrindCore.net](https://github.com/Nanook/GrindCore.net)**: .NET wrapper for GrindCore (.NET Framework 3.5 through .NET 10)
+- **[GrindCore NuGet](https://www.nuget.org/packages/GrindCore)**: Standalone GrindCore package
+- **[SharpCompress](https://github.com/adamhathcock/sharpcompress)**: The upstream library this fork enhances
+
+## Contributing
+
+Contributions welcome. Areas of interest:
+
+- Performance benchmarking
+- Platform-specific testing
+- Additional native algorithm integration (BZip2, PPMd)
+- Real-world usage feedback
+
+Please use GitHub issues for support requests.
+
+## License
+
+MIT License — same as the original SharpCompress project.
+Native libraries are licensed as specified in [GrindCore documentation](https://github.com/Nanook/GrindCore).

@@ -17,6 +17,13 @@ namespace SharpCompress.Test.Tar;
 
 public class TarArchiveTests : ArchiveTests
 {
+    static TarArchiveTests()
+    {
+#if !NETFRAMEWORK
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+#endif
+    }
+
     public TarArchiveTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Fact]

@@ -30,6 +30,8 @@ public enum CompressionType
     Crushed,
     Distilled,
     ZStandard,
+    LZ4,
+    Brotli,
     ArjLZ77,
     AceLZ77,
 }

@@ -252,8 +252,17 @@
         "resolved": "4.7.0",
         "contentHash": "VybpaOQQhqE6siHppMktjfGBw1GCwvCqiufqmP8F1nj7fTUNtW35LOEt3UZTEsECfo+ELAl/9o9nJx3U91i7vA=="
       },
-      "sharpcompress": {
-        "type": "Project"
+      "GrindCore.SharpCompress": {
+        "type": "Project",
+        "dependencies": {
+          "GrindCore": "[0.8.0, )"
+        }
+      },
+      "GrindCore": {
+        "type": "CentralTransitive",
+        "requested": "[0.8.0, )",
+        "resolved": "0.8.0",
+        "contentHash": "gCtH7MBff9V2rsoE/NMBh+j8OqwTreT6V7uo0HnsLTmzw9WZLG14VvF3wC2jQAQ2OFInyxlNVA3tS6607UE4vg=="
       }
     }
   }

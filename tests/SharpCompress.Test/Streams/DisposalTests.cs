@@ -8,11 +8,13 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.Compressors.Lzw;
 using SharpCompress.Compressors.PPMd;
 using SharpCompress.Compressors.Reduce;
-using SharpCompress.Compressors.ZStandard;
 using SharpCompress.IO;
 using SharpCompress.Readers;
 using SharpCompress.Test.Mocks;
 using Xunit;
+#if !GRINDCORE
+using SharpCompress.Compressors.ZStandard;
+#endif
 
 namespace SharpCompress.Test.Streams;
 
@@ -180,6 +182,7 @@ public class DisposalTests
         VerifyNeverDispose(stream => ReduceStream.Create(stream, 0, 0, 1));
     }
 
+#if !GRINDCORE
     [Fact]
     public void ZStandard_CompressionStream_Disposal()
     {
@@ -202,4 +205,5 @@ public class DisposalTests
                 )
         );
     }
+#endif
 }

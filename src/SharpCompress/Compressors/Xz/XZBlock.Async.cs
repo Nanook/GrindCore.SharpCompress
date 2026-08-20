@@ -30,10 +30,17 @@ public sealed partial class XZBlock
 
         if (!_endOfStream)
         {
-            bytesRead = await _decomStream
-                .NotNull()
-                .ReadAsync(buffer, offset, count, cancellationToken)
-                .ConfigureAwait(false);
+            try
+            {
+                bytesRead = await _decomStream
+                    .NotNull()
+                    .ReadAsync(buffer, offset, count, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not SharpCompressException)
+            {
+                throw new SharpCompressException("Decompression error", ex);
+            }
             UpdateCheck(buffer, offset, bytesRead);
         }
 

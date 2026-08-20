@@ -12,11 +12,41 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <UseGrindCore Condition=" '$(UseGrindCore)' == ''">true</UseGrindCore>
+    <DefineConstants Condition=" '$(UseGrindCore)' != 'false'"
+      >$(DefineConstants);GRINDCORE</DefineConstants
+    >
+  </PropertyGroup>
   <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))">
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
     <DefineConstants>$(DefineConstants);LINUX</DefineConstants>
+  </PropertyGroup>
+  <!-- RuntimeIdentifier is required for GrindCore native DLL resolution on net48.
+       NuGet copies runtimes/<rid>/native/ to output only when RID is set. -->
+  <PropertyGroup>
+    <RuntimeIdentifier
+      Condition=" '$(RuntimeIdentifier)' == '' And '$(TargetFramework)' == 'net48' "
+      >win-x64</RuntimeIdentifier
+    >
+    <PlatformTarget
+      Condition=" '$(RuntimeIdentifier)' == 'win-x64' or '$(RuntimeIdentifier)' == 'linux-x64' or '$(RuntimeIdentifier)' == 'osx-x64' "
+      >x64</PlatformTarget
+    >
+    <PlatformTarget
+      Condition=" '$(RuntimeIdentifier)' == 'win-arm64' or '$(RuntimeIdentifier)' == 'linux-arm64' or '$(RuntimeIdentifier)' == 'osx-arm64' "
+      >arm64</PlatformTarget
+    >
+    <PlatformTarget
+      Condition=" '$(RuntimeIdentifier)' == 'win-x86' or '$(RuntimeIdentifier)' == 'linux-x86' "
+      >x86</PlatformTarget
+    >
+    <PlatformTarget Condition=" '$(RuntimeIdentifier)' == 'linux-arm' ">arm</PlatformTarget>
+    <RuntimeIdentifiers Condition=" '$(RuntimeIdentifier)' != '' "
+      >$(RuntimeIdentifier)</RuntimeIdentifiers
+    >
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\SharpCompress\SharpCompress.csproj" />

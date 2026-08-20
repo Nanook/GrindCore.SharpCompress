@@ -88,14 +88,15 @@ public class ExceptionHierarchyTests
     public void InternalLzmaExceptions_InheritFromSharpCompressException()
     {
         // Use reflection to verify internal exception types
-        var dataErrorExceptionType = Type.GetType(
-            "SharpCompress.Compressors.LZMA.DataErrorException, SharpCompress"
+        var assembly = typeof(SharpCompressException).Assembly;
+        var dataErrorExceptionType = assembly.GetType(
+            "SharpCompress.Compressors.LZMA.DataErrorException"
         );
         Assert.NotNull(dataErrorExceptionType);
         Assert.True(typeof(SharpCompressException).IsAssignableFrom(dataErrorExceptionType));
 
-        var invalidParamExceptionType = Type.GetType(
-            "SharpCompress.Compressors.LZMA.InvalidParamException, SharpCompress"
+        var invalidParamExceptionType = assembly.GetType(
+            "SharpCompress.Compressors.LZMA.InvalidParamException"
         );
         Assert.NotNull(invalidParamExceptionType);
         Assert.True(typeof(SharpCompressException).IsAssignableFrom(invalidParamExceptionType));

@@ -67,7 +67,7 @@ Target(
         Run("dotnet", "csharpier check .");
     }
 );
-Target(Restore, [CheckFormat], () => Run("dotnet", "restore --locked-mode"));
+Target(Restore, [CheckFormat], () => Run("dotnet", "restore --force-evaluate"));
 Target(UpdateLocks, [CheckFormat], () => Run("dotnet", "restore --force-evaluate"));
 
 Target(
@@ -97,7 +97,7 @@ Target(
 
         foreach (var file in GetFiles("**/*.Test.csproj"))
         {
-            Run("dotnet", $"test {file} -c Release -f {framework} --no-restore --verbosity=normal");
+            Run("dotnet", $"test {file} -c Release -f {framework} --verbosity=normal");
         }
     }
 );

@@ -199,6 +199,22 @@ public partial class ZipWriter
                         compressionLevel
                     );
                 }
+                case ZipCompressionMethod.LZ4:
+                {
+                    return providers.CreateCompressStream(
+                        CompressionType.LZ4,
+                        counting,
+                        compressionLevel
+                    );
+                }
+                case ZipCompressionMethod.Brotli:
+                {
+                    return providers.CreateCompressStream(
+                        CompressionType.Brotli,
+                        counting,
+                        compressionLevel
+                    );
+                }
                 default:
                 {
                     throw new NotSupportedException("CompressionMethod: " + zipCompressionMethod);
@@ -325,6 +341,28 @@ public partial class ZipWriter
                     return await providers
                         .CreateCompressStreamAsync(
                             CompressionType.ZStandard,
+                            counting,
+                            compressionLevel,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
+                }
+                case ZipCompressionMethod.LZ4:
+                {
+                    return await providers
+                        .CreateCompressStreamAsync(
+                            CompressionType.LZ4,
+                            counting,
+                            compressionLevel,
+                            cancellationToken
+                        )
+                        .ConfigureAwait(false);
+                }
+                case ZipCompressionMethod.Brotli:
+                {
+                    return await providers
+                        .CreateCompressStreamAsync(
+                            CompressionType.Brotli,
                             counting,
                             compressionLevel,
                             cancellationToken

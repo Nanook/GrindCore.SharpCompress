@@ -16,5 +16,7 @@ internal enum ZipCompressionMethod
     ZStandard = 93,
     Xz = 95,
     PPMd = 98,
+    Brotli = 129,
+    LZ4 = 130,
     WinzipAes = 0x63, //http://www.winzip.com/aes_info.htm
 }

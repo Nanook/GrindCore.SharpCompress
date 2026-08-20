@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using SharpCompress.Common;
 
+#pragma warning disable CA1725 // Parameter names should match base declaration
+
 namespace SharpCompress.IO;
 
 /// <summary>

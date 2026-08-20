@@ -20,7 +20,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     public ZipTypesLevelsWithCrcRatioAsyncTests() => UseExtensionInsteadOfNameToVerify = true;
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 1, 0.11f)] // was 0.8f, actual 0.104
+    [InlineData(CompressionType.Deflate, 1, 1, 0.15f)] // GrindCore ZLib-NG level 1 compresses less aggressively than managed (~14%)
     [InlineData(CompressionType.Deflate, 3, 1, 0.08f)] // was 0.8f, actual 0.078
     [InlineData(CompressionType.Deflate, 6, 1, 0.05f)] // was 0.8f, actual ~0.042
     [InlineData(CompressionType.Deflate, 9, 1, 0.04f)] // was 0.7f, actual 0.038
@@ -29,7 +29,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     [InlineData(CompressionType.ZStandard, 9, 1, 0.006f)] // was 0.7f, actual 0.005
     [InlineData(CompressionType.ZStandard, 22, 1, 0.005f)] // was 0.7f, actual 0.004
     [InlineData(CompressionType.BZip2, 0, 1, 0.035f)] // was 0.8f, actual 0.033
-    [InlineData(CompressionType.LZMA, 0, 1, 0.005f)] // was 0.8f, actual 0.004
+    [InlineData(CompressionType.LZMA, 0, 1, 0.02f)] // GrindCore LZMA 25.1.0 level 0 uses faster settings (~1.8%)
     [InlineData(CompressionType.None, 0, 1, 1.001f)] // was 1.1f, actual 1.000
     [InlineData(CompressionType.Deflate, 6, 2, 0.045f)] // was 0.8f, actual 0.042
     [InlineData(CompressionType.ZStandard, 3, 2, 0.012f)] // was 0.7f, actual 0.010
@@ -105,7 +105,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     }
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 4, 0.11f)] // was 0.8, actual 0.105
+    [InlineData(CompressionType.Deflate, 1, 4, 0.15f)] // GrindCore ZLib-NG level 1 compresses less aggressively than managed (~14%)
     [InlineData(CompressionType.Deflate, 3, 4, 0.08f)] // was 0.8, actual 0.077
     [InlineData(CompressionType.Deflate, 6, 4, 0.045f)] // was 0.8, actual 0.042
     [InlineData(CompressionType.Deflate, 9, 4, 0.04f)] // was 0.8, actual 0.037
@@ -114,7 +114,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     [InlineData(CompressionType.ZStandard, 9, 4, 0.003f)] // was 0.8, actual 0.002
     [InlineData(CompressionType.ZStandard, 22, 4, 0.003f)] // was 0.8, actual 0.002
     [InlineData(CompressionType.BZip2, 0, 4, 0.035f)] // was 0.8, actual 0.032
-    [InlineData(CompressionType.LZMA, 0, 4, 0.003f)] // was 0.8, actual 0.002
+    [InlineData(CompressionType.LZMA, 0, 4, 0.02f)] // GrindCore LZMA 25.1.0 level 0 uses faster settings (~1.8%)
     public async ValueTask Zip_WriterFactory_Crc32_Test_Async(
         CompressionType compressionType,
         int compressionLevel,
@@ -177,7 +177,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     }
 
     [Theory]
-    [InlineData(CompressionType.Deflate, 1, 2, 0.11f)] // was 0.8, actual 0.104
+    [InlineData(CompressionType.Deflate, 1, 2, 0.15f)] // GrindCore ZLib-NG level 1 compresses less aggressively than managed (~14%)
     [InlineData(CompressionType.Deflate, 3, 2, 0.08f)] // was 0.8, actual 0.077
     [InlineData(CompressionType.Deflate, 6, 2, 0.045f)] // was 0.8, actual 0.042
     [InlineData(CompressionType.Deflate, 9, 2, 0.04f)] // was 0.7, actual 0.038
@@ -186,7 +186,7 @@ public class ZipTypesLevelsWithCrcRatioAsyncTests : ArchiveTests
     [InlineData(CompressionType.ZStandard, 9, 2, 0.006f)] // was 0.7, actual 0.005
     [InlineData(CompressionType.ZStandard, 22, 2, 0.005f)] // was 0.7, actual 0.004
     [InlineData(CompressionType.BZip2, 0, 2, 0.035f)] // was 0.8, actual 0.032
-    [InlineData(CompressionType.LZMA, 0, 2, 0.005f)] // was 0.8, actual 0.004
+    [InlineData(CompressionType.LZMA, 0, 2, 0.02f)] // GrindCore LZMA 25.1.0 level 0 uses faster settings (~1.8%)
     public async ValueTask Zip_ZipArchiveOpen_Crc32_Test_Async(
         CompressionType compressionType,
         int compressionLevel,
