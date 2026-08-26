@@ -139,17 +139,16 @@ internal static class GrindCoreBufferHelper
 
     /// <summary>
     /// Configures BaseStreamAsyncOnly flag based on stream type detection.
-    /// NOTE: This method requires GrindCore to have the BaseStreamAsyncOnly property added to CompressionOptions.
-    /// Once GrindCore is updated, uncomment the implementation below.
+    /// Sets the flag proactively so the very first sync write/flush uses async base stream
+    /// APIs, avoiding the cold-start gap on async-only streams.
     /// </summary>
     /// <param name="options">The GrindCore options to configure.</param>
     /// <param name="stream">The base stream to analyze.</param>
     public static void ConfigureAsyncOnlyIfNeeded(NGC.CompressionOptions options, Stream stream)
     {
-        // TODO: Uncomment once GrindCore.CompressionOptions has BaseStreamAsyncOnly property
-        // if (IsAsyncOnlyStream(stream))
-        // {
-        //     options.BaseStreamAsyncOnly = true;
-        // }
+        if (IsAsyncOnlyStream(stream))
+        {
+            options.BaseStreamAsyncOnly = true;
+        }
     }
 }

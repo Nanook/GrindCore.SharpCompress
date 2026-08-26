@@ -2,7 +2,7 @@
 
 GrindCore.SharpCompress is an enhanced version of **SharpCompress** that integrates **GrindCore** native compression. This project delivers native compression support built using the **System.IO.Compression** pattern, utilizing compression algorithms directly from their original C implementations.
 
-This fork replaces GZip, LZMA, Deflate, ZStandard, LZ4, and Brotli implementations with **native C streams** from [GrindCore](https://github.com/Nanook/GrindCore.net), providing significant performance improvements while maintaining full API compatibility.
+This fork replaces GZip, LZMA, Deflate, ZStandard, LZ4, BZip2, and Brotli implementations with **native C streams** from [GrindCore](https://github.com/Nanook/GrindCore.net), providing significant performance improvements while maintaining full API compatibility.
 
 Based on **SharpCompress 0.50.4** — includes all upstream features plus native compression.
 
@@ -21,7 +21,7 @@ Based on **SharpCompress 0.50.4** — includes all upstream features plus native
 | **ZIP** | ✅ | ✅ | ✅ (Deflate, ZStd, LZMA) | Zip64, PKWare/WinZip AES encryption |
 | **TAR** | ✅ | ✅ | ✅ (with compression) | GZip, BZip2, LZip, XZ, ZStandard |
 | **GZIP** | ✅ | ✅ | ✅ | Native ZLib-NG |
-| **BZIP2** | ✅ | ✅ | ❌ (managed) | Original C# implementation |
+| **BZIP2** | ✅ | ✅ | ✅ | Native libbzip2 1.0.8 |
 | **7ZIP** | ✅ | ✅ | ✅ (LZMA/LZMA2) | Non-solid write, seekable streams required |
 | **RAR** | ✅ | ❌ | N/A | RAR4 and RAR5, solid archives supported |
 | **LZIP** | ✅ | ✅ | ✅ | Native LZMA |
@@ -38,7 +38,7 @@ Based on **SharpCompress 0.50.4** — includes all upstream features plus native
 | **ZStandard** | 1-22 | ✅ v1.5.7 | ZIP, TAR, standalone |
 | **LZ4** | 1-12 | ✅ v1.10.0 | 7zip decompression, standalone |
 | **Brotli** | 1-11 | ✅ v1.1.0 | 7zip decompression, standalone |
-| **BZip2** | Fixed | ❌ | Managed C# implementation |
+| **BZip2** | 1-9 | ✅ libbzip2 v1.0.8 | Used in ZIP, TAR, 7zip, standalone |
 | **PPMd** | Fixed | ❌ | Managed C# implementation |
 | **Deflate64** | N/A | ❌ | Decompression only |
 | **Shrink/Implode/Reduce** | N/A | ❌ | Legacy ZIP decompression only |
@@ -171,7 +171,7 @@ Contributions welcome. Areas of interest:
 
 - Performance benchmarking
 - Platform-specific testing
-- Additional native algorithm integration (BZip2, PPMd)
+- Additional native algorithm integration (PPMd)
 - Real-world usage feedback
 
 Please use GitHub issues for support requests.

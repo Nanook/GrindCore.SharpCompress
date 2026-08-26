@@ -42,7 +42,43 @@ public sealed class BZip2CompressionProvider : CompressionProviderBase
 
     public override Stream CreateDecompressStream(Stream source)
     {
-        return BZip2Stream.Create(source, CompressionMode.Decompress, false);
+        // Enable tolerance in all decompression contexts because GrindCore's buffer
+        // may overread past the bzip2 stream end into non-bzip2 data. The caller's
+        // rewind mechanism (IStreamStack.Flush) corrects the base stream position.
+        return BZip2Stream.Create(
+            source,
+            CompressionMode.Decompress,
+            false,
+            leaveOpen: false,
+            tolerateTruncatedStream: true
+        );
+    }
+
+    public override Stream CreateDecompressStream(Stream source, CompressionContext context)
+    {
+        // When InputSize is known (e.g., from a Zip entry header), pass it so GrindCore
+        // limits reads from the base stream to the exact compressed entry size.
+        // Always enable tolerance in archive context because buffer overread past the
+        // entry boundary into non-bzip2 archive structure is expected.
+        if (context.InputSize > 0)
+        {
+            return BZip2Stream.Create(
+                source,
+                CompressionMode.Decompress,
+                false,
+                leaveOpen: false,
+                tolerateTruncatedStream: true,
+                inputSize: context.InputSize
+            );
+        }
+
+        return BZip2Stream.Create(
+            source,
+            CompressionMode.Decompress,
+            false,
+            leaveOpen: false,
+            tolerateTruncatedStream: true
+        );
     }
 
     public override async ValueTask<Stream> CreateDecompressStreamAsync(
@@ -55,7 +91,26 @@ public sealed class BZip2CompressionProvider : CompressionProviderBase
                 source,
                 CompressionMode.Decompress,
                 false,
+                leaveOpen: false,
+                tolerateTruncatedStream: true,
+                cancellationToken: cancellationToken
+            )
+            .ConfigureAwait(false);
+    }
+
+    public override async ValueTask<Stream> CreateDecompressStreamAsync(
+        Stream source,
+        CompressionContext context,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await BZip2Stream
+            .CreateAsync(
+                source,
+                CompressionMode.Decompress,
                 false,
+                leaveOpen: false,
+                tolerateTruncatedStream: true,
                 cancellationToken: cancellationToken
             )
             .ConfigureAwait(false);

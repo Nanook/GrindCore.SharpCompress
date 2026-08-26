@@ -52,6 +52,7 @@
   <!-- When GrindCore is disabled, remove the managed implementations that would conflict -->
   <ItemGroup Condition="'$(UseGrindCore)' != 'true'">
     <Compile Remove="Compressors\Brotli\BrotliStream_GC.cs" />
+    <Compile Remove="Compressors\BZip2\BZip2Stream_GC.cs" />
     <Compile Remove="Compressors\Deflate\DeflateStream_GC.cs" />
     <Compile Remove="Compressors\Deflate\GZipStream_GC.cs" />
     <Compile Remove="Compressors\Deflate\ZlibStream_GC.cs" />
@@ -63,6 +64,13 @@
 
   <!-- When GrindCore is enabled, remove the legacy managed sources that duplicate functionality -->
   <ItemGroup Condition="'$(UseGrindCore)' == 'true'">
+    <Compile Remove="Compressors\BZip2\BZip2Stream.cs" />
+    <Compile Remove="Compressors\BZip2\BZip2Stream.Async.cs" />
+    <Compile Remove="Compressors\BZip2\CBZip2InputStream.cs" />
+    <Compile Remove="Compressors\BZip2\CBZip2InputStream.Async.cs" />
+    <Compile Remove="Compressors\BZip2\CBZip2OutputStream.cs" />
+    <Compile Remove="Compressors\BZip2\CBZip2OutputStream.Async.cs" />
+    <Compile Remove="Compressors\BZip2\CRC.cs" />
     <Compile Remove="Compressors\Deflate\DeflateStream.cs" />
     <Compile Remove="Compressors\Deflate\GZipStream.cs" />
     <Compile Remove="Compressors\Deflate\ZlibStream.cs" />
