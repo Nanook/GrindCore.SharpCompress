@@ -70,6 +70,13 @@ public partial class EntryStream : Stream
             {
                 lzmaStream.Flush(); //Lzma over reads. Knock it back
             }
+            else if (
+                ss.GetStream<SharpCompress.Compressors.BZip2.BZip2Stream>()
+                is SharpCompress.Compressors.BZip2.BZip2Stream bzip2Stream
+            )
+            {
+                bzip2Stream.Flush(); //BZip2 over reads. Knock it back
+            }
         }
         base.Dispose(disposing);
         _stream.Dispose();

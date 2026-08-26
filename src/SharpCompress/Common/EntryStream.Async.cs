@@ -41,6 +41,15 @@ public partial class EntryStream
             {
                 await lzmaStream.FlushAsync().ConfigureAwait(false);
             }
+            else if (
+                ss.GetStream<SharpCompress.Compressors.BZip2.BZip2Stream>()
+                is SharpCompress.Compressors.BZip2.BZip2Stream bzip2Stream
+            )
+            {
+#pragma warning disable VSTHRD103 // Flush performs a non-I/O buffer rewind (position adjustment only)
+                bzip2Stream.Flush(); //BZip2 over reads. Knock it back
+#pragma warning restore VSTHRD103
+            }
         }
         await base.DisposeAsync().ConfigureAwait(false);
         await _stream.DisposeAsync().ConfigureAwait(false);
