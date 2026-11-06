@@ -4,14 +4,14 @@ GrindCore.SharpCompress is an enhanced version of **SharpCompress** that integra
 
 This fork replaces GZip, LZMA, Deflate, ZStandard, LZ4, BZip2, and Brotli implementations with **native C streams** from [GrindCore](https://github.com/Nanook/GrindCore.net), providing significant performance improvements while maintaining full API compatibility.
 
-Based on **SharpCompress 0.50.4** — includes all upstream features plus native compression.
+Based on **SharpCompress 0.50.8** (plus post-release upstream fixes) — includes all upstream features plus native compression.
 
 > For more in-depth information, see [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Nanook/GrindCore.SharpCompress).
 
 ## Installation
 
 ```xml
-<PackageReference Include="GrindCore.SharpCompress" Version="0.50.4" />
+<PackageReference Include="GrindCore.SharpCompress" Version="0.50.8" />
 ```
 
 ## Format Support
@@ -45,17 +45,26 @@ Based on **SharpCompress 0.50.4** — includes all upstream features plus native
 
 ## Key Features
 
-### Native Compression via GrindCore
+### Native Compression via GrindCore 0.10.0
 - Native C implementations compiled from original algorithm authors' code
 - No external DLL dependencies — native libraries bundled per platform
 - Multiplatform: Windows (x64/x86/ARM64), Linux (x64/ARM64/ARM), macOS (x64/ARM64)
 - AOT/Trimming compatible on .NET 8+
 
-### 7-Zip Writing (New in 0.50.4)
+### 7-Zip Writing (added in 0.50.4)
 - `SevenZipWriter` for creating 7z archives with LZMA or LZMA2 compression
 - Non-solid mode (each file compressed independently)
 - Async writing support via `WriterFactory.OpenAsyncWriter`
 - Requires seekable output stream
+
+### Security hardening and bug fixes (0.50.8)
+- Hardened RAR5, 7z, GZip, ZIP, ARC, ARJ, ACE, and LZip parsing against truncated or malformed input
+- Improved encrypted RAR5 archive handling: key caching, correct comment parsing
+- GZip async CRC and size validation during stream disposal
+- LZMA2 invalid chunk property detection (now raises `InvalidFormatException`)
+- USTAR long-name splitting corrected on Windows
+- ZIP entry names that are UTF-8 encoded without a BOM now set the UTF-8 flag
+- Empty entries written with a compression method now produce a valid (non-empty) compressed stream
 
 ### Archive Detection API (New in 0.50.4)
 - `ArchiveFactory.GetArchiveInformation()` — detect archive type without fully opening
@@ -105,10 +114,10 @@ This is a drop-in replacement. Change your package reference:
 
 ```xml
 <!-- Before -->
-<PackageReference Include="SharpCompress" Version="0.50.4" />
+<PackageReference Include="SharpCompress" Version="0.50.8" />
 
 <!-- After -->
-<PackageReference Include="GrindCore.SharpCompress" Version="0.50.4" />
+<PackageReference Include="GrindCore.SharpCompress" Version="0.50.8" />
 ```
 
 No code changes required. Existing SharpCompress code benefits from native performance automatically.
@@ -175,6 +184,19 @@ Contributions welcome. Areas of interest:
 - Real-world usage feedback
 
 Please use GitHub issues for support requests.
+
+## Support
+
+GrindCore.SharpCompress is free and open source. If you find it — or any of my other projects — useful, you're welcome to show your appreciation:
+
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/nanook_)
+
+- **Sponsor**: [ko-fi.com/nanook_/tiers](https://ko-fi.com/nanook_/tiers)
+- **Buy Me a Beer 🍺**: [ko-fi.com/nanook_](https://ko-fi.com/nanook_)
+
+This project is an enhancement of [SharpCompress](https://github.com/adamhathcock/sharpcompress) (MIT). Any support goes towards my open-source work in general, not to the SharpCompress project.
+
+---
 
 ## License
 

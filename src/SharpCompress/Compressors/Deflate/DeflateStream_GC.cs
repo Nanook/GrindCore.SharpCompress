@@ -253,6 +253,18 @@ public class DeflateStream : Stream, IStreamStack
 #endif
                 if (disposing)
                 {
+                    // If the stream is in encoder mode and no data was written, produce a valid
+                    // empty deflate stream to ensure non-zero compressed output. This prevents
+                    // ZipCentralDirectoryEntry from switching to Store (method 0) in the central
+                    // directory while the local header was already written as Deflate (method 8).
+                    if (_isEncoder && !_modeInitialized)
+                    {
+                        Write(Array.Empty<byte>(), 0, 0);
+                        // Force the final deflate end-of-stream block; GrindCore only produces
+                        // compressed output when Complete() is called explicitly for empty input.
+                        _grindCoreStream!.Complete();
+                    }
+
                     if (_modeInitialized && _grindCoreStream!.BufferedBytesUnused != 0)
                     {
                         _grindCoreStream.Complete(); //finalise without dispose

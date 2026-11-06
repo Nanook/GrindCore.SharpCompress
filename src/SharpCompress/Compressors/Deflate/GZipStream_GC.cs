@@ -316,6 +316,15 @@ public class GZipStream : Stream, IStreamStack
         {
             return;
         }
+
+        // If the stream is a compressor and nothing has been written yet, force-initialize so
+        // that a valid empty GZip stream (header + trailer) is produced. This mirrors the
+        // managed GZipStream fix: calling Write(empty) triggers InitializeCompressMode().
+        if (disposing && _isEncoder && _grindCoreStream == null && _rawDeflateStream == null)
+        {
+            Write(Array.Empty<byte>(), 0, 0);
+        }
+
         _isDisposed = true;
 
 #if DEBUG_STREAMS
@@ -845,6 +854,13 @@ public class GZipStream : Stream, IStreamStack
         if (_isDisposed)
         {
             return;
+        }
+
+        // If encoder and no data written, produce a valid empty GZip stream before disposal.
+        if (_isEncoder && _grindCoreStream == null && _rawDeflateStream == null)
+        {
+            await WriteAsync(Array.Empty<byte>(), 0, 0, CancellationToken.None)
+                .ConfigureAwait(false);
         }
 
         try

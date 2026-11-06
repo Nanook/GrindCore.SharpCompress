@@ -43,24 +43,32 @@ public partial class LzmaStream
             isLzma2,
             leaveOpen
         );
-        if (!isLzma2)
+        try
         {
-            if (presetDictionary != null)
+            if (!isLzma2)
             {
-                await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
-            }
+                if (presetDictionary != null)
+                {
+                    await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
+                }
 
-            await lzma._rangeDecoder.InitAsync(inputStream).ConfigureAwait(false);
-        }
-        else
-        {
-            if (presetDictionary != null)
-            {
-                await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
-                lzma._needDictReset = false;
+                await lzma._rangeDecoder.InitAsync(inputStream).ConfigureAwait(false);
             }
+            else
+            {
+                if (presetDictionary != null)
+                {
+                    await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
+                    lzma._needDictReset = false;
+                }
+            }
+            return lzma;
         }
-        return lzma;
+        catch
+        {
+            await lzma.ReleaseBuffersAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     /*public static async ValueTask<LzmaStream> CreateAsync(
@@ -83,6 +91,9 @@ public partial class LzmaStream
 
     private async ValueTask DecodeChunkHeaderAsync(CancellationToken cancellationToken = default)
     {
+#if !LEGACY_DOTNET
+        _bufferedAsyncChunkReady = false;
+#endif
         var headerBuffer = GetAsyncHeaderBuffer();
         await _inputStream!
             .ReadExactAsync(headerBuffer, 0, 1, cancellationToken)
@@ -135,11 +146,8 @@ public partial class LzmaStream
                 await _inputStream!
                     .ReadExactAsync(headerBuffer, 0, 1, cancellationToken)
                     .ConfigureAwait(false);
-                Properties[0] = headerBuffer[0];
                 _inputPosition++;
-
-                _decoder = new Decoder();
-                _decoder.SetDecoderProperties(Properties);
+                SetChunkProperties(headerBuffer[0]);
             }
             else if (_needProps)
             {
@@ -147,11 +155,22 @@ public partial class LzmaStream
             }
             else if (control >= 0xA0)
             {
-                _decoder = new Decoder();
+                _decoder ??= new Decoder();
                 _decoder.SetDecoderProperties(Properties);
             }
 
+#if !LEGACY_DOTNET
+            await _rangeDecoder
+                .InitLzma2ChunkAsync(
+                    _inputStream,
+                    checked((int)_rangeDecoderLimit),
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            _bufferedAsyncChunkReady = true;
+#else
             await _rangeDecoder.InitAsync(_inputStream, cancellationToken).ConfigureAwait(false);
+#endif
         }
         else if (control > 0x02)
         {
@@ -168,6 +187,25 @@ public partial class LzmaStream
         }
     }
 
+    private ValueTask<bool> DecodeBlockAsync(CancellationToken cancellationToken)
+    {
+#if !LEGACY_DOTNET
+        if (_isLzma2)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!_bufferedAsyncChunkReady)
+            {
+                // Do not enter the pointer-based decoder after a canceled/failed payload fill.
+                throw new DataErrorException();
+            }
+#pragma warning disable VSTHRD103 // The bounded LZMA2 payload is already in memory; this call performs CPU work only.
+            return new ValueTask<bool>(_decoder!.Code(_dictionarySize, _outWindow, _rangeDecoder));
+#pragma warning restore VSTHRD103
+        }
+#endif
+        return _decoder!.CodeAsync(_dictionarySize, _outWindow, _rangeDecoder, cancellationToken);
+    }
+
     public override async Task<int> ReadAsync(
         byte[] buffer,
         int offset,
@@ -175,6 +213,12 @@ public partial class LzmaStream
         CancellationToken cancellationToken
     )
     {
+        ThrowIfDisposed();
+        if (count > 0)
+        {
+            EnsureReadMode(ReadMode.Asynchronous);
+        }
+
         if (_endReached)
         {
             return 0;
@@ -201,11 +245,23 @@ public partial class LzmaStream
                 }
             }
 
+            if (_availableBytes < 0)
+            {
+                throw new DataErrorException();
+            }
+
             var toProcess = count - total;
             if (toProcess > _availableBytes)
             {
                 toProcess = (int)_availableBytes;
             }
+#if !LEGACY_DOTNET
+            if (_isLzma2 && !_uncompressedChunk)
+            {
+                // Bound CPU-only work between cancellation checks, even for huge caller buffers.
+                toProcess = Math.Min(toProcess, 16 * 1024);
+            }
+#endif
 
             _outWindow.SetLimit(toProcess);
             if (_uncompressedChunk)
@@ -214,16 +270,16 @@ public partial class LzmaStream
                     .CopyStreamAsync(_inputStream, toProcess, cancellationToken)
                     .ConfigureAwait(false);
             }
-            else if (
-                await _decoder!
-                    .CodeAsync(_dictionarySize, _outWindow, _rangeDecoder, cancellationToken)
-                    .ConfigureAwait(false)
-            )
+            else if (await DecodeBlockAsync(cancellationToken).ConfigureAwait(false))
             {
                 HandleEndMarker();
             }
 
             var read = _outWindow.Read(buffer, offset, toProcess);
+            if (read == 0 && _availableBytes > 0)
+            {
+                throw new DataErrorException();
+            }
             total += read;
             offset += read;
             _position += read;
@@ -242,16 +298,7 @@ public partial class LzmaStream
                 )
                 {
                     _outWindow.SetLimit(toProcess + 1);
-                    if (
-                        !await _decoder!
-                            .CodeAsync(
-                                _dictionarySize,
-                                _outWindow,
-                                _rangeDecoder,
-                                cancellationToken
-                            )
-                            .ConfigureAwait(false)
-                    )
+                    if (!await DecodeBlockAsync(cancellationToken).ConfigureAwait(false))
                     {
                         _rangeDecoder.ReleaseStream();
                         throw new DataErrorException();
@@ -289,6 +336,12 @@ public partial class LzmaStream
         CancellationToken cancellationToken = default
     )
     {
+        ThrowIfDisposed();
+        if (!buffer.IsEmpty)
+        {
+            EnsureReadMode(ReadMode.Asynchronous);
+        }
+
         if (_endReached)
         {
             return 0;
@@ -317,11 +370,22 @@ public partial class LzmaStream
                 }
             }
 
+            if (_availableBytes < 0)
+            {
+                throw new DataErrorException();
+            }
+
             var toProcess = count - total;
             if (toProcess > _availableBytes)
             {
                 toProcess = (int)_availableBytes;
             }
+#if !LEGACY_DOTNET
+            if (_isLzma2 && !_uncompressedChunk)
+            {
+                toProcess = Math.Min(toProcess, 16 * 1024);
+            }
+#endif
 
             _outWindow.SetLimit(toProcess);
             if (_uncompressedChunk)
@@ -330,16 +394,16 @@ public partial class LzmaStream
                     .CopyStreamAsync(_inputStream, toProcess, cancellationToken)
                     .ConfigureAwait(false);
             }
-            else if (
-                await _decoder!
-                    .CodeAsync(_dictionarySize, _outWindow, _rangeDecoder, cancellationToken)
-                    .ConfigureAwait(false)
-            )
+            else if (await DecodeBlockAsync(cancellationToken).ConfigureAwait(false))
             {
                 HandleEndMarker();
             }
 
             var read = _outWindow.Read(buffer, offset, toProcess);
+            if (read == 0 && _availableBytes > 0)
+            {
+                throw new DataErrorException();
+            }
             total += read;
             offset += read;
             _position += read;
@@ -358,16 +422,7 @@ public partial class LzmaStream
                 )
                 {
                     _outWindow.SetLimit(toProcess + 1);
-                    if (
-                        !await _decoder!
-                            .CodeAsync(
-                                _dictionarySize,
-                                _outWindow,
-                                _rangeDecoder,
-                                cancellationToken
-                            )
-                            .ConfigureAwait(false)
-                    )
+                    if (!await DecodeBlockAsync(cancellationToken).ConfigureAwait(false))
                     {
                         _rangeDecoder.ReleaseStream();
                         throw new DataErrorException();
@@ -407,6 +462,7 @@ public partial class LzmaStream
         CancellationToken cancellationToken
     )
     {
+        ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         if (_encoder != null)
         {
@@ -422,17 +478,19 @@ public partial class LzmaStream
         CancellationToken cancellationToken = default
     )
     {
+        ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         if (_encoder != null)
         {
+            using var input = new ReadOnlyMemoryStream(buffer);
             _position = await _encoder
-                .CodeAsync(new MemoryStream(buffer.ToArray()), false, cancellationToken)
+                .CodeAsync(input, false, cancellationToken)
                 .ConfigureAwait(false);
         }
     }
 #endif
 
-#if !LEGACY_DOTNET || NETSTANDARD2_1
+#if STREAM_DISPOSEASYNC
     public override async ValueTask DisposeAsync()
 #else
     public async ValueTask DisposeAsync()
@@ -443,30 +501,70 @@ public partial class LzmaStream
             return;
         }
         _isDisposed = true;
-
-        if (_encoder != null)
+        try
         {
-            _position = await _encoder.CodeAsync(null, true).ConfigureAwait(false);
-            _encoder.Dispose();
-        }
-
-        if (!_leaveOpen)
-        {
-            if (_inputStream is IAsyncDisposable asyncDisposableInputStream)
+            if (_encoder != null)
             {
-                await asyncDisposableInputStream.DisposeAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                _inputStream?.Dispose();
+                _position = await _encoder.CodeAsync(null, true).ConfigureAwait(false);
             }
         }
-        await _outWindow.DisposeAsync().ConfigureAwait(false);
-        ReturnAsyncHeaderBuffer();
+        finally
+        {
+            try
+            {
+                await ReleaseBuffersAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                if (!_leaveOpen)
+                {
+                    if (_inputStream is IAsyncDisposable asyncDisposableInputStream)
+                    {
+                        await asyncDisposableInputStream.DisposeAsync().ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        _inputStream?.Dispose();
+                    }
+                }
+            }
+        }
 
-#if !LEGACY_DOTNET || NETSTANDARD2_1
+#if STREAM_DISPOSEASYNC
         await base.DisposeAsync().ConfigureAwait(false);
 #endif
         GC.SuppressFinalize(this);
+    }
+
+    private async ValueTask ReleaseBuffersAsync()
+    {
+        try
+        {
+#pragma warning disable VSTHRD103 // Encoder.Dispose only returns buffers; finalization is separate.
+            try
+            {
+                _encoder?.Dispose();
+            }
+            finally
+            {
+                if (_decoder is not null)
+                {
+                    await _decoder.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+#pragma warning restore VSTHRD103
+        }
+        finally
+        {
+            try
+            {
+                await _outWindow.DisposeAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _rangeDecoder.ReleaseStream();
+                ReturnAsyncHeaderBuffer();
+            }
+        }
     }
 }

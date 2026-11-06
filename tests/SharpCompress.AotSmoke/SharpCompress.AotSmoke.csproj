@@ -7,6 +7,12 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
   </PropertyGroup>
+  <PropertyGroup>
+    <!-- NU1903: Microsoft.DotNet.ILCompiler 10.0.11 has a known vulnerability (GHSA-p3jp-9v83-76w9).
+         Suppressed here because this project only uses ILCompiler as an AOT toolchain dependency —
+         it is not part of the published library. Use SDK 10.0.401+ to pick up the fixed version. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\SharpCompress\SharpCompress.csproj" />
   </ItemGroup>
