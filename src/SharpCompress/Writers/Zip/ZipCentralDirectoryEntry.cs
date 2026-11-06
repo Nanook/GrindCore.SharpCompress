@@ -73,9 +73,10 @@ internal class ZipCentralDirectoryEntry
             version = 20;
         }
 
-        var flags = Equals(archiveEncoding.GetEncoding(), Encoding.UTF8)
-            ? HeaderFlags.Efs
-            : HeaderFlags.None;
+        var flags =
+            archiveEncoding.GetEncoding().CodePage == Encoding.UTF8.CodePage
+                ? HeaderFlags.Efs
+                : HeaderFlags.None;
         if (UsesDataDescriptor)
         {
             // Cannot use data descriptors with zip64:

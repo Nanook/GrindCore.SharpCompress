@@ -258,7 +258,14 @@ internal class ZlibBaseStream : Stream, IStreamStack
     {
         if (_z is null)
         {
-            return;
+            if (!_wantCompress || _streamMode == StreamMode.Reader)
+            {
+                return;
+            }
+
+            // Nothing was written, but the output still needs its final (empty) block
+            _streamMode = StreamMode.Writer;
+            _ = z;
         }
 
         if (_streamMode == StreamMode.Writer)
@@ -365,7 +372,14 @@ internal class ZlibBaseStream : Stream, IStreamStack
     {
         if (_z is null)
         {
-            return;
+            if (!_wantCompress || _streamMode == StreamMode.Reader)
+            {
+                return;
+            }
+
+            // Nothing was written, but the output still needs its final (empty) block
+            _streamMode = StreamMode.Writer;
+            _ = z;
         }
 
         if (_streamMode == StreamMode.Writer)
