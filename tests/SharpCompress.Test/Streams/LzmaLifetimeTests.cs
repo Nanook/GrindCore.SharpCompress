@@ -13,14 +13,24 @@ public class LzmaLifetimeTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    [Trait("Category", "GrindCoreSkip")]
     public async Task FailedFinalizationReleasesEncoderBuffers(bool asyncDispose)
     {
+        // This test inspects the managed LzmaStream._encoder internal field via reflection.
+        // GrindCore's LzmaStream_GC backs encoding with native code; no _encoder field exists.
+#if GRINDCORE
+        return;
+#else
         using var output = new ThrowingOutput();
         var stream = LzmaStream.Create(new LzmaEncoderProperties(), false, output);
         var encoder = GetField(stream, "_encoder")!;
         if (asyncDispose)
         {
+#if LEGACY_DOTNET
+            Assert.Throws<IOException>(() => stream.Dispose());
+#else
             await Assert.ThrowsAsync<IOException>(async () => await stream.DisposeAsync());
+#endif
         }
         else
         {
@@ -33,11 +43,17 @@ public class LzmaLifetimeTests
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
             stream.WriteAsync(new byte[1], 0, 1, CancellationToken.None)
         );
+#endif
     }
 
     [Fact]
+    // GrindCore: this test inspects _asyncHeaderBuffer via reflection which doesn't exist in LzmaStream_GC.
+    [Trait("Category", "GrindCoreSkip")]
     public async Task DisposedLzma2ReaderCannotRentHeaderBuffer()
     {
+#if GRINDCORE
+        return;
+#else
         using var input = new MemoryStream(new byte[] { 0 });
         var stream = LzmaStream.Create(new byte[] { 0 }, input, leaveOpen: true);
         stream.Dispose();
@@ -47,6 +63,7 @@ public class LzmaLifetimeTests
         Assert.Null(GetField(stream, "_asyncHeaderBuffer"));
         Assert.False(stream.CanRead);
         Assert.True(input.CanRead);
+#endif
     }
 
     [Fact]

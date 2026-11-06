@@ -254,13 +254,30 @@ public class LzmaStream : Stream, IStreamStack
 
         // Create the appropriate GrindCore stream - use helper to determine LZMA2
         var shouldUseLzma2 = GrindCoreBufferHelper.IsLzma2(null, _isLzma2);
-        if (shouldUseLzma2)
+        try
         {
-            _grindCoreStream = new Nanook.GrindCore.Lzma.Lzma2Stream(inputStream, options);
+            if (shouldUseLzma2)
+            {
+                _grindCoreStream = new Nanook.GrindCore.Lzma.Lzma2Stream(inputStream, options);
+            }
+            else
+            {
+                _grindCoreStream = new Nanook.GrindCore.Lzma.LzmaStream(inputStream, options);
+            }
         }
-        else
+        catch (Exception ex)
+            when (ex
+                    is not (
+                        SharpCompressException
+                        or ObjectDisposedException
+                        or OperationCanceledException
+                        or NotSupportedException
+                    )
+            )
         {
-            _grindCoreStream = new Nanook.GrindCore.Lzma.LzmaStream(inputStream, options);
+            // GrindCore throws raw System.Exception for invalid LZMA properties (e.g. bad dictionary size).
+            // Map to InvalidParamException to match the managed LzmaStream behaviour.
+            throw new InvalidParamException();
         }
 
         Properties = properties;
@@ -389,7 +406,25 @@ public class LzmaStream : Stream, IStreamStack
             return 0;
         }
 
-        return _grindCoreStream.Read(buffer, offset, count);
+        try
+        {
+            return _grindCoreStream.Read(buffer, offset, count);
+        }
+        catch (Exception ex)
+            when (ex
+                    is not (
+                        SharpCompressException
+                        or ObjectDisposedException
+                        or OperationCanceledException
+                        or NotSupportedException
+                    )
+            )
+        {
+            // GrindCore throws raw System.Exception for decode errors (e.g. corrupt or truncated data).
+            // Map to DataErrorException so EncryptedDecoderStream can wrap it as CryptographicException
+            // and callers relying on SharpCompressException catch blocks work correctly.
+            throw new DataErrorException();
+        }
     }
 
     public override int ReadByte()
@@ -399,7 +434,22 @@ public class LzmaStream : Stream, IStreamStack
             return -1;
         }
 
-        return _grindCoreStream.ReadByte();
+        try
+        {
+            return _grindCoreStream.ReadByte();
+        }
+        catch (Exception ex)
+            when (ex
+                    is not (
+                        SharpCompressException
+                        or ObjectDisposedException
+                        or OperationCanceledException
+                        or NotSupportedException
+                    )
+            )
+        {
+            throw new DataErrorException();
+        }
     }
 
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -416,7 +466,7 @@ public class LzmaStream : Stream, IStreamStack
         _grindCoreStream.Write(buffer, offset, count);
     }
 
-    public override Task<int> ReadAsync(
+    public override async Task<int> ReadAsync(
         byte[] buffer,
         int offset,
         int count,
@@ -433,7 +483,24 @@ public class LzmaStream : Stream, IStreamStack
             throw new NotSupportedException("Cannot read from an encoder stream");
         }
 
-        return _grindCoreStream.ReadAsync(buffer, offset, count, cancellationToken);
+        try
+        {
+            return await _grindCoreStream
+                .ReadAsync(buffer, offset, count, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+            when (ex
+                    is not (
+                        SharpCompressException
+                        or ObjectDisposedException
+                        or OperationCanceledException
+                        or NotSupportedException
+                    )
+            )
+        {
+            throw new DataErrorException();
+        }
     }
 
     public override Task WriteAsync(
@@ -457,7 +524,7 @@ public class LzmaStream : Stream, IStreamStack
     }
 
 #if !LEGACY_DOTNET
-    public override ValueTask<int> ReadAsync(
+    public override async ValueTask<int> ReadAsync(
         Memory<byte> buffer,
         CancellationToken cancellationToken = default
     )
@@ -472,7 +539,24 @@ public class LzmaStream : Stream, IStreamStack
             throw new NotSupportedException("Cannot read from an encoder stream");
         }
 
-        return _grindCoreStream.ReadAsync(buffer, cancellationToken);
+        try
+        {
+            return await _grindCoreStream
+                .ReadAsync(buffer, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+            when (ex
+                    is not (
+                        SharpCompressException
+                        or ObjectDisposedException
+                        or OperationCanceledException
+                        or NotSupportedException
+                    )
+            )
+        {
+            throw new DataErrorException();
+        }
     }
 
     public override ValueTask WriteAsync(

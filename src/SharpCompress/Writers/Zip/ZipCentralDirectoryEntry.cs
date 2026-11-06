@@ -96,8 +96,14 @@ internal class ZipCentralDirectoryEntry
             }
         }
 
-        // Support for zero byte files
-        if (Decompressed == 0 && Compressed == 0)
+        // Support for zero byte files on seekable writes. For non-seekable (data-descriptor)
+        // entries the local header was already written with the original method and cannot be
+        // updated; changing the central directory method here would create a method mismatch.
+        if (
+            Decompressed == 0
+            && Compressed == 0
+            && (flags & HeaderFlags.UsePostDataDescriptor) == 0
+        )
         {
             usedCompression = ZipCompressionMethod.None;
         }

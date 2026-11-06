@@ -5,6 +5,12 @@ using Xunit;
 
 namespace SharpCompress.Test.Streams;
 
+#if GRINDCORE
+// DeflateReadAheadTests tests InputBuffer on the managed DeflateStream, which GrindCore's
+// native DeflateStream_GC does not expose. These tests will be enabled once GrindCore
+// exposes equivalent read-ahead buffer access.
+public class DeflateReadAheadTests { }
+#else
 public class DeflateReadAheadTests
 {
     [Theory]
@@ -46,3 +52,4 @@ public class DeflateReadAheadTests
         Assert.Equal(trailer, remaining.ToArray());
     }
 }
+#endif

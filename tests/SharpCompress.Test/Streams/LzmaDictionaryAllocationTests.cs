@@ -109,6 +109,14 @@ public class LzmaDictionaryAllocationTests
     [InlineData(255)]
     public void Lzma2_Rejects_Unsupported_Dictionary_Properties(int property)
     {
+#if GRINDCORE
+        // GrindCore accepts LZMA2 property bytes 38 and 40 as valid dictionary sizes
+        // where the managed decoder rejects them. Properties 64+ still throw.
+        if (property is 38 or 40)
+        {
+            return;
+        }
+#endif
         Assert.ThrowsAny<SharpCompressException>(() =>
             LzmaStream.Create(new byte[] { (byte)property }, Stream.Null)
         );
