@@ -21,7 +21,7 @@ internal static class ZipArchiveVolumeFactory
                     part1.DirectoryName!,
                     String.Concat(
                         m.Groups[1].Value,
-                        Regex.Replace(m.Groups[2].Value, @"[^xz]", ""),
+                        Regex.Replace(m.Groups[2].Value.ToLowerInvariant(), @"[^xz]", ""),
                         index.ToString(Constants.DefaultCultureInfo).PadLeft(2, '0')
                     )
                 )
@@ -32,11 +32,6 @@ internal static class ZipArchiveVolumeFactory
             return ArchiveVolumeFactory.GetFilePart(index, part1);
         }
 
-        if (item != null && item.Exists)
-        {
-            return item;
-        }
-
-        return null; //no more items
+        return item is null ? null : ArchiveVolumeFactory.ResolveFilePart(item);
     }
 }

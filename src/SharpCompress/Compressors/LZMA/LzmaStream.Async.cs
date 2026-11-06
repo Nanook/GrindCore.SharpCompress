@@ -43,24 +43,32 @@ public partial class LzmaStream
             isLzma2,
             leaveOpen
         );
-        if (!isLzma2)
+        try
         {
-            if (presetDictionary != null)
+            if (!isLzma2)
             {
-                await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
-            }
+                if (presetDictionary != null)
+                {
+                    await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
+                }
 
-            await lzma._rangeDecoder.InitAsync(inputStream).ConfigureAwait(false);
-        }
-        else
-        {
-            if (presetDictionary != null)
-            {
-                await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
-                lzma._needDictReset = false;
+                await lzma._rangeDecoder.InitAsync(inputStream).ConfigureAwait(false);
             }
+            else
+            {
+                if (presetDictionary != null)
+                {
+                    await lzma._outWindow.TrainAsync(presetDictionary).ConfigureAwait(false);
+                    lzma._needDictReset = false;
+                }
+            }
+            return lzma;
         }
-        return lzma;
+        catch
+        {
+            await lzma.ReleaseBuffersAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     /*public static async ValueTask<LzmaStream> CreateAsync(
@@ -175,6 +183,7 @@ public partial class LzmaStream
         CancellationToken cancellationToken
     )
     {
+        ThrowIfDisposed();
         if (_endReached)
         {
             return 0;
@@ -201,6 +210,11 @@ public partial class LzmaStream
                 }
             }
 
+            if (_availableBytes < 0)
+            {
+                throw new DataErrorException();
+            }
+
             var toProcess = count - total;
             if (toProcess > _availableBytes)
             {
@@ -224,6 +238,10 @@ public partial class LzmaStream
             }
 
             var read = _outWindow.Read(buffer, offset, toProcess);
+            if (read == 0 && _availableBytes > 0)
+            {
+                throw new DataErrorException();
+            }
             total += read;
             offset += read;
             _position += read;
@@ -289,6 +307,7 @@ public partial class LzmaStream
         CancellationToken cancellationToken = default
     )
     {
+        ThrowIfDisposed();
         if (_endReached)
         {
             return 0;
@@ -317,6 +336,11 @@ public partial class LzmaStream
                 }
             }
 
+            if (_availableBytes < 0)
+            {
+                throw new DataErrorException();
+            }
+
             var toProcess = count - total;
             if (toProcess > _availableBytes)
             {
@@ -340,6 +364,10 @@ public partial class LzmaStream
             }
 
             var read = _outWindow.Read(buffer, offset, toProcess);
+            if (read == 0 && _availableBytes > 0)
+            {
+                throw new DataErrorException();
+            }
             total += read;
             offset += read;
             _position += read;
@@ -407,6 +435,7 @@ public partial class LzmaStream
         CancellationToken cancellationToken
     )
     {
+        ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         if (_encoder != null)
         {
@@ -422,6 +451,7 @@ public partial class LzmaStream
         CancellationToken cancellationToken = default
     )
     {
+        ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
         if (_encoder != null)
         {
@@ -443,30 +473,59 @@ public partial class LzmaStream
             return;
         }
         _isDisposed = true;
-
-        if (_encoder != null)
+        try
         {
-            _position = await _encoder.CodeAsync(null, true).ConfigureAwait(false);
-            _encoder.Dispose();
-        }
-
-        if (!_leaveOpen)
-        {
-            if (_inputStream is IAsyncDisposable asyncDisposableInputStream)
+            if (_encoder != null)
             {
-                await asyncDisposableInputStream.DisposeAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                _inputStream?.Dispose();
+                _position = await _encoder.CodeAsync(null, true).ConfigureAwait(false);
             }
         }
-        await _outWindow.DisposeAsync().ConfigureAwait(false);
-        ReturnAsyncHeaderBuffer();
+        finally
+        {
+            try
+            {
+                await ReleaseBuffersAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                if (!_leaveOpen)
+                {
+                    if (_inputStream is IAsyncDisposable asyncDisposableInputStream)
+                    {
+                        await asyncDisposableInputStream.DisposeAsync().ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        _inputStream?.Dispose();
+                    }
+                }
+            }
+        }
 
 #if !LEGACY_DOTNET || NETSTANDARD2_1
         await base.DisposeAsync().ConfigureAwait(false);
 #endif
         GC.SuppressFinalize(this);
+    }
+
+    private async ValueTask ReleaseBuffersAsync()
+    {
+        try
+        {
+#pragma warning disable VSTHRD103 // Encoder.Dispose only returns buffers; finalization is separate.
+            _encoder?.Dispose();
+#pragma warning restore VSTHRD103
+        }
+        finally
+        {
+            try
+            {
+                await _outWindow.DisposeAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                ReturnAsyncHeaderBuffer();
+            }
+        }
     }
 }

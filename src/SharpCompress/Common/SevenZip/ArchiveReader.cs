@@ -674,9 +674,12 @@ internal partial class ArchiveReader
                         != folder._unpackCrc
                     )
                     {
-                        throw new InvalidFormatException(
+                        var exception = new InvalidFormatException(
                             "Decoded stream does not match expected CRC."
                         );
+                        throw folder.IsEncrypted()
+                            ? EncryptedDecoderStream.DecodingException(exception)
+                            : exception;
                     }
                 }
             }
@@ -1041,6 +1044,13 @@ internal partial class ArchiveReader
         if (nextHeaderOffset > _streamEnding - db._startPositionAfterHeader)
         {
             throw new ArchiveOperationException("nextHeaderOffset is invalid");
+        }
+
+        // Validate the physical header range before allocating attacker-controlled sizes.
+        // Subtract the validated offset instead of adding offset and size to avoid overflow.
+        if (nextHeaderSize > _streamEnding - db._startPositionAfterHeader - nextHeaderOffset)
+        {
+            throw new IncompleteArchiveException("Next header extends beyond the end of stream.");
         }
 
         _stream.Seek(nextHeaderOffset, SeekOrigin.Current);

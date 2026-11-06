@@ -98,7 +98,7 @@ public partial class SevenZipArchive : AbstractArchive<SevenZipArchiveEntry, Sev
             .GroupBy(x => x.FilePart.Folder)
             .Any(folder => folder.Skip(1).Any());
 
-    public override bool IsEncrypted => Entries.First(x => !x.IsDirectory).IsEncrypted;
+    public override bool IsEncrypted => Entries.Any(x => x.IsEncrypted);
 
     public override long TotalSize =>
         _database?._packSizes.Aggregate(0L, (total, packSize) => total + packSize) ?? 0;
@@ -188,8 +188,12 @@ public partial class SevenZipArchive : AbstractArchive<SevenZipArchiveEntry, Sev
                 );
             }
 
-            return CreateEntryStream(
-                new ReadOnlySubStream(_currentFolderStream, entry.Size, leaveOpen: true)
+            // Entry boundaries do not end a solid folder's decoder. Its buffered input must
+            // remain intact until the reader advances to another folder or is disposed.
+            return new EntryStream(
+                this,
+                new ReadOnlySubStream(_currentFolderStream, entry.Size, leaveOpen: true),
+                rewindDecoderOnDispose: false
             );
         }
 
