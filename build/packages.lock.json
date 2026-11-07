@@ -4,9 +4,9 @@
     "net10.0": {
       "Bullseye": {
         "type": "Direct",
-        "requested": "[6.1.0, )",
-        "resolved": "6.1.0",
-        "contentHash": "fltnAJDe0BEX5eymXGUq+il2rSUA0pHqUonNDRH2TrvRu8SkU17mYG0IVpdmG2ibtfhdjNrv4CuTCxHOwcozCA=="
+        "requested": "[6.3.0, )",
+        "resolved": "6.3.0",
+        "contentHash": "yK14DF1aGvyGxIDFwApU1+YJcnXRmuVhGdz7js7eVTBnLvl/4rg20jb43YDhFvifcx7tRD4iOzF6ykoLdvWNfw=="
       },
       "Glob": {
         "type": "Direct",
